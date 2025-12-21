@@ -4,8 +4,8 @@ from telegram.ext import (
     ApplicationBuilder, CommandHandler,
     ChatMemberHandler, ContextTypes
 )
-
-BOT_TOKEN = "8234989451:AAGy9-pggcTGUv9TgHCbym2lKaeleloDPzc"
+import os
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 GROUP_ID =  -1002240484750
 ADMIN_ID = 1380090461
 REQUIRED_INVITES = 5
@@ -115,4 +115,5 @@ print("Bot running...")
 app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome_new_user))
 
 app.run_polling()
+
 
