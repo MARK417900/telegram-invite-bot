@@ -4,7 +4,8 @@ const token = "8015347446:AAG49JNaGrSNKK4lFkMWXkfRQd-pyLvSMMQ";
 
 const bot = new TelegramBot(token, { polling: true });
 
-// REQUIRED CHANNELS
+// ADMIN ID
+const ADMIN_ID = 8521844327;// REQUIRED CHANNELS
 const channels = [
   "@earnwithmark41"
 ];
@@ -249,3 +250,135 @@ ${code}`);
   }
 
 });
+
+// ================= ADMIN PANEL =================
+
+// open admin panel
+bot.onText(/\/admin/, (msg) => {
+
+  const chatId = msg.chat.id;
+
+  if(chatId !== ADMIN_ID) return;
+
+  bot.sendMessage(chatId,
+`👑 Admin Panel
+
+Commands:
+
+/broadcast MESSAGE
+/stats
+/referrals USER_ID
+/addcode CODE
+/removecode CODE
+/listcodes`);
+
+});
+
+
+// broadcast message
+bot.onText(/\/broadcast (.+)/, (msg, match) => {
+
+  const chatId = msg.chat.id;
+  if(chatId !== ADMIN_ID) return;
+
+  const message = match[1];
+
+  Object.keys(users).forEach(id => {
+    bot.sendMessage(id, message).catch(()=>{});
+  });
+
+  bot.sendMessage(chatId,"✅ Broadcast sent.");
+
+});
+
+
+// bot stats
+bot.onText(/\/stats/, (msg)=>{
+
+  const chatId = msg.chat.id;
+  if(chatId !== ADMIN_ID) return;
+
+  const totalUsers = Object.keys(users).length;
+  const remainingCodes = codes.length;
+
+  bot.sendMessage(chatId,
+`📊 Bot Stats
+
+Users: ${totalUsers}
+Available Codes: ${remainingCodes}`);
+
+});
+
+
+// check user referrals
+bot.onText(/\/referrals (.+)/,(msg,match)=>{
+
+  const chatId = msg.chat.id;
+  if(chatId !== ADMIN_ID) return;
+
+  const userId = match[1];
+
+  if(!users[userId]){
+    bot.sendMessage(chatId,"User not found");
+    return;
+  }
+
+  bot.sendMessage(chatId,
+`👤 User ${userId}
+
+Referrals: ${users[userId].ref}
+Code Claimed: ${users[userId].claimedCode}`);
+
+});
+
+
+// add new code
+bot.onText(/\/addcode (.+)/,(msg,match)=>{
+
+  const chatId = msg.chat.id;
+  if(chatId !== ADMIN_ID) return;
+
+  const code = match[1];
+
+  codes.push(code);
+
+  bot.sendMessage(chatId,"✅ Code added.");
+
+});
+
+
+// remove code
+bot.onText(/\/removecode (.+)/,(msg,match)=>{
+
+  const chatId = msg.chat.id;
+  if(chatId !== ADMIN_ID) return;
+
+  const code = match[1];
+
+  const index = codes.indexOf(code);
+
+  if(index === -1){
+    bot.sendMessage(chatId,"Code not found");
+    return;
+  }
+
+  codes.splice(index,1);
+
+  bot.sendMessage(chatId,"❌ Code removed");
+
+});
+
+
+// list all codes
+bot.onText(/\/listcodes/, (msg)=>{
+
+  const chatId = msg.chat.id;
+  if(chatId !== ADMIN_ID) return;
+
+  bot.sendMessage(chatId,
+`🎁 Codes:
+
+${codes.join("\n")}`);
+
+});
+
