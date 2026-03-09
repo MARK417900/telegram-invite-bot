@@ -1,3 +1,4 @@
+```javascript
 const express = require("express");
 const app = express();
 
@@ -14,7 +15,6 @@ app.listen(PORT, () => {
 const TelegramBot = require("node-telegram-bot-api");
 
 const token = "8015347446:AAG49JNaGrSNKK4lFkMWXkfRQd-pyLvSMMQ";
-
 const bot = new TelegramBot(token, { polling: true });
 
 const botUsername = "HotyaReferBot";
@@ -24,19 +24,14 @@ const ADMIN_ID = 8521844327;
 
 // REQUIRED CHANNELS
 const channels = [
-  "@earnwithmark41","@Marks_community","@MSofficialTeam"
-];
-
-// UNIQUE CODES
-let codes = [
-"CODE1A","CODE2B","CODE3C","CODE4D","CODE5E",
-"CODE6F","CODE7G","CODE8H","CODE9I","CODE10J",
-"CODE11K","CODE12L","CODE13M","CODE14N","CODE15O",
-"CODE16P","CODE17Q","CODE18R","CODE19S","CODE20T"
+  "@earnwithmark41",
+  "@Marks_community",
+  "@MSofficialTeam"
 ];
 
 // USER DATABASE
 const users = {};
+
 
 // CHECK CHANNEL MEMBERSHIP
 async function checkMembership(userId) {
@@ -47,10 +42,7 @@ async function checkMembership(userId) {
 
       const member = await bot.getChatMember(channel, userId);
 
-      if (
-        member.status === "left" ||
-        member.status === "kicked"
-      ) {
+      if (member.status === "left" || member.status === "kicked") {
         return false;
       }
 
@@ -64,6 +56,7 @@ async function checkMembership(userId) {
 
 }
 
+
 // START COMMAND
 bot.onText(/\/start(?: (.+))?/, (msg, match) => {
 
@@ -71,11 +64,13 @@ bot.onText(/\/start(?: (.+))?/, (msg, match) => {
   const referrerId = match[1];
 
   if (!users[chatId]) {
+
     users[chatId] = {
       ref: 0,
       invited: [],
       referredBy: referrerId || null
     };
+
   }
 
   let joinText = "🚨 Please join all channels first to use the bot.";
@@ -116,10 +111,8 @@ bot.on("callback_query", async (query) => {
     const joined = await checkMembership(chatId);
 
     if (!joined) {
-
-      bot.sendMessage(chatId,"❌ You must join the channel first.");
+      bot.sendMessage(chatId,"❌ You must join all channels first.");
       return;
-
     }
 
     const user = users[chatId];
@@ -148,8 +141,7 @@ Total referrals: ${referrer.ref}`);
 
       reply_markup: {
         keyboard: [
-          ["👥 Refer"],
-          ["💰 Balance"],
+          ["👥 Refer", "💰 Balance"],
           ["🎁 Get Code"]
         ],
         resize_keyboard: true
@@ -203,34 +195,34 @@ Referrals: ${users[chatId].ref}/5`);
   }
 
   // GET CODE
-if (text === "🎁 Get Code") {
+  if (text === "🎁 Get Code") {
 
-  const joined = await checkMembership(chatId);
+    const joined = await checkMembership(chatId);
 
-  if (!joined) {
-    bot.sendMessage(chatId,"❌ Please join the channel first.");
-    return;
-  }
+    if (!joined) {
+      bot.sendMessage(chatId,"❌ Please join all channels first.");
+      return;
+    }
 
-  const user = users[chatId];
+    const user = users[chatId];
 
-  if (user.ref < 0) {
+    if (user.ref < 5) {
 
-    bot.sendMessage(chatId,
+      bot.sendMessage(chatId,
 `❌ You need 5 referrals.
 
 Current referrals: ${user.ref}/5`);
 
-    return;
+      return;
 
-  }
+    }
 
-  bot.sendMessage(chatId,
+    bot.sendMessage(chatId,
 `🎉 Congratulations!
 
 You completed 5 referrals.
 
-📩 Now send a message to the admin bot to receive your code:
+📩 Now message the admin bot to receive your code:
 
 👉 https://t.me/Mark41_helperBot
 
@@ -240,14 +232,17 @@ Send this message there:
 
 Admin will verify and send your code.`);
 
-  // RESET REFERRALS
-  user.ref = 0;
-  user.invited = [];
+    // RESET REFERRALS
+    user.ref = 0;
+    user.invited = [];
 
-}
+  }
+
+});
 
 
 // ================= ADMIN PANEL =================
+
 
 // OPEN ADMIN PANEL
 bot.onText(/\/admin/, (msg) => {
@@ -258,6 +253,7 @@ bot.onText(/\/admin/, (msg) => {
 
   bot.sendMessage(chatId,
 `👑 Admin Panel
+
 Commands:
 
 /broadcast MESSAGE
@@ -291,13 +287,11 @@ bot.onText(/\/stats/, (msg)=>{
   if(chatId !== ADMIN_ID) return;
 
   const totalUsers = Object.keys(users).length;
-  const remainingCodes = codes.length;
 
   bot.sendMessage(chatId,
 `📊 Bot Stats
 
-Users: ${totalUsers}
-Available Codes: ${remainingCodes}`);
+Users: ${totalUsers}`);
 
 });
 
@@ -321,11 +315,4 @@ bot.onText(/\/referrals (.+)/,(msg,match)=>{
 Referrals: ${users[userId].ref}`);
 
 });
-
-
-
-
-
-
-
-
+```
