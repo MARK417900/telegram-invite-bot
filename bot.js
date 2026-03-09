@@ -214,7 +214,7 @@ if (text === "🎁 Get Code") {
 
   const user = users[chatId];
 
-  if (user.ref < 5) {
+  if (user.ref < 0) {
 
     bot.sendMessage(chatId,
 `❌ You need 5 referrals.
@@ -321,6 +321,7 @@ bot.onText(/\/referrals (.+)/,(msg,match)=>{
 Referrals: ${users[userId].ref}`);
 
 });
+
 
 
 
