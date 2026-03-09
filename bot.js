@@ -82,7 +82,7 @@ bot.onText(/\/start(?: (.+))?/, (msg, match) => {
     buttons.push([
       {
         text: "📢 Join Channel",
-        url: 'https://t.me/${ch.replace("@","")}`
+        url: `https://t.me/${ch.replace("@","")}`
       }
     ]);
 
@@ -315,4 +315,5 @@ bot.onText(/\/referrals (.+)/,(msg,match)=>{
 Referrals: ${users[userId].ref}`);
 
 });
+
 
