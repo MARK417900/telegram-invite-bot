@@ -1,9 +1,15 @@
+```json
 {
-  "name": "telegram-bot",
+  "name": "telegram-referral-bot",
   "version": "1.0.0",
+  "description": "Telegram referral bot",
   "main": "bot.js",
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
-    "node-telegram-bot-api": "^0.61.0",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "node-telegram-bot-api": "^0.61.0"
   }
 }
+```
