@@ -1,3 +1,16 @@
+const express = require("express");
+const app = express();
+
+app.get("/", (req, res) => {
+  res.send("Bot is running");
+});
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log("Server running on port " + PORT);
+});
+
 const TelegramBot = require("node-telegram-bot-api");
 
 const token = "8015347446:AAG49JNaGrSNKK4lFkMWXkfRQd-pyLvSMMQ";
@@ -381,4 +394,5 @@ bot.onText(/\/listcodes/, (msg)=>{
 ${codes.join("\n")}`);
 
 });
+
 
