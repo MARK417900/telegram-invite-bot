@@ -17,14 +17,18 @@ const token = "8015347446:AAG49JNaGrSNKK4lFkMWXkfRQd-pyLvSMMQ";
 
 const bot = new TelegramBot(token, { polling: true });
 
+const botUsername = "HotyaReferBot";
+
 // ADMIN ID
-const ADMIN_ID = 8521844327;// REQUIRED CHANNELS
+const ADMIN_ID = 8521844327;
+
+// REQUIRED CHANNELS
 const channels = [
-  "@earnwithmark41"
+  "@earnwithmark41","@official_adda_zone","@Marks_community","@MSofficialTeam"
 ];
 
-// CODES
-const codes = [
+// UNIQUE CODES
+let codes = [
 "CODE1A","CODE2B","CODE3C","CODE4D","CODE5E",
 "CODE6F","CODE7G","CODE8H","CODE9I","CODE10J",
 "CODE11K","CODE12L","CODE13M","CODE14N","CODE15O",
@@ -69,39 +73,10 @@ bot.onText(/\/start(?: (.+))?/, (msg, match) => {
   if (!users[chatId]) {
 
     users[chatId] = {
-      balance: 0,
       ref: 0,
       invited: [],
-      claimedCode: false
+      referredBy: referrerId || null
     };
-
-  }
-
-  // REFERRAL SYSTEM
-  if (referrerId && referrerId != chatId) {
-
-    if (!users[referrerId]) {
-
-      users[referrerId] = {
-        balance: 0,
-        ref: 0,
-        invited: [],
-        claimedCode: false
-      };
-
-    }
-
-    if (!users[referrerId].invited.includes(chatId)) {
-
-      users[referrerId].invited.push(chatId);
-      users[referrerId].ref += 1;
-
-      bot.sendMessage(referrerId,
-`🎉 New referral joined!
-
-Total referrals: ${users[referrerId].ref}`);
-
-    }
 
   }
 
@@ -136,10 +111,29 @@ bot.on("callback_query", async (query) => {
 
     if (!joined) {
 
-      bot.sendMessage(chatId,
-"❌ You must join the channel first.");
-
+      bot.sendMessage(chatId,"❌ You must join the channel first.");
       return;
+
+    }
+
+    const user = users[chatId];
+
+    // COUNT REFERRAL AFTER JOIN
+    if (user.referredBy && user.referredBy != chatId) {
+
+      const referrer = users[user.referredBy];
+
+      if (referrer && !referrer.invited.includes(chatId)) {
+
+        referrer.invited.push(chatId);
+        referrer.ref += 1;
+
+        bot.sendMessage(user.referredBy,
+`🎉 New referral joined!
+
+Total referrals: ${referrer.ref}`);
+
+      }
 
     }
 
@@ -166,15 +160,14 @@ bot.on("callback_query", async (query) => {
 bot.on("message", async (msg) => {
 
   const chatId = msg.chat.id;
-  const text = msg.text;
+  const text = msg.text || "";
 
   if (!users[chatId]) {
 
     users[chatId] = {
-      balance: 0,
       ref: 0,
       invited: [],
-      claimedCode: false
+      referredBy: null
     };
 
   }
@@ -182,7 +175,7 @@ bot.on("message", async (msg) => {
   // REFER BUTTON
   if (text === "👥 Refer") {
 
-    const refLink = `https://t.me/HotyaReferBot?start=${chatId}`;
+    const refLink = `https://t.me/${botUsername}?start=${chatId}`;
 
     bot.sendMessage(chatId,
 `👥 Your referral link:
@@ -199,12 +192,11 @@ Invite 5 friends to unlock your reward code!`);
     bot.sendMessage(chatId,
 `📊 Your Stats
 
-Referrals: ${users[chatId].ref}/5
-Code Claimed: ${users[chatId].claimedCode ? "Yes" : "No"}`);
+Referrals: ${users[chatId].ref}/5`);
 
   }
 
-  // GET CODE BUTTON
+  // GET CODE
   if (text === "🎁 Get Code") {
 
     const joined = await checkMembership(chatId);
@@ -213,7 +205,6 @@ Code Claimed: ${users[chatId].claimedCode ? "Yes" : "No"}`);
 
       bot.sendMessage(chatId,
 "❌ Please join the channel first.");
-
       return;
 
     }
@@ -231,27 +222,15 @@ Current referrals: ${user.ref}/5`);
 
     }
 
-    if (user.claimedCode) {
-
-      bot.sendMessage(chatId,
-"⚠️ You already claimed your reward code.");
-
-      return;
-
-    }
-
     if (codes.length === 0) {
 
       bot.sendMessage(chatId,
 "❌ All reward codes have been claimed.");
-
       return;
 
     }
 
     const code = codes.shift();
-
-    user.claimedCode = true;
 
     bot.sendMessage(chatId,
 `🎉 Congratulations!
@@ -260,13 +239,18 @@ Your reward code:
 
 ${code}`);
 
+    // RESET REFERRALS AFTER CLAIM
+    user.ref = 0;
+    user.invited = [];
+
   }
 
 });
 
+
 // ================= ADMIN PANEL =================
 
-// open admin panel
+// OPEN ADMIN PANEL
 bot.onText(/\/admin/, (msg) => {
 
   const chatId = msg.chat.id;
@@ -288,7 +272,7 @@ Commands:
 });
 
 
-// broadcast message
+// BROADCAST
 bot.onText(/\/broadcast (.+)/, (msg, match) => {
 
   const chatId = msg.chat.id;
@@ -305,7 +289,7 @@ bot.onText(/\/broadcast (.+)/, (msg, match) => {
 });
 
 
-// bot stats
+// BOT STATS
 bot.onText(/\/stats/, (msg)=>{
 
   const chatId = msg.chat.id;
@@ -323,7 +307,7 @@ Available Codes: ${remainingCodes}`);
 });
 
 
-// check user referrals
+// CHECK USER REFERRALS
 bot.onText(/\/referrals (.+)/,(msg,match)=>{
 
   const chatId = msg.chat.id;
@@ -339,13 +323,12 @@ bot.onText(/\/referrals (.+)/,(msg,match)=>{
   bot.sendMessage(chatId,
 `👤 User ${userId}
 
-Referrals: ${users[userId].ref}
-Code Claimed: ${users[userId].claimedCode}`);
+Referrals: ${users[userId].ref}`);
 
 });
 
 
-// add new code
+// ADD CODE
 bot.onText(/\/addcode (.+)/,(msg,match)=>{
 
   const chatId = msg.chat.id;
@@ -360,7 +343,7 @@ bot.onText(/\/addcode (.+)/,(msg,match)=>{
 });
 
 
-// remove code
+// REMOVE CODE
 bot.onText(/\/removecode (.+)/,(msg,match)=>{
 
   const chatId = msg.chat.id;
@@ -382,7 +365,7 @@ bot.onText(/\/removecode (.+)/,(msg,match)=>{
 });
 
 
-// list all codes
+// LIST CODES
 bot.onText(/\/listcodes/, (msg)=>{
 
   const chatId = msg.chat.id;
@@ -394,5 +377,3 @@ bot.onText(/\/listcodes/, (msg)=>{
 ${codes.join("\n")}`);
 
 });
-
-
