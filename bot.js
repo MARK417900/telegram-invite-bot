@@ -78,19 +78,19 @@ bot.onText(/\/start(?: (.+))?/, (msg, match) => {
     };
   }
 
-  let joinText = "🚨 Please join all channels first:\n\n";
+  let joinText = "🚨 Please join all channels first to use the bot.";
 
   let buttons = [];
 
   channels.forEach((ch) => {
-    joinText += `👉 ${ch}\n`;
 
     buttons.push([
       {
-        text: `Join ${ch}`,
+        text: "📢 Join Channel",
         url: `https://t.me/${ch.replace("@","")}`
       }
     ]);
+
   });
 
   buttons.push([
@@ -203,55 +203,48 @@ Referrals: ${users[chatId].ref}/5`);
   }
 
   // GET CODE
-  if (text === "🎁 Get Code") {
+if (text === "🎁 Get Code") {
 
-    const joined = await checkMembership(chatId);
+  const joined = await checkMembership(chatId);
 
-    if (!joined) {
+  if (!joined) {
+    bot.sendMessage(chatId,"❌ Please join the channel first.");
+    return;
+  }
 
-      bot.sendMessage(chatId,
-"❌ Please join the channel first.");
-      return;
+  const user = users[chatId];
 
-    }
+  if (user.ref < 5) {
 
-    const user = users[chatId];
-
-    if (user.ref < 5) {
-
-      bot.sendMessage(chatId,
+    bot.sendMessage(chatId,
 `❌ You need 5 referrals.
 
 Current referrals: ${user.ref}/5`);
 
-      return;
-
-    }
-
-    if (codes.length === 0) {
-
-      bot.sendMessage(chatId,
-"❌ All reward codes have been claimed.");
-      return;
-
-    }
-
-    const code = codes.shift();
-
-    bot.sendMessage(chatId,
-`🎉 Congratulations!
-
-Your reward code:
-
-${code}`);
-
-    // RESET REFERRALS AFTER CLAIM
-    user.ref = 0;
-    user.invited = [];
+    return;
 
   }
 
-});
+  bot.sendMessage(chatId,
+`🎉 Congratulations!
+
+You completed 5 referrals.
+
+📩 Now send a message to the admin bot to receive your code:
+
+👉 https://t.me/Mark41_helperBot
+
+Send this message there:
+
+"Please send my reward code. My Telegram ID: ${chatId}"
+
+Admin will verify and send your code.`);
+
+  // RESET REFERRALS
+  user.ref = 0;
+  user.invited = [];
+
+}
 
 
 // ================= ADMIN PANEL =================
@@ -383,4 +376,5 @@ bot.onText(/\/listcodes/, (msg)=>{
 ${codes.join("\n")}`);
 
 });
+
 
