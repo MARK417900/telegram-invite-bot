@@ -24,7 +24,7 @@ const ADMIN_ID = 8521844327;
 
 // REQUIRED CHANNELS
 const channels = [
-  "@earnwithmark41","@official_adda_zone","@Marks_community","@MSofficialTeam"
+  "@earnwithmark41","@Marks_community","@MSofficialTeam"
 ];
 
 // UNIQUE CODES
@@ -71,30 +71,36 @@ bot.onText(/\/start(?: (.+))?/, (msg, match) => {
   const referrerId = match[1];
 
   if (!users[chatId]) {
-
     users[chatId] = {
       ref: 0,
       invited: [],
       referredBy: referrerId || null
     };
-
   }
 
-  let joinText = "🚨 Please join our channel first:\n\n";
+  let joinText = "🚨 Please join all channels first:\n\n";
+
+  let buttons = [];
 
   channels.forEach((ch) => {
     joinText += `👉 ${ch}\n`;
+
+    buttons.push([
+      {
+        text: `Join ${ch}`,
+        url: `https://t.me/${ch.replace("@","")}`
+      }
+    ]);
   });
 
+  buttons.push([
+    { text: "✅ I Joined", callback_data: "check_join" }
+  ]);
+
   bot.sendMessage(chatId, joinText, {
-
     reply_markup: {
-      inline_keyboard: [
-        [{ text: "Join Channel", url: "https://t.me/earnwithmark41" }],
-        [{ text: "✅ I Joined", callback_data: "check_join" }]
-      ]
+      inline_keyboard: buttons
     }
-
   });
 
 });
@@ -377,3 +383,4 @@ bot.onText(/\/listcodes/, (msg)=>{
 ${codes.join("\n")}`);
 
 });
+
