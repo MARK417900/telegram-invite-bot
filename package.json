@@ -5,7 +5,7 @@
   "description": "Telegram referral bot",
   "main": "bot.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node bot.js"
   },
   "dependencies": {
     "express": "^4.18.2",
