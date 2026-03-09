@@ -258,15 +258,11 @@ bot.onText(/\/admin/, (msg) => {
 
   bot.sendMessage(chatId,
 `👑 Admin Panel
-
 Commands:
 
 /broadcast MESSAGE
 /stats
-/referrals USER_ID
-/addcode CODE
-/removecode CODE
-/listcodes`);
+/referrals USER_ID`);
 
 });
 
@@ -327,54 +323,8 @@ Referrals: ${users[userId].ref}`);
 });
 
 
-// ADD CODE
-bot.onText(/\/addcode (.+)/,(msg,match)=>{
-
-  const chatId = msg.chat.id;
-  if(chatId !== ADMIN_ID) return;
-
-  const code = match[1];
-
-  codes.push(code);
-
-  bot.sendMessage(chatId,"✅ Code added.");
-
-});
 
 
-// REMOVE CODE
-bot.onText(/\/removecode (.+)/,(msg,match)=>{
 
-  const chatId = msg.chat.id;
-  if(chatId !== ADMIN_ID) return;
-
-  const code = match[1];
-
-  const index = codes.indexOf(code);
-
-  if(index === -1){
-    bot.sendMessage(chatId,"Code not found");
-    return;
-  }
-
-  codes.splice(index,1);
-
-  bot.sendMessage(chatId,"❌ Code removed");
-
-});
-
-
-// LIST CODES
-bot.onText(/\/listcodes/, (msg)=>{
-
-  const chatId = msg.chat.id;
-  if(chatId !== ADMIN_ID) return;
-
-  bot.sendMessage(chatId,
-`🎁 Codes:
-
-${codes.join("\n")}`);
-
-});
 
 
