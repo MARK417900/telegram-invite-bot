@@ -70,17 +70,21 @@ bot.onText(/\/start(?: (.+))?/, (msg, match) => {
   const chatId = msg.chat.id;
   const referrerId = match[1];
 
-  if (!users[chatId]) {
+ if (!users[chatId]) {
 
-    users[chatId] = {
-      ref: 0,
-      invited: [],
-      referredBy: referrerId && referrerId != chatId ? referrerId : null
-    };
-    saveUsers();
+  users[chatId] = {
+    ref: 0,
+    invited: [],
+    referredBy: null
+  };
 
-  }
+}
 
+// Save referral only first time
+if (referrerId && referrerId != chatId && !users[chatId].referredBy) {
+  users[chatId].referredBy = referrerId;
+}
+saveUsers();
   let joinText = "🚨 Please join all channels first to use the bot.";
 
   let buttons = [];
@@ -125,44 +129,48 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
+    // FIX: ensure user exists
+    if (!users[chatId]) {
+      users[chatId] = {
+        ref: 0,
+        invited: [],
+        referredBy: null
+      };
+      saveUsers();
+    }
+
     const user = users[chatId];
 
-    // COUNT REFERRAL ONLY AFTER SUCCESSFUL CHANNEL JOIN
-if (user.referredBy && user.referredBy != chatId) {
+    if (user.referredBy && user.referredBy != chatId) {
 
-  // Ensure referrer exists
-  if (!users[user.referredBy]) {
-    users[user.referredBy] = {
-      ref: 0,
-      invited: [],
-      referredBy: null
-    };
-  }
+      if (!users[user.referredBy]) {
+        users[user.referredBy] = {
+          ref: 0,
+          invited: [],
+          referredBy: null
+        };
+      }
 
-  const referrer = users[user.referredBy];
+      const referrer = users[user.referredBy];
 
-  // Prevent duplicate counting
-  if (!referrer.invited.includes(chatId)) {
+      if (!referrer.invited.includes(chatId)) {
 
-    referrer.invited.push(chatId);
-    referrer.ref += 1;
-    saveUsers();
+        referrer.invited.push(chatId);
+        referrer.ref += 1;
+        saveUsers();
 
-    // Notify referrer
-    bot.sendMessage(user.referredBy,
+        bot.sendMessage(user.referredBy,
 `🎉 New referral joined all channels!
 
 👤 User ID: ${chatId}
 
 📊 Total referrals: ${referrer.ref}`);
 
-  }
-
-}
+      }
+    }
 
     bot.sendMessage(chatId,
 "✅ Access Granted!", {
-
       reply_markup: {
         keyboard: [
           ["👥 Refer", "💰 Balance"],
@@ -170,13 +178,11 @@ if (user.referredBy && user.referredBy != chatId) {
         ],
         resize_keyboard: true
       }
-
     });
 
   }
 
 });
-
 
 // MESSAGE HANDLER
 bot.on("message", async (msg) => {
@@ -342,6 +348,7 @@ bot.onText(/\/referrals (.+)/,(msg,match)=>{
 Referrals: ${users[userId].ref}`);
 
 });
+
 
 
 
