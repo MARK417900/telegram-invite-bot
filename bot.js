@@ -12,7 +12,9 @@ app.listen(PORT, () => {
   console.log("Server running on port " + PORT);
 });
 
+const fs = require("fs");
 const TelegramBot = require("node-telegram-bot-api");
+
 
 const token = "8015347446:AAG49JNaGrSNKK4lFkMWXkfRQd-pyLvSMMQ";
 const bot = new TelegramBot(token, { polling: true });
@@ -30,9 +32,14 @@ const channels = [
 ];
 
 // USER DATABASE
-const users = {};
+let users = {};
 
-
+if (fs.existsSync("users.json")) {
+  users = JSON.parse(fs.readFileSync("users.json"));
+}
+function saveUsers() {
+  fs.writeFileSync("users.json", JSON.stringify(users, null, 2));
+}
 // CHECK CHANNEL MEMBERSHIP
 async function checkMembership(userId) {
 
@@ -68,8 +75,9 @@ bot.onText(/\/start(?: (.+))?/, (msg, match) => {
     users[chatId] = {
       ref: 0,
       invited: [],
-      referredBy: referrerId || null
+      referredBy: referrerId && referrerId != chatId ? referrerId : null
     };
+    saveUsers();
 
   }
 
@@ -117,24 +125,38 @@ bot.on("callback_query", async (query) => {
 
     const user = users[chatId];
 
-    // COUNT REFERRAL AFTER JOIN
-    if (user.referredBy && user.referredBy != chatId) {
+    // COUNT REFERRAL ONLY AFTER SUCCESSFUL CHANNEL JOIN
+if (user.referredBy && user.referredBy != chatId) {
 
-      const referrer = users[user.referredBy];
+  // Ensure referrer exists
+  if (!users[user.referredBy]) {
+    users[user.referredBy] = {
+      ref: 0,
+      invited: [],
+      referredBy: null
+    };
+  }
 
-      if (referrer && !referrer.invited.includes(chatId)) {
+  const referrer = users[user.referredBy];
 
-        referrer.invited.push(chatId);
-        referrer.ref += 1;
+  // Prevent duplicate counting
+  if (!referrer.invited.includes(chatId)) {
 
-        bot.sendMessage(user.referredBy,
-`🎉 New referral joined!
+    referrer.invited.push(chatId);
+    referrer.ref += 1;
+    saveUsers();
 
-Total referrals: ${referrer.ref}`);
+    // Notify referrer
+    bot.sendMessage(user.referredBy,
+`🎉 New referral joined all channels!
 
-      }
+👤 User ID: ${chatId}
 
-    }
+📊 Total referrals: ${referrer.ref}`);
+
+  }
+
+}
 
     bot.sendMessage(chatId,
 "✅ Access Granted!", {
@@ -235,6 +257,7 @@ Admin will verify and send your code.`);
     // RESET REFERRALS
     user.ref = 0;
     user.invited = [];
+    saveUsers();
 
   }
 
@@ -315,5 +338,6 @@ bot.onText(/\/referrals (.+)/,(msg,match)=>{
 Referrals: ${users[userId].ref}`);
 
 });
+
 
 
