@@ -112,6 +112,8 @@ bot.onText(/\/start(?: (.+))?/, (msg, match) => {
 // JOIN BUTTON HANDLER
 bot.on("callback_query", async (query) => {
 
+  bot.answerCallbackQuery(query.id);
+
   const chatId = query.message.chat.id;
 
   if (query.data === "check_join") {
@@ -180,7 +182,8 @@ if (user.referredBy && user.referredBy != chatId) {
 bot.on("message", async (msg) => {
 
   const chatId = msg.chat.id;
-  const text = msg.text || "";
+const text = msg.text || "";
+if (text.startsWith("/")) return;
 
   if (!users[chatId]) {
 
@@ -189,6 +192,7 @@ bot.on("message", async (msg) => {
       invited: [],
       referredBy: null
     };
+        saveUsers();
 
   }
 
@@ -338,6 +342,7 @@ bot.onText(/\/referrals (.+)/,(msg,match)=>{
 Referrals: ${users[userId].ref}`);
 
 });
+
 
 
 
