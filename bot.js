@@ -241,7 +241,8 @@ const progress = user.ref % 5; // shows 1/5, 2/5
 
 }
   // GET CODE
-  if (text === "🎁 Get Code") {
+ // GET CODE
+if (text === "🎁 Get Code") {
 
     const joined = await checkMembership(chatId);
 
@@ -250,17 +251,19 @@ const progress = user.ref % 5; // shows 1/5, 2/5
       return;
     }
 
-   const progress = user.ref % 5; // progress toward next reward
+    const user = users[chatId]; // ✅ define user here
 
-if (progress < 5) {
-    bot.sendMessage(chatId,
+    const progress = user.ref % 5; // progress toward next reward
+
+    if (progress < 5) {
+        bot.sendMessage(chatId,
 `❌ You need 5 referrals.
 
 Current progress: ${progress}/5`);
-    return;
-  }
-}
+        return;
+    }
 
+    // ✅ Success message inside the block
     bot.sendMessage(chatId,
 `🎉 Congratulations!
 
@@ -276,11 +279,7 @@ Send this message there:
 
 Admin will verify and send your code.`);
 
-  }
-
-});
-
-
+} 
 // ================= ADMIN PANEL =================
 
 
@@ -384,6 +383,7 @@ Current Progress: ${progress}/5
 Invited Users: ${user.invited.join(", ") || "None"}
 Referred By: ${user.referredBy || "None"}`);
 });
+
 
 
 
