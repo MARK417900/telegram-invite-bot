@@ -193,44 +193,37 @@ bot.on("callback_query", async (query) => {
 bot.on("message", async (msg) => {
 
   const chatId = msg.chat.id;
-const text = msg.text || "";
-if (text.startsWith("/")) return;
+  const text = msg.text || "";
+  if (text.startsWith("/")) return;
 
   if (!users[chatId]) {
-
     users[chatId] = {
-  ref: 0,
-  redeems: 0,
-  invited: [],
-  referredBy: null
-};
-        saveUsers();
-
+      ref: 0,
+      redeems: 0,
+      invited: [],
+      referredBy: null
+    };
+    saveUsers();
   }
+
+  const user = users[chatId]; // ✅ define user
 
   // REFER BUTTON
   if (text === "👥 Refer") {
-
     const refLink = `https://t.me/${botUsername}?start=${chatId}`;
-
     bot.sendMessage(chatId,
 `👥 Your referral link:
 
 ${refLink}
 
 Invite 5 friends to unlock your reward code!`);
-
   }
 
   // BALANCE BUTTON
- if (text === "💰 Balance") {
-
-  const user = users[chatId];
-
-const progress = user.ref % 5; // shows 1/5, 2/5
-  const safeProgress = progress < 0 ? 0 : progress;
-
-  bot.sendMessage(chatId,
+  if (text === "💰 Balance") {
+    const progress = user.ref % 5;
+    const safeProgress = progress < 0 ? 0 : progress;
+    bot.sendMessage(chatId,
 `📊 Your Stats
 
 👥 Total Referrals: ${user.ref}
@@ -238,32 +231,27 @@ const progress = user.ref % 5; // shows 1/5, 2/5
 🎁 Codes Redeemed: ${user.redeems}
 
 🏆 Current Progress: ${safeProgress}/5`);
+  }
 
-}
   // GET CODE
- // GET CODE
-if (text === "🎁 Get Code") {
+  if (text === "🎁 Get Code") {
 
     const joined = await checkMembership(chatId);
-
     if (!joined) {
       bot.sendMessage(chatId,"❌ Please join all channels first.");
       return;
     }
 
-    const user = users[chatId]; // ✅ define user here
-
-    const progress = user.ref % 5; // progress toward next reward
-
+    const progress = user.ref % 5;
     if (progress < 5) {
-        bot.sendMessage(chatId,
+      bot.sendMessage(chatId,
 `❌ You need 5 referrals.
 
 Current progress: ${progress}/5`);
-        return;
+      return;
     }
 
-    // ✅ Success message inside the block
+    // ✅ Success message
     bot.sendMessage(chatId,
 `🎉 Congratulations!
 
@@ -278,8 +266,9 @@ Send this message there:
 "Please send my reward code. My Telegram ID: ${chatId}"
 
 Admin will verify and send your code.`);
+  }
 
-} 
+}); // ✅ CLOSES message handler
 // ================= ADMIN PANEL =================
 
 
@@ -383,6 +372,7 @@ Current Progress: ${progress}/5
 Invited Users: ${user.invited.join(", ") || "None"}
 Referred By: ${user.referredBy || "None"}`);
 });
+
 
 
 
