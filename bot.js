@@ -22,7 +22,7 @@ const bot = new TelegramBot(token, { polling: true });
 const botUsername = "HotyaReferBot";
 
 // ADMIN ID
-const ADMIN_ID = 8521844327;
+const ADMIN_IDS = [8521844327, 8809115899];
 
 // REQUIRED CHANNELS
 const channels = [
@@ -38,7 +38,10 @@ if (fs.existsSync("users.json")) {
   users = JSON.parse(fs.readFileSync("users.json"));
 }
 function saveUsers() {
-  fs.writeFileSync("users.json", JSON.stringify(users, null, 2));
+  fs.writeFile("users.json", JSON.stringify(users, null, 2), err => {
+    if(err) console.log("Error saving users:", err);
+    else console.log("✅ users.json updated successfully");
+  });
 }
 // CHECK CHANNEL MEMBERSHIP
 async function checkMembership(userId) {
@@ -72,11 +75,12 @@ bot.onText(/\/start(?: (.+))?/, (msg, match) => {
 
  if (!users[chatId]) {
 
-  users[chatId] = {
-    ref: 0,
-    invited: [],
-    referredBy: null
-  };
+ users[chatId] = {
+  ref: 0,
+  redeems: 0,
+  invited: [],
+  referredBy: null
+};
 
 }
 
@@ -130,12 +134,13 @@ bot.on("callback_query", async (query) => {
     }
 
     // FIX: ensure user exists
-    if (!users[chatId]) {
-      users[chatId] = {
-        ref: 0,
-        invited: [],
-        referredBy: null
-      };
+ if (!users[chatId]) {
+  users[chatId] = {
+    ref: 0,
+    invited: [],
+    redeems: 0,
+    referredBy: null
+  };
       saveUsers();
     }
 
@@ -194,10 +199,11 @@ if (text.startsWith("/")) return;
   if (!users[chatId]) {
 
     users[chatId] = {
-      ref: 0,
-      invited: [],
-      referredBy: null
-    };
+  ref: 0,
+  redeems: 0,
+  invited: [],
+  referredBy: null
+};
         saveUsers();
 
   }
@@ -217,15 +223,23 @@ Invite 5 friends to unlock your reward code!`);
   }
 
   // BALANCE BUTTON
-  if (text === "💰 Balance") {
+ if (text === "💰 Balance") {
 
-    bot.sendMessage(chatId,
+  const user = users[chatId];
+
+const progress = user.ref % 5; // shows 1/5, 2/5
+  const safeProgress = progress < 0 ? 0 : progress;
+
+  bot.sendMessage(chatId,
 `📊 Your Stats
 
-Referrals: ${users[chatId].ref}/5`);
+👥 Total Referrals: ${user.ref}
 
-  }
+🎁 Codes Redeemed: ${user.redeems}
 
+🏆 Current Progress: ${safeProgress}/5`);
+
+}
   // GET CODE
   if (text === "🎁 Get Code") {
 
@@ -236,18 +250,16 @@ Referrals: ${users[chatId].ref}/5`);
       return;
     }
 
-    const user = users[chatId];
+   const progress = user.ref % 5; // progress toward next reward
 
-    if (user.ref < 5) {
-
-      bot.sendMessage(chatId,
+if (progress < 5) {
+    bot.sendMessage(chatId,
 `❌ You need 5 referrals.
 
-Current referrals: ${user.ref}/5`);
-
-      return;
-
-    }
+Current progress: ${progress}/5`);
+    return;
+  }
+}
 
     bot.sendMessage(chatId,
 `🎉 Congratulations!
@@ -264,11 +276,6 @@ Send this message there:
 
 Admin will verify and send your code.`);
 
-    // RESET REFERRALS
-    user.ref = 0;
-    user.invited = [];
-    saveUsers();
-
   }
 
 });
@@ -282,7 +289,7 @@ bot.onText(/\/admin/, (msg) => {
 
   const chatId = msg.chat.id;
 
-  if(chatId !== ADMIN_ID) return;
+  if (!ADMIN_IDS.includes(chatId)) return;
 
   bot.sendMessage(chatId,
 `👑 Admin Panel
@@ -291,7 +298,8 @@ Commands:
 
 /broadcast MESSAGE
 /stats
-/referrals USER_ID`);
+/user USER_ID
+/redeem USER_ID`);
 
 });
 
@@ -300,7 +308,7 @@ Commands:
 bot.onText(/\/broadcast (.+)/, (msg, match) => {
 
   const chatId = msg.chat.id;
-  if(chatId !== ADMIN_ID) return;
+  if (!ADMIN_IDS.includes(chatId)) return;
 
   const message = match[1];
 
@@ -312,12 +320,33 @@ bot.onText(/\/broadcast (.+)/, (msg, match) => {
 
 });
 
+// redeem count
+bot.onText(/\/redeem (.+)/,(msg,match)=>{
+
+  const chatId = msg.chat.id;
+
+  if (!ADMIN_IDS.includes(chatId)) return;
+
+  const userId = match[1];
+
+  if(!users[userId]){
+    bot.sendMessage(chatId,"User not found");
+    return;
+  }
+
+  users[userId].redeems += 1;
+
+  saveUsers();
+
+  bot.sendMessage(chatId,"✅ Redeem approved.");
+
+});
 
 // BOT STATS
 bot.onText(/\/stats/, (msg)=>{
 
   const chatId = msg.chat.id;
-  if(chatId !== ADMIN_ID) return;
+  if (!ADMIN_IDS.includes(chatId)) return;
 
   const totalUsers = Object.keys(users).length;
 
@@ -329,25 +358,33 @@ Users: ${totalUsers}`);
 });
 
 
-// CHECK USER REFERRALS
-bot.onText(/\/referrals (.+)/,(msg,match)=>{
+// ================= ADMIN FULL USER INFO =================
+bot.onText(/\/user (.+)/, (msg, match) => {
+    const chatId = msg.chat.id;
 
-  const chatId = msg.chat.id;
-  if(chatId !== ADMIN_ID) return;
+    // Only admins can use this command
+    if (!ADMIN_IDS.includes(chatId)) return;
 
-  const userId = match[1];
+    const userId = match[1];
 
-  if(!users[userId]){
-    bot.sendMessage(chatId,"User not found");
-    return;
-  }
+    if (!users[userId]) {
+        bot.sendMessage(chatId, "❌ User not found");
+        return;
+    }
 
-  bot.sendMessage(chatId,
+    const user = users[userId];
+    const progress = user.ref % 5; // Progress toward next reward
+
+    bot.sendMessage(chatId,
 `👤 User ${userId}
 
-Referrals: ${users[userId].ref}`);
-
+Total Referrals: ${user.ref}
+Redeems: ${user.redeems}
+Current Progress: ${progress}/5
+Invited Users: ${user.invited.join(", ") || "None"}
+Referred By: ${user.referredBy || "None"}`);
 });
+
 
 
 
