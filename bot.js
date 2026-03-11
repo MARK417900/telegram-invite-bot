@@ -356,7 +356,7 @@ bot.on("message", async (msg) => {
 
     ADMIN_IDS.forEach(admin => {
       bot.sendMessage(admin,
-        `📩 New Redeem Request\n🆔 User ID: ${chatId}\n🎁 Codes Redeemed: ${user.redeems}\n👥 Total Referrals: ${user.ref}\n📌 Referral Progress: ${user.refProgress}/5\n📩 Invited Users: ${user.invited.length > 0 ? user.invited.join(", ") : "None"}\n`,
+        `📩 New Redeem Request\n\n🆔 User ID: ${chatId}\n🎁 Codes Redeemed: ${user.redeems}\n\n👥 Total Referrals: ${user.ref}\n📌 Referral Progress: ${user.refProgress}/5\n📩 Invited Users: ${user.invited.length > 0 ? user.invited.join(", ") : "None"}\n`,
         {
           reply_markup: {
             inline_keyboard: [
@@ -441,13 +441,6 @@ const chatId = msg.chat.id;
 const text = msg.text || "";
 
 if(!users[chatId]) return;
-
-/* BOT OFF CHECK */
-
-if(!botEnabled && !ADMIN_IDS.includes(chatId)){
-bot.sendMessage(chatId,botOffMessage);
-return;
-}
 
 /* ================= STATUS ================= */
 
