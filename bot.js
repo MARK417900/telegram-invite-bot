@@ -15,7 +15,7 @@ app.listen(PORT, () => {
 });
 
 /* TELEGRAM BOT */
-const token = "8102453698:AAFNCf3eHenMLLk3NHULqTCtSFD_R_Zph5M";
+const token = "8102453698:AAGZMJbProlxixjP-9Tk-kX2sNAsXQnXncc";
 const bot = new TelegramBot(token, { polling: true });
 const botUsername = "Refer_SellerBot";
 
