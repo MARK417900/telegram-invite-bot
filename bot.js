@@ -382,6 +382,7 @@ users[chatId].adminMsgId = m.message_id;
 saveUsers();
 
 });
+}
 
   // Handle Redeem request
   if (text === "🎁 Redeem") {
