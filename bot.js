@@ -388,7 +388,7 @@ bot.on("message", async (msg) => {
 
   // HELP
   if (text === "Help ❓") {
-    bot.sendMessage(chatId, `Need help?\n\nContact support bot:\n👉 https://t.me/Mark41_helperBot`);
+    bot.sendMessage(chatId, `Need help ? ? ?\n\nContact support bot:\n👉 @Mark41_helperBot`);
   }
 
   // BUY CODE
