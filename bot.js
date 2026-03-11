@@ -119,7 +119,7 @@ bot.on("callback_query", async (query) => {
     const userId = data.split("_")[1];
     users[userId].waitingAdminMsg = true;
     saveUsers();
-    bot.sendMessage(adminId, "Send message or media to the user.");
+    bot.sendMessage(adminId, "Send message to the user.");
   }
 
   // ------------------------------
@@ -158,8 +158,8 @@ bot.on("callback_query", async (query) => {
     users[userId].waitingAdminMsg = true;
     saveUsers();
 
-    bot.sendMessage(userId, "✅ Your purchase has been approved! Admin will send your reward soon.");
-    bot.sendMessage(adminId, `✅ Purchase approved for User ID: ${userId}\nSend photo/video + caption as reward.`);
+    bot.sendMessage(userId, "✅ Your purchase has been approved! Admin will send your reward soon..🥳");
+    bot.sendMessage(adminId, `Purchase approved ✅\nSend reward to User ID: ${userId}`);
     bot.editMessageReplyMarkup({ inline_keyboard: [] }, {
       chat_id: query.message.chat.id,
       message_id: query.message.message_id
@@ -214,7 +214,7 @@ bot.on("callback_query", async (query) => {
   // ------------------------------
   // Buy code flow
   // ------------------------------
-  if (data === "buy_hotya" || data === "buy_gosh") {
+  if (data === "Hotya CODE" || data === "GOSH CODE") {
     createUser(chatId);
     users[chatId].buyType = data;
     saveUsers();
@@ -242,7 +242,7 @@ bot.on("callback_query", async (query) => {
     saveUsers();
 
     bot.sendPhoto(chatId, "paymentQR.jpg", {
-      caption: `🧾 Order ID: ${orderId}\n\nPay ₹20 for each referral code.\n You are buying ${refs} referrals).\n\nAfter payment upload screenshot.`,
+      caption: `🧾 Order ID: ${orderId}\n\nPay ₹20 for each referral code.\nYou are buying ${refs} referrals.🔥\n\nAfter payment upload screenshot.`,
       reply_markup: {
         inline_keyboard: [
           [{ text: "📤 Upload Screenshot", callback_data: "upload_ss" }],
@@ -320,7 +320,7 @@ bot.on("message", async (msg) => {
 
     ADMIN_IDS.forEach(admin => {
       bot.sendPhoto(admin, fileId, {
-        caption: `🛒 New Purchase Request\n👤 User ID: ${chatId}\n 💳 Buy Type: ${user.buyType || "None"}\nReferrals Buying: ${user.buyRefs}`,
+        caption: `🛒 New Purchase Request\n\n ID: ${chatId}\n Buy Type: ${user.buyType || "None"}\nReferrals Buying: ${user.buyRefs}`,
         reply_markup: {
           inline_keyboard: [
             [
@@ -360,7 +360,7 @@ bot.on("message", async (msg) => {
 
     ADMIN_IDS.forEach(admin => {
       bot.sendMessage(admin,
-        `📩 New Redeem Request\n👤 User Profile:\n🆔 User ID: ${chatId}\n🛒 Total Purchases: ${user.purchases}\n🎁 Codes Redeemed: ${user.redeems}\n👥 Total Referrals: ${user.ref}\n📌 Referral Progress: ${user.refProgress}/5\n📩 Invited Users: ${user.invited.length > 0 ? user.invited.join(", ") : "None"}\n💳 Last Buy Type: ${user.buyType || "None"}\n🖼 Screenshot Uploaded: ${user.screenshot ? "Yes" : "No"}`,
+        `📩 New Redeem Request\n🆔 User ID: ${chatId}\n🎁 Codes Redeemed: ${user.redeems}\n👥 Total Referrals: ${user.ref}\n📌 Referral Progress: ${user.refProgress}/5\n📩 Invited Users: ${user.invited.length > 0 ? user.invited.join(", ") : "None"}\n`,
         {
           reply_markup: {
             inline_keyboard: [
@@ -378,7 +378,7 @@ bot.on("message", async (msg) => {
   // PROFILE
   if (text === "👤 Profile") {
     bot.sendMessage(chatId,
-      `👤 Profile\n\n🆔 User ID: ${chatId}\n🛒 Total Purchases: ${user.purchases}\n🎁 Codes Redeemed: ${user.redeems}\n👥 Total Referrals: ${user.ref}\n📌 Required Referrals: ${user.refProgress}/5`);
+      `👤 User Profile\n\n🆔 User ID: ${chatId}\n🛒 Total Purchases: ${user.purchases}\n🎁 Codes Redeemed: ${user.redeems}\n👥 Total Referrals: ${user.ref}\n📌 Required Referrals: ${user.refProgress}/5`);
   }
 
   // REFER
