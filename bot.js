@@ -429,8 +429,7 @@ bot.sendMessage(chatId,
 reply_markup:{
 keyboard:[
 ["📊 Status","📢 Broadcast"],
-["👤 User Info","✉ Msg User"],
-["🟢 Bot ON/OFF"]
+["👤 User Info","✉ Msg User"]
 ],
 resize_keyboard:true
 }
@@ -475,9 +474,7 @@ bot.sendMessage(chatId,
 
 🛒 Total Purchases: ${totalPurchases}
 
-🎁 Total Redeems: ${totalRedeems}
-
-🤖 Bot Status: ${botEnabled ? "ON 🟢":"OFF 🔴"}`);
+🎁 Total Redeems: ${totalRedeems}`);
 
 }
 
@@ -517,7 +514,7 @@ if(!ADMIN_IDS.includes(chatId)) return;
 
 adminStates.userInfo = true;
 
-bot.sendMessage(chatId,"Send User ID to check profile.");
+bot.sendMessage(chatId,"Send User ID to check full profile.");
 
 return;
 
@@ -536,15 +533,20 @@ bot.sendMessage(chatId,"❌ User not found.");
 const u = users[id];
 
 bot.sendMessage(chatId,
-`👤 USER PROFILE
+`🆔 User ID: ${id}
 
-🆔 ID: ${id}
+👥 Total Referrals: ${u.ref}
+👤 Referred By: ${u.referredBy || "None"}
+📊 Referral Progress: ${u.refProgress}/5
 
-🛒 Purchases: ${u.purchases}
-🎁 Redeems: ${u.redeems}
-👥 Referrals: ${u.ref}
+🛒 Total Purchases: ${u.purchases}
+🎁 Codes Redeemed: ${u.redeems}
 
-Invited: ${u.invited.join(", ") || "None"}`);
+📦 Purchase Request: ${u.buyRequest ? "Yes":"No"}
+🎁 Redeem Request: ${u.redeemRequest ? "Yes":"No"}
+
+👨‍👩‍👧 Invited Users:
+${u.invited.length ? u.invited.join(", ") : "None"}`);
 
 }
 
@@ -553,7 +555,6 @@ adminStates.userInfo=false;
 return;
 
 }
-
 /* ================= MESSAGE USER ================= */
 
 if(text === "✉ Msg User"){
@@ -599,45 +600,6 @@ return;
 
 }
 
-/* ================= BOT ON OFF ================= */
 
-if(text === "🟢 Bot ON/OFF"){
-
-if(!ADMIN_IDS.includes(chatId)) return;
-
-botEnabled = !botEnabled;
-
-if(!botEnabled){
-
-adminStates.botOffSetup = true;
-
-bot.sendMessage(chatId,"Send message users will see when bot is OFF.");
-
-}else{
-
-bot.sendMessage(chatId,"🟢 Bot is now ENABLED.");
-
-}
-
-return;
-
-}
-
-if(adminStates.botOffSetup && ADMIN_IDS.includes(chatId)){
-
-botOffMessage = text;
-
-bot.sendMessage(chatId,
-`🔴 Bot disabled.
-
-Users will see:
-
-"${botOffMessage}"`);
-
-adminStates.botOffSetup = false;
-
-return;
-
-}
 
 });
