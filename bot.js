@@ -168,7 +168,7 @@ bot.sendMessage(adminId,`Purchase approved\nSend reward to user ${userId}`);
 bot.deleteMessage(query.message.chat.id,query.message.message_id).catch(()=>{});
 
 }
-
+  }
 /* REJECT PURCHASE */
 if(data.startsWith("buyreject_")){
 
@@ -187,7 +187,7 @@ bot.sendMessage(userId,"❌ Your purchase request was rejected by admin.");
 bot.deleteMessage(query.message.chat.id, query.message.message_id).catch(()=>{});
 
 }
-
+}
 /* JOIN CHECK */
 if(data==="check_join"){
 
