@@ -25,8 +25,7 @@ const ADMIN_IDS = [8521844327, 8809115899];
 /* CHANNELS */
 const channels = [
   "@earnwithmark41",
-  "@Marks_community",
-  "@MSofficialTeam"
+  "@Marks_community"
 ];
 
 /* DATABASE */
@@ -404,47 +403,241 @@ bot.on("message", async (msg) => {
   }
 });
 
+/* ================= ADMIN SYSTEM ================= */
+
+let botEnabled = true;
+let botOffMessage = "⚠️Due to Bot Maintenance Bot is currently disabled by admin. Please try again later.";
+
+let adminStates = {
+broadcast:false,
+userInfo:false,
+msgUser:false,
+msgTarget:null,
+botOffSetup:false
+};
+
 /* ADMIN PANEL */
-bot.onText(/\/admin/, (msg) => {
-  const chatId = msg.chat.id;
-  if (!ADMIN_IDS.includes(chatId)) return;
-  bot.sendMessage(chatId, `👑 Admin Panel\n\n/broadcast MESSAGE\n/stats\n/user USER_ID\n/redeem USER_ID`);
+
+bot.onText(/\/admin/, (msg)=>{
+
+const chatId = msg.chat.id;
+
+if(!ADMIN_IDS.includes(chatId)) return;
+
+bot.sendMessage(chatId,
+"👑 ADMIN PANEL",{
+reply_markup:{
+keyboard:[
+["📊 Status","📢 Broadcast"],
+["👤 User Info","✉ Msg User"],
+["🟢 Bot ON/OFF"]
+],
+resize_keyboard:true
+}
 });
 
-/* BROADCAST */
-bot.onText(/\/broadcast (.+)/, (msg, match) => {
-  const chatId = msg.chat.id;
-  if (!ADMIN_IDS.includes(chatId)) return;
-  const message = match[1];
-  Object.keys(users).forEach(id => bot.sendMessage(id, message).catch(() => {}));
-  bot.sendMessage(chatId, "✅ Broadcast sent");
 });
 
-/* REDEEM ADMIN */
-bot.onText(/\/redeem (.+)/, (msg, match) => {
-  const chatId = msg.chat.id;
-  if (!ADMIN_IDS.includes(chatId)) return;
-  const userId = match[1];
-  if (!users[userId]) return bot.sendMessage(chatId, "❌ User not found");
-  users[userId].redeems += 1;
-  saveUsers();
-  bot.sendMessage(chatId, "✅ Redeem approved");
+/* MESSAGE HANDLER FOR ADMIN PANEL */
+
+bot.on("message",(msg)=>{
+
+const chatId = msg.chat.id;
+const text = msg.text || "";
+
+if(!users[chatId]) return;
+
+/* BOT OFF CHECK */
+
+if(!botEnabled && !ADMIN_IDS.includes(chatId)){
+bot.sendMessage(chatId,botOffMessage);
+return;
+}
+
+/* ================= STATUS ================= */
+
+if(text === "📊 Status"){
+
+if(!ADMIN_IDS.includes(chatId)) return;
+
+let totalUsers = Object.keys(users).length;
+
+let totalPurchases = Object.values(users)
+.reduce((sum,u)=>sum+u.purchases,0);
+
+let totalRedeems = Object.values(users)
+.reduce((sum,u)=>sum+u.redeems,0);
+
+bot.sendMessage(chatId,
+`📊 BOT STATUS
+
+👤 Total Users: ${totalUsers}
+
+🛒 Total Purchases: ${totalPurchases}
+
+🎁 Total Redeems: ${totalRedeems}
+
+🤖 Bot Status: ${botEnabled ? "ON 🟢":"OFF 🔴"}`);
+
+}
+
+/* ================= BROADCAST ================= */
+
+if(text === "📢 Broadcast"){
+
+if(!ADMIN_IDS.includes(chatId)) return;
+
+adminStates.broadcast = true;
+
+bot.sendMessage(chatId,"Send message to broadcast to all users.");
+
+return;
+
+}
+
+if(adminStates.broadcast && ADMIN_IDS.includes(chatId)){
+
+Object.keys(users).forEach(id=>{
+bot.sendMessage(id,text).catch(()=>{});
 });
 
-/* STATS */
-bot.onText(/\/stats/, (msg) => {
-  const chatId = msg.chat.id;
-  if (!ADMIN_IDS.includes(chatId)) return;
-  bot.sendMessage(chatId, `📊 Bot Stats\n\nUsers: ${Object.keys(users).length}`);
-});
+bot.sendMessage(chatId,"✅ Broadcast sent.");
 
-/* USER INFO */
-bot.onText(/\/user (.+)/, (msg, match) => {
-  const chatId = msg.chat.id;
-  if (!ADMIN_IDS.includes(chatId)) return;
-  const id = match[1];
-  if (!users[id]) return bot.sendMessage(chatId, "❌ User not found");
-  const u = users[id];
-  bot.sendMessage(chatId,
-    `👤 User ${id}\n\nPurchases: ${u.purchases}\nReferrals: ${u.ref}\nRedeems: ${u.redeems}\nInvited: ${u.invited.join(", ") || "None"}`);
+adminStates.broadcast=false;
+
+return;
+
+}
+
+/* ================= USER INFO ================= */
+
+if(text === "👤 User Info"){
+
+if(!ADMIN_IDS.includes(chatId)) return;
+
+adminStates.userInfo = true;
+
+bot.sendMessage(chatId,"Send User ID to check profile.");
+
+return;
+
+}
+
+if(adminStates.userInfo && ADMIN_IDS.includes(chatId)){
+
+const id = text;
+
+if(!users[id]){
+
+bot.sendMessage(chatId,"❌ User not found.");
+
+}else{
+
+const u = users[id];
+
+bot.sendMessage(chatId,
+`👤 USER PROFILE
+
+🆔 ID: ${id}
+
+🛒 Purchases: ${u.purchases}
+🎁 Redeems: ${u.redeems}
+👥 Referrals: ${u.ref}
+
+Invited: ${u.invited.join(", ") || "None"}`);
+
+}
+
+adminStates.userInfo=false;
+
+return;
+
+}
+
+/* ================= MESSAGE USER ================= */
+
+if(text === "✉ Msg User"){
+
+if(!ADMIN_IDS.includes(chatId)) return;
+
+adminStates.msgUser = true;
+
+bot.sendMessage(chatId,"Send User ID to message.");
+
+return;
+
+}
+
+if(adminStates.msgUser && ADMIN_IDS.includes(chatId)){
+
+if(!users[text]){
+
+bot.sendMessage(chatId,"❌ User not found.");
+
+return;
+
+}
+
+adminStates.msgTarget = text;
+adminStates.msgUser = false;
+
+bot.sendMessage(chatId,"Send message to deliver to user.");
+
+return;
+
+}
+
+if(adminStates.msgTarget && ADMIN_IDS.includes(chatId)){
+
+bot.sendMessage(adminStates.msgTarget,text);
+
+bot.sendMessage(chatId,"✅ Message sent to user.");
+
+adminStates.msgTarget = null;
+
+return;
+
+}
+
+/* ================= BOT ON OFF ================= */
+
+if(text === "🟢 Bot ON/OFF"){
+
+if(!ADMIN_IDS.includes(chatId)) return;
+
+botEnabled = !botEnabled;
+
+if(!botEnabled){
+
+adminStates.botOffSetup = true;
+
+bot.sendMessage(chatId,"Send message users will see when bot is OFF.");
+
+}else{
+
+bot.sendMessage(chatId,"🟢 Bot is now ENABLED.");
+
+}
+
+return;
+
+}
+
+if(adminStates.botOffSetup && ADMIN_IDS.includes(chatId)){
+
+botOffMessage = text;
+
+bot.sendMessage(chatId,
+`🔴 Bot disabled.
+
+Users will see:
+
+"${botOffMessage}"`);
+
+adminStates.botOffSetup = false;
+
+return;
+
+}
+
 });
