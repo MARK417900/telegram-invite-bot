@@ -373,18 +373,27 @@ bot.on("message", async (msg) => {
     bot.sendMessage(chatId, "Your redeem request has been submitted. ✅\n\nAdmin will review it soon. 🎉");
 
     ADMIN_IDS.forEach(admin => {
-      bot.sendMessage(admin,
-        `📩 New Redeem Request\n\n🆔 User ID: <code>${chatId}</code>\n🎁 Codes Redeemed: ${user.redeems}\n\n👥 Total Referrals: ${user.ref}\n📌 Referral Progress: ${user.refProgress}/5\n📩 Invited Users: ${user.invited.length > 0 ? user.invited.join(", ") : "None"}\n`,{ parse_mode:"HTML" }
-        {
-          reply_markup: {
-            inline_keyboard: [
-              [
-                { text: "✅ Approve", callback_data: `approve_${chatId}` },
-                { text: "❌ Reject", callback_data: `reject_${chatId}` }
-              ]
-            ]
-          }
-        });
+     bot.sendMessage(admin,
+`📩 New Redeem Request
+
+🆔 User ID: <code>${chatId}</code>
+🎁 Codes Redeemed: ${user.redeems}
+
+👥 Total Referrals: ${user.ref}
+📌 Referral Progress: ${user.refProgress}/5
+📩 Invited Users: ${user.invited.length > 0 ? user.invited.join(", ") : "None"}
+`,
+{
+parse_mode:"HTML",
+reply_markup:{
+inline_keyboard:[
+[
+{ text:"✅ Approve", callback_data:`approve_${chatId}` },
+{ text:"❌ Reject", callback_data:`reject_${chatId}` }
+]
+]
+}
+});
     });
     return;
   }
