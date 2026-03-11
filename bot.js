@@ -172,16 +172,19 @@ bot.deleteMessage(query.message.chat.id,query.message.message_id).catch(()=>{});
 /* REJECT PURCHASE */
 if(data.startsWith("buyreject_")){
 
-const userId=data.split("_")[1];
+const userId = data.split("_")[1];
 
-users[userId].orderStatus="Cancelled";
-users[userId].buyRequest=false;
+/* SAFETY CHECK */
+if(!ADMIN_IDS.includes(adminId) || !users[userId]) return;
+
+users[userId].orderStatus = "Cancelled";
+users[userId].buyRequest = false;
 
 saveUsers();
 
-bot.sendMessage(userId,"❌ Order cancelled.");
+bot.sendMessage(userId,"❌ Your purchase request was rejected by admin.");
 
-bot.deleteMessage(query.message.chat.id,query.message.message_id).catch(()=>{});
+bot.deleteMessage(query.message.chat.id, query.message.message_id).catch(()=>{});
 
 }
 
@@ -242,6 +245,7 @@ if(data.startsWith("approve_")){
 
 users[userId].redeems+=1;
 users[userId].refProgress = users[userId].refProgress % 5;
+if(!users[userId]) return;
 users[userId].redeemRequest=false;
 users[userId].waitingAdminMsg=true;
 
@@ -252,14 +256,15 @@ bot.sendMessage(adminId,`Send reward to user ${userId}`);
 
 }else{
 
-users[userId].redeemRequest=false;
+if(!users[userId]) return;
+
+users[userId].redeemRequest = false;
+
 saveUsers();
 
-bot.sendMessage(userId,"❌ Redeem rejected.");
+bot.sendMessage(userId,"❌ Your redeem request was rejected.");
 
-}
-
-bot.deleteMessage(query.message.chat.id,query.message.message_id).catch(()=>{});
+bot.deleteMessage(query.message.chat.id, query.message.message_id).catch(()=>{});
 
 }
 
