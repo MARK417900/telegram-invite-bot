@@ -266,13 +266,12 @@ bot.on("callback_query", async (query) => {
       users[userId].redeemRequest = false;
       users[userId].waitingAdminMsg = true;
       saveUsers();
-      bot.sendMessage(userId, "🎉 Your redeem request has been approved! Admin will send your reward soon.");
-      bot.sendMessage(adminId, `✅ Redeem approved for User ID: ${userId}\nSend photo/video + caption as reward to this user.`);
+      bot.sendMessage(userId, "🎉 Your redeem request has been approved!\n Admin will send your reward soon..🥳");
+      bot.sendMessage(adminId, `Redeem approved ✅ for \nSend  reward to User ID: ${userId}.`);
     } else {
       users[userId].redeemRequest = false;
       saveUsers();
       bot.sendMessage(userId, "❌ Your redeem request was rejected.");
-      bot.sendMessage(adminId, "❌ Redeem rejected");
     }
   }
 });
@@ -378,7 +377,7 @@ bot.on("message", async (msg) => {
   // PROFILE
   if (text === "👤 Profile") {
     bot.sendMessage(chatId,
-      `👤 User Profile\n\n🆔 User ID: ${chatId}\n🛒 Total Purchases: ${user.purchases}\n🎁 Codes Redeemed: ${user.redeems}\n👥 Total Referrals: ${user.ref}\n📌 Required Referrals: ${user.refProgress}/5`);
+      `🆔 User ID: ${chatId}\n\n👥 Total Referrals: ${user.ref}\n🛒 Total Purchases: ${user.purchases}\n🎁 Codes Redeemed: ${user.redeems}\n📌 Required Referrals: ${user.refProgress}/5`);
   }
 
   // REFER
@@ -388,7 +387,7 @@ bot.on("message", async (msg) => {
   }
 
   // HELP
-  if (text === "❓ Help") {
+  if (text === "Help ❓") {
     bot.sendMessage(chatId, `Need help?\n\nContact support bot:\n👉 https://t.me/Mark41_helperBot`);
   }
 
