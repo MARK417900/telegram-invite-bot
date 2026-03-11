@@ -332,9 +332,17 @@ bot.on("message", async (msg) => {
       } else if (msg.text) {
         bot.sendMessage(pendingUser, msg.text);
       }
-      users[pendingUser].waitingAdminMsg = false;
-      saveUsers();
-      bot.sendMessage(chatId, "✅ Reward/message sent to user.");
+      if(users[pendingUser].adminMsgId){
+ADMIN_IDS.forEach(admin=>{
+bot.deleteMessage(admin, users[pendingUser].adminMsgId).catch(()=>{});
+});
+users[pendingUser].adminMsgId = null;
+}
+
+users[pendingUser].waitingAdminMsg = false;
+saveUsers();
+
+bot.sendMessage(chatId,"✅ Reward sent and request closed.");
       return;
     }
   }
@@ -351,22 +359,29 @@ bot.on("message", async (msg) => {
 
     bot.sendMessage(chatId, "✅ Screenshot received. Your purchase request has been submitted.");
 
-    ADMIN_IDS.forEach(admin => {
-      bot.sendPhoto(admin, fileId, {
-        caption: `🛒 New Purchase Request\n\n ID: ${chatId}\n Buy Type: ${user.buyType || "None"}\nReferrals Buying: ${user.buyRefs}`,
-        reply_markup: {
-          inline_keyboard: [
-            [
-              { text: "✅ Approve", callback_data: `buyapprove_${chatId}` },
-              { text: "❌ Reject", callback_data: `buyreject_${chatId}` }
-            ],
-            [{ text: "✉ Message User", callback_data: `msg_${chatId}` }]
-          ]
-        }
-      });
-    });
-    return;
-  }
+   ADMIN_IDS.forEach(async (admin) => {
+
+const m = await bot.sendPhoto(admin, fileId, {
+caption: `🛒 New Purchase Request
+
+ID: ${chatId}
+Buy Type: ${user.buyType || "None"}
+Referrals Buying: ${user.buyRefs}`,
+reply_markup:{
+inline_keyboard:[
+[
+{ text:"✅ Approve", callback_data:`buyapprove_${chatId}` },
+{ text:"❌ Reject", callback_data:`buyreject_${chatId}` }
+],
+[{ text:"✉ Message User", callback_data:`msg_${chatId}` }]
+]
+}
+});
+
+users[chatId].adminMsgId = m.message_id;
+saveUsers();
+
+});
 
   // Handle Redeem request
   if (text === "🎁 Redeem") {
@@ -413,6 +428,9 @@ inline_keyboard:[
 ]
 }
 });
+      
+users[chatId].adminMsgId = m.message_id;
+saveUsers();
     });
     return;
   }
