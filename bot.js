@@ -203,7 +203,7 @@ bot.on("callback_query", async (query) => {
       reply_markup: {
         keyboard: [
           ["👤 Profile", "👥 Refer"],
-          ["🎁 Redeem", "❓ Help"],
+          ["🎁 Redeem", "Help ❓"],
           ["🛒 Buy Code"]
         ],
         resize_keyboard: true
@@ -214,7 +214,7 @@ bot.on("callback_query", async (query) => {
   // ------------------------------
   // Buy code flow
   // ------------------------------
-  if (data === "Hotya CODE" || data === "GOSH CODE") {
+  if (data === "Hotya_CODE" || data === "GOSH_CODE") {
     createUser(chatId);
     users[chatId].buyType = data;
     saveUsers();
@@ -396,8 +396,8 @@ bot.on("message", async (msg) => {
     bot.sendMessage(chatId, "Select code type:", {
       reply_markup: {
         inline_keyboard: [
-          [{ text: "🔥 Hotya", callback_data: "buy_hotya" }],
-          [{ text: "⚡ GOSH", callback_data: "buy_gosh" }]
+          [{ text: "🔥 Hotya", callback_data: "Hotya_CODE" }],
+          [{ text: "⚡ GOSH", callback_data: "GOSH_CODE" }]
         ]
       }
     });
