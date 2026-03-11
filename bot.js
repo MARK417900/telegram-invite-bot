@@ -406,8 +406,9 @@ saveUsers();
 
     bot.sendMessage(chatId, "Your redeem request has been submitted. ✅\n\nAdmin will review it soon. 🎉");
 
-    ADMIN_IDS.forEach(admin => {
-     bot.sendMessage(admin,
+   ADMIN_IDS.forEach(async (admin)=>{
+
+const m = await bot.sendMessage(admin,
 `📩 New Redeem Request
 
 🆔 User ID: <code>${chatId}</code>
@@ -428,12 +429,11 @@ inline_keyboard:[
 ]
 }
 });
-      
+
 users[chatId].adminMsgId = m.message_id;
 saveUsers();
-    });
-    return;
-  }
+
+});
 
   // PROFILE
   if (text === "👤 Profile") {
