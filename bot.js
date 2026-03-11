@@ -183,13 +183,24 @@ bot.on("callback_query", async (query) => {
     });
   }
 
-  if (data.startsWith("buyreject_")) {
-    const userId = data.split("_")[1];
-    users[userId].orderStatus = "Cancelled";
-    users[userId].buyRequest = false;
-    saveUsers();
-    bot.sendMessage(userId, "❌ Your order was cancelled by admin.");
-  }
+if (data.startsWith("buyreject_")) {
+
+const userId = data.split("_")[1];
+
+if (!ADMIN_IDS.includes(adminId)) return;
+
+users[userId].orderStatus = "Cancelled";
+users[userId].buyRequest = false;
+
+saveUsers();
+
+bot.sendMessage(userId, "❌ Your order was cancelled by admin.");
+
+/* DELETE ADMIN REQUEST MESSAGE */
+
+bot.deleteMessage(query.message.chat.id, query.message.message_id).catch(()=>{});
+
+}
 
   // ------------------------------
   // Check channel join
@@ -284,10 +295,18 @@ bot.on("callback_query", async (query) => {
       bot.sendMessage(userId, "🎉 Your redeem request has been approved!\n Admin will send your reward soon..🥳");
       bot.sendMessage(adminId, `Redeem approved ✅\nSend  reward to User ID: <code>${chatId}</code>`,{ parse_mode:"HTML" });
     } else {
-      users[userId].redeemRequest = false;
-      saveUsers();
-      bot.sendMessage(userId, "❌ Your redeem request was rejected.");
-    }
+
+users[userId].redeemRequest = false;
+
+saveUsers();
+
+bot.sendMessage(userId, "❌ Your redeem request was rejected.");
+
+/* DELETE ADMIN REQUEST MESSAGE */
+
+bot.deleteMessage(query.message.chat.id, query.message.message_id).catch(()=>{});
+
+}
   }
 });
 
@@ -401,7 +420,7 @@ inline_keyboard:[
   // PROFILE
   if (text === "👤 Profile") {
     bot.sendMessage(chatId,
-      `🆔 User ID: ${chatId}\n\n👥 Total Referrals: ${user.ref}\n\n🛒 Total Purchases: ${user.purchases}\n\n🎁 Codes Redeemed: ${user.redeems}\n\n📌 Required Referrals: ${user.refProgress}/5`);
+      `🆔 User ID: <code>${chatId}</code>\n\n👥 Total Referrals: ${user.ref}\n\n🛒 Total Purchases: ${user.purchases}\n\n🎁 Codes Redeemed: ${user.redeems}\n\n📌 Required Referrals: ${user.refProgress}/5`,{ parse_mode:"HTML" });
   }
 
   // REFER
