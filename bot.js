@@ -435,6 +435,7 @@ users[chatId].adminMsgId = m.message_id;
 saveUsers();
 
 });
+  }
 
   // PROFILE
   if (text === "👤 Profile") {
