@@ -81,29 +81,47 @@ function createUser(id) {
 
 /* START COMMAND */
 bot.onText(/\/start(?: (.+))?/, (msg, match) => {
-  const chatId = msg.chat.id;
-  const referrerId = match[1];
 
-  createUser(chatId);
+const chatId = msg.chat.id;
+const referrerId = match[1];
 
-  if (referrerId && referrerId != chatId && !users[chatId].referredBy) {
-    users[chatId].referredBy = referrerId;
-  }
+createUser(chatId);
 
-  saveUsers();
+if (referrerId && referrerId != chatId && !users[chatId].referredBy) {
+users[chatId].referredBy = referrerId;
+}
 
-  const buttons = channels.map(ch => [{
-    text: "📢 Join Channel",
-    url: `https://t.me/${ch.replace("@", "")}`
-  }]);
+saveUsers();
 
-  buttons.push([{ text: "✅ I Joined", callback_data: "check_join" }]);
+/* JOIN BUTTON LAYOUT */
 
-  bot.sendMessage(chatId, "🚨 Please join all channels first.", {
-    reply_markup: { inline_keyboard: buttons }
-  });
+const buttons = [
+[
+{
+text:"📢 Join Channel 1",
+url:`https://t.me/${channels[0].replace("@","")}`
+},
+{
+text:"📢 Join Channel 2",
+url:`https://t.me/${channels[1].replace("@","")}`
+}
+],
+[
+{
+text:"✅ I Joined",
+callback_data:"check_join"
+}
+]
+];
+
+bot.sendMessage(chatId,
+"🚨 Please join all channels first.",{
+reply_markup:{
+inline_keyboard:buttons
+}
 });
 
+});
 /* CALLBACK HANDLER */
 bot.on("callback_query", async (query) => {
   bot.answerCallbackQuery(query.id);
@@ -264,7 +282,7 @@ bot.on("callback_query", async (query) => {
       users[userId].waitingAdminMsg = true;
       saveUsers();
       bot.sendMessage(userId, "🎉 Your redeem request has been approved!\n Admin will send your reward soon..🥳");
-      bot.sendMessage(adminId, `Redeem approved ✅\nSend  reward to User ID: ${userId}.`);
+      bot.sendMessage(adminId, `Redeem approved ✅\nSend  reward to User ID: <code>${chatId}</code>`,{ parse_mode:"HTML" });
     } else {
       users[userId].redeemRequest = false;
       saveUsers();
@@ -356,7 +374,7 @@ bot.on("message", async (msg) => {
 
     ADMIN_IDS.forEach(admin => {
       bot.sendMessage(admin,
-        `📩 New Redeem Request\n\n🆔 User ID: ${chatId}\n🎁 Codes Redeemed: ${user.redeems}\n\n👥 Total Referrals: ${user.ref}\n📌 Referral Progress: ${user.refProgress}/5\n📩 Invited Users: ${user.invited.length > 0 ? user.invited.join(", ") : "None"}\n`,
+        `📩 New Redeem Request\n\n🆔 User ID: <code>${chatId}</code>\n🎁 Codes Redeemed: ${user.redeems}\n\n👥 Total Referrals: ${user.ref}\n📌 Referral Progress: ${user.refProgress}/5\n📩 Invited Users: ${user.invited.length > 0 ? user.invited.join(", ") : "None"}\n`,{ parse_mode:"HTML" }
         {
           reply_markup: {
             inline_keyboard: [
@@ -374,7 +392,7 @@ bot.on("message", async (msg) => {
   // PROFILE
   if (text === "👤 Profile") {
     bot.sendMessage(chatId,
-      `🆔 User ID: ${chatId}\n\n👥 Total Referrals: ${user.ref}\n🛒 Total Purchases: ${user.purchases}\n\n🎁 Codes Redeemed: ${user.redeems}\n📌 Required Referrals: ${user.refProgress}/5`);
+      `🆔 User ID: ${chatId}\n\n👥 Total Referrals: ${user.ref}\n\n🛒 Total Purchases: ${user.purchases}\n\n🎁 Codes Redeemed: ${user.redeems}\n\n📌 Required Referrals: ${user.refProgress}/5`);
   }
 
   // REFER
@@ -476,7 +494,7 @@ if(!ADMIN_IDS.includes(chatId)) return;
 adminStates.broadcast = true;
 
 bot.sendMessage(chatId,
-"📢 Send message to broadcast to all users.\n\nPress ❌ Cancel to stop.",{
+"📢 Send message to broadcast to all users.",{
 reply_markup:{
 keyboard:[
 ["❌ Cancel"]
@@ -543,11 +561,42 @@ if(!ADMIN_IDS.includes(chatId)) return;
 
 adminStates.userInfo = true;
 
-bot.sendMessage(chatId,"Send User ID to check full profile.");
+bot.sendMessage(chatId,
+"Send User ID to check profile.",{
+reply_markup:{
+keyboard:[
+["❌ Cancel"]
+],
+resize_keyboard:true
+}
+});
 
 return;
 
 }
+
+/* CANCEL USER INFO */
+
+if(text === "❌ Cancel" && adminStates.userInfo){
+
+adminStates.userInfo = false;
+
+bot.sendMessage(chatId,
+"❌ User info check cancelled.",{
+reply_markup:{
+keyboard:[
+["📊 Status","📢 Broadcast"],
+["👤 User Info","✉ Msg User"]
+],
+resize_keyboard:true
+}
+});
+
+return;
+
+}
+
+/* PROCESS USER INFO */
 
 if(adminStates.userInfo && ADMIN_IDS.includes(chatId)){
 
@@ -562,10 +611,11 @@ bot.sendMessage(chatId,"❌ User not found.");
 const u = users[id];
 
 bot.sendMessage(chatId,
-`🆔 User ID: ${id}
+`👤 FULL USER PROFILE
+
+🆔 User ID: ${id}
 
 👥 Total Referrals: ${u.ref}
-👤 Referred By: ${u.referredBy || "None"}
 📊 Referral Progress: ${u.refProgress}/5
 
 🛒 Total Purchases: ${u.purchases}
@@ -574,8 +624,17 @@ bot.sendMessage(chatId,
 📦 Purchase Request: ${u.buyRequest ? "Yes":"No"}
 🎁 Redeem Request: ${u.redeemRequest ? "Yes":"No"}
 
-👨‍👩‍👧 Invited Users:
-${u.invited.length ? u.invited.join(", ") : "None"}`);
+💳 Buy Type: ${u.buyType || "None"}
+👤 Referred By: ${u.referredBy || "None"}
+
+🧾 Order ID: ${u.orderId || "None"}
+📌 Order Status: ${u.orderStatus || "None"}
+
+📸 Screenshot Uploaded: ${u.screenshot ? "Yes":"No"}
+
+Invited Users:
+${u.invited.length ? u.invited.join(", ") : "None"}
+`);
 
 }
 
@@ -592,18 +651,49 @@ if(!ADMIN_IDS.includes(chatId)) return;
 
 adminStates.msgUser = true;
 
-bot.sendMessage(chatId,"Send User ID to message.");
+bot.sendMessage(chatId,
+"Send User ID to send message.",{
+reply_markup:{
+keyboard:[
+["❌ Cancel"]
+],
+resize_keyboard:true
+}
+});
 
 return;
 
 }
+
+/* CANCEL MSG USER */
+
+if(text === "❌ Cancel" && (adminStates.msgUser || adminStates.msgTarget)){
+
+adminStates.msgUser = false;
+adminStates.msgTarget = null;
+
+bot.sendMessage(chatId,
+"❌ Message sending cancelled.",{
+reply_markup:{
+keyboard:[
+["📊 Status","📢 Broadcast"],
+["👤 User Info","✉ Msg User"]
+],
+resize_keyboard:true
+}
+});
+
+return;
+
+}
+
+/* GET USER ID */
 
 if(adminStates.msgUser && ADMIN_IDS.includes(chatId)){
 
 if(!users[text]){
 
 bot.sendMessage(chatId,"❌ User not found.");
-
 return;
 
 }
@@ -611,11 +701,14 @@ return;
 adminStates.msgTarget = text;
 adminStates.msgUser = false;
 
-bot.sendMessage(chatId,"Send message to deliver to user.");
+bot.sendMessage(chatId,
+"Send message to deliver to user.");
 
 return;
 
 }
+
+/* SEND MESSAGE */
 
 if(adminStates.msgTarget && ADMIN_IDS.includes(chatId)){
 
@@ -628,7 +721,3 @@ adminStates.msgTarget = null;
 return;
 
 }
-
-
-
-});
