@@ -1,14 +1,9 @@
-
 {
-  "name": "telegram-referral-bot",
-  "version": "1.0.0",
-  "description": "Telegram referral bot",
-  "main": "bot.js",
-  "scripts": {
-    "start": "node bot.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "node-telegram-bot-api": "^0.61.0"
-  }
+"name":"earnbot",
+"version":"1.0.0",
+"main":"index.js",
+"dependencies":{
+"node-telegram-bot-api":"^0.61.0",
+"express":"^4.18.2"
+}
 }
