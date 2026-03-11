@@ -71,7 +71,7 @@ function createUser(id) {
       waitingAdminMsg: false,
       invited: [],
       referredBy: null,
-      orderId: null,
+   
       orderStatus: null,
       orderUser: null
     };
@@ -231,17 +231,15 @@ bot.on("callback_query", async (query) => {
   if (data.startsWith("ref_")) {
     createUser(chatId);
     const refs = parseInt(data.split("_")[1]);
-    const orderId = "ORD" + Date.now();
 
     users[chatId].buyRefs = refs;
     users[chatId].buyRequest = true;
-    users[chatId].orderId = orderId;
     users[chatId].orderStatus = "Waiting Payment";
     users[chatId].orderUser = chatId;
     saveUsers();
 
     bot.sendPhoto(chatId, "paymentQR.jpg", {
-      caption: `🧾 Order ID: ${orderId}\n\nPay ₹20 for each referral code.\nYou are buying ${refs} referrals.🔥\n\nAfter payment upload screenshot.`,
+      caption: `Pay ₹20 for each referral code.\nYou are buying ${refs} referrals.🔥\n\nAfter payment upload screenshot.`,
       reply_markup: {
         inline_keyboard: [
           [{ text: "📤 Upload Screenshot", callback_data: "upload_ss" }],
@@ -266,7 +264,7 @@ bot.on("callback_query", async (query) => {
       users[userId].waitingAdminMsg = true;
       saveUsers();
       bot.sendMessage(userId, "🎉 Your redeem request has been approved!\n Admin will send your reward soon..🥳");
-      bot.sendMessage(adminId, `Redeem approved ✅ for \nSend  reward to User ID: ${userId}.`);
+      bot.sendMessage(adminId, `Redeem approved ✅\nSend  reward to User ID: ${userId}.`);
     } else {
       users[userId].redeemRequest = false;
       saveUsers();
@@ -354,7 +352,7 @@ bot.on("message", async (msg) => {
     user.redeemRequest = true;
     saveUsers();
 
-    bot.sendMessage(chatId, "✅ Your redeem request has been submitted.\n\nAdmin will review it soon.");
+    bot.sendMessage(chatId, "Your redeem request has been submitted. ✅\n\nAdmin will review it soon. 🎉");
 
     ADMIN_IDS.forEach(admin => {
       bot.sendMessage(admin,
@@ -376,7 +374,7 @@ bot.on("message", async (msg) => {
   // PROFILE
   if (text === "👤 Profile") {
     bot.sendMessage(chatId,
-      `🆔 User ID: ${chatId}\n\n👥 Total Referrals: ${user.ref}\n🛒 Total Purchases: ${user.purchases}\n🎁 Codes Redeemed: ${user.redeems}\n📌 Required Referrals: ${user.refProgress}/5`);
+      `🆔 User ID: ${chatId}\n\n👥 Total Referrals: ${user.ref}\n🛒 Total Purchases: ${user.purchases}\n\n🎁 Codes Redeemed: ${user.redeems}\n📌 Required Referrals: ${user.refProgress}/5`);
   }
 
   // REFER
@@ -405,8 +403,6 @@ bot.on("message", async (msg) => {
 
 /* ================= ADMIN SYSTEM ================= */
 
-let botEnabled = true;
-let botOffMessage = "⚠️Due to Bot Maintenance Bot is currently disabled by admin. Please try again later.";
 
 let adminStates = {
 broadcast:false,
@@ -486,11 +482,42 @@ if(!ADMIN_IDS.includes(chatId)) return;
 
 adminStates.broadcast = true;
 
-bot.sendMessage(chatId,"Send message to broadcast to all users.");
+bot.sendMessage(chatId,
+"📢 Send message to broadcast to all users.\n\nPress ❌ Cancel to stop.",{
+reply_markup:{
+keyboard:[
+["❌ Cancel"]
+],
+resize_keyboard:true
+}
+});
 
 return;
 
 }
+
+/* CANCEL BROADCAST */
+
+if(text === "❌ Cancel" && adminStates.broadcast){
+
+adminStates.broadcast = false;
+
+bot.sendMessage(chatId,
+"❌ Broadcast cancelled.",{
+reply_markup:{
+keyboard:[
+["📊 Status","📢 Broadcast"],
+["👤 User Info","✉ Msg User"]
+],
+resize_keyboard:true
+}
+});
+
+return;
+
+}
+
+/* SEND BROADCAST */
 
 if(adminStates.broadcast && ADMIN_IDS.includes(chatId)){
 
@@ -498,7 +525,16 @@ Object.keys(users).forEach(id=>{
 bot.sendMessage(id,text).catch(()=>{});
 });
 
-bot.sendMessage(chatId,"✅ Broadcast sent.");
+bot.sendMessage(chatId,
+"✅ Broadcast sent.",{
+reply_markup:{
+keyboard:[
+["📊 Status","📢 Broadcast"],
+["👤 User Info","✉ Msg User"]
+],
+resize_keyboard:true
+}
+});
 
 adminStates.broadcast=false;
 
