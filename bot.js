@@ -167,7 +167,6 @@ bot.sendMessage(adminId,`Purchase approved\nSend reward to user ${userId}`);
 
 bot.deleteMessage(query.message.chat.id,query.message.message_id).catch(()=>{});
 
-}
   }
 /* REJECT PURCHASE */
 if(data.startsWith("buyreject_")){
@@ -243,9 +242,9 @@ const userId=data.split("_")[1];
 
 if(data.startsWith("approve_")){
 
+if(!users[userId]) return;
 users[userId].redeems+=1;
 users[userId].refProgress = users[userId].refProgress % 5;
-if(!users[userId]) return;
 users[userId].redeemRequest=false;
 users[userId].waitingAdminMsg=true;
 
