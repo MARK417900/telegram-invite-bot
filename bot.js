@@ -7,11 +7,11 @@ const PORT = process.env.PORT || 3000;
 
 /* SERVER */
 app.get("/", (req, res) => {
-  res.send("✅ Bot Backend Running");
+res.send("✅ Bot Backend Running");
 });
 
 app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
+console.log("Server running on port " + PORT);
 });
 
 /* TELEGRAM BOT */
@@ -20,73 +20,70 @@ const bot = new TelegramBot(token, { polling: true });
 const botUsername = "Refer_SellerBot";
 
 /* ADMIN */
-const ADMIN_IDS = [8521844327, 8809115899];
+const ADMIN_IDS = [8521844327,8809115899];
 
 /* CHANNELS */
-const channels = [
-  "@earnwithmark41",
-  "@Marks_community"
-];
+const channels = ["@earnwithmark41","@Marks_community"];
 
 /* DATABASE */
 const DATA_FILE = __dirname + "/users.json";
 let users = {};
 
 if (fs.existsSync(DATA_FILE)) {
-  users = JSON.parse(fs.readFileSync(DATA_FILE));
+users = JSON.parse(fs.readFileSync(DATA_FILE));
 } else {
-  fs.writeFileSync(DATA_FILE, JSON.stringify({}));
+fs.writeFileSync(DATA_FILE, JSON.stringify({}));
 }
 
-function saveUsers() {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(users, null, 2));
+function saveUsers(){
+fs.writeFileSync(DATA_FILE, JSON.stringify(users,null,2));
 }
 
 /* CREATE USER */
-function createUser(id) {
-  if (!users[id]) {
-    users[id] = {
-      ref: 0,
-      refProgress: 0,
-      redeems: 0,
-      purchases: 0,
-      redeemRequest: false,
-      buyRequest: false,
-      buyRefs: 0,
-      buyType: null,
-      screenshot: null,
-      waitingAdminMsg: false,
-      invited: [],
-      referredBy: null,
-      orderStatus: null
-    };
-    saveUsers();
-  }
+function createUser(id){
+if(!users[id]){
+users[id]={
+ref:0,
+refProgress:0,
+redeems:0,
+purchases:0,
+redeemRequest:false,
+buyRequest:false,
+buyRefs:0,
+buyType:null,
+screenshot:null,
+waitingAdminMsg:false,
+invited:[],
+referredBy:null,
+orderStatus:null
+};
+saveUsers();
+}
 }
 
-/* CHECK MEMBERSHIP */
-async function checkMembership(userId) {
-  try {
-    for (let channel of channels) {
-      const member = await bot.getChatMember(channel, userId);
-      if (member.status === "left" || member.status === "kicked") return false;
-    }
-    return true;
-  } catch {
-    return false;
-  }
+/* CHECK CHANNEL */
+async function checkMembership(userId){
+try{
+for(let channel of channels){
+const member = await bot.getChatMember(channel,userId);
+if(member.status==="left"||member.status==="kicked") return false;
+}
+return true;
+}catch{
+return false;
+}
 }
 
 /* START */
-bot.onText(/\/start(?: (.+))?/, async (msg, match) => {
+bot.onText(/\/start(?: (.+))?/, async(msg,match)=>{
 
 const chatId = msg.chat.id;
 const referrerId = match[1];
 
 createUser(chatId);
 
-if (referrerId && referrerId != chatId && !users[chatId].referredBy) {
-  users[chatId].referredBy = referrerId;
+if(referrerId && referrerId!=chatId && !users[chatId].referredBy){
+users[chatId].referredBy = referrerId;
 }
 
 saveUsers();
@@ -96,17 +93,17 @@ const buttons = [
 { text:"📢 Join Channel 1", url:`https://t.me/${channels[0].replace("@","")}` },
 { text:"📢 Join Channel 2", url:`https://t.me/${channels[1].replace("@","")}` }
 ],
-[{ text:"✅ I Joined", callback_data:"check_join" }]
+[{ text:"✅ I Joined", callback_data:"check_join"}]
 ];
 
 bot.sendMessage(chatId,"🚨 Please join all channels first.",{
-reply_markup:{ inline_keyboard:buttons }
+reply_markup:{inline_keyboard:buttons}
 });
 
 });
 
 /* CALLBACK HANDLER */
-bot.on("callback_query", async (query) => {
+bot.on("callback_query", async(query)=>{
 
 const chatId = query.message.chat.id;
 const data = query.data;
@@ -115,36 +112,13 @@ const adminId = query.from.id;
 bot.answerCallbackQuery(query.id);
 
 /* JOIN CHECK */
-if(data === "check_join"){
+if(data==="check_join"){
 
 const joined = await checkMembership(chatId);
 
 if(!joined){
 bot.sendMessage(chatId,"❌ Join all channels first.");
 return;
-}
-
-const user = users[chatId];
-
-if(user.referredBy && user.referredBy != chatId){
-
-if(!users[user.referredBy]) createUser(user.referredBy);
-
-const ref = users[user.referredBy];
-
-if(!ref.invited.includes(chatId)){
-
-ref.invited.push(chatId);
-ref.ref++;
-ref.refProgress++;
-
-saveUsers();
-
-bot.sendMessage(user.referredBy,
-`🎉 New referral joined
-User: ${chatId}
-Total: ${ref.ref}`);
-}
 }
 
 bot.sendMessage(chatId,"✅ Access Granted!",{
@@ -157,25 +131,44 @@ keyboard:[
 resize_keyboard:true
 }
 });
+}
 
+/* BUY HOTYA */
+if(data==="Hotya_CODE"){
+users[chatId].buyRequest=true;
+users[chatId].buyType="Hotya";
+saveUsers();
+
+bot.sendMessage(chatId,
+"🔥 Hotya Code\nSend payment screenshot after payment.");
+}
+
+/* BUY GOSH */
+if(data==="GOSH_CODE"){
+users[chatId].buyRequest=true;
+users[chatId].buyType="GOSH";
+saveUsers();
+
+bot.sendMessage(chatId,
+"⚡ GOSH Code\nSend payment screenshot after payment.");
 }
 
 /* APPROVE PURCHASE */
 if(data.startsWith("buyapprove_")){
 
-const userId = data.split("_")[1];
+const userId=data.split("_")[1];
 
-if(!ADMIN_IDS.includes(adminId) || !users[userId]) return;
+if(!ADMIN_IDS.includes(adminId)) return;
 
 users[userId].purchases++;
-users[userId].orderStatus = "Approved";
-users[userId].buyRequest = false;
-users[userId].waitingAdminMsg = true;
+users[userId].orderStatus="Approved";
+users[userId].buyRequest=false;
+users[userId].waitingAdminMsg=true;
 
 saveUsers();
 
-bot.sendMessage(userId,"✅ Purchase approved! Admin will send reward.");
-bot.sendMessage(adminId,"Send reward to user.");
+bot.sendMessage(userId,"✅ Purchase approved.\nAdmin sending reward.");
+bot.sendMessage(adminId,"Send reward now.");
 
 bot.deleteMessage(query.message.chat.id,query.message.message_id).catch(()=>{});
 
@@ -184,51 +177,86 @@ bot.deleteMessage(query.message.chat.id,query.message.message_id).catch(()=>{});
 /* REJECT PURCHASE */
 if(data.startsWith("buyreject_")){
 
-const userId = data.split("_")[1];
+const userId=data.split("_")[1];
 
-if(!ADMIN_IDS.includes(adminId) || !users[userId]) return;
+if(!ADMIN_IDS.includes(adminId)) return;
 
-users[userId].orderStatus = "Cancelled";
-users[userId].buyRequest = false;
+users[userId].buyRequest=false;
+users[userId].orderStatus="Rejected";
 
 saveUsers();
 
 bot.sendMessage(userId,"❌ Purchase rejected.");
 
 bot.deleteMessage(query.message.chat.id,query.message.message_id).catch(()=>{});
-
-}
-
-/* ADMIN MESSAGE USER */
-if(data.startsWith("msg_")){
-
-const userId = data.split("_")[1];
-
-users[userId].waitingAdminMsg = true;
-
-saveUsers();
-
-bot.sendMessage(adminId,"Send message to the user.");
-
 }
 
 });
 
 /* MESSAGE HANDLER */
-bot.on("message", async (msg)=>{
+bot.on("message", async(msg)=>{
 
 const chatId = msg.chat.id;
 const text = msg.text || "";
 
 createUser(chatId);
-
 const user = users[chatId];
+
+/* ADMIN SEND REWARD */
+if(ADMIN_IDS.includes(chatId)){
+
+const pendingUser = Object.keys(users).find(id=>users[id].waitingAdminMsg);
+
+if(pendingUser){
+
+if(msg.photo){
+const fileId = msg.photo[msg.photo.length-1].file_id;
+bot.sendPhoto(pendingUser,fileId,{caption:"🎁 Your reward"});
+}else if(msg.text){
+bot.sendMessage(pendingUser,msg.text);
+}
+
+users[pendingUser].waitingAdminMsg=false;
+saveUsers();
+
+bot.sendMessage(chatId,"✅ Reward sent.");
+return;
+}
+}
 
 if(text.startsWith("/")) return;
 
-/* PROFILE */
-if(text === "👤 Profile"){
+/* RECEIVE SCREENSHOT */
+if(msg.photo && user.buyRequest){
 
+const fileId = msg.photo[msg.photo.length-1].file_id;
+
+user.screenshot=fileId;
+user.orderStatus="Submitted";
+
+saveUsers();
+
+bot.sendMessage(chatId,"✅ Screenshot received.");
+
+ADMIN_IDS.forEach(admin=>{
+bot.sendPhoto(admin,fileId,{
+caption:`🛒 Purchase Request
+User: ${chatId}
+Type: ${user.buyType}`,
+reply_markup:{
+inline_keyboard:[
+[
+{ text:"✅ Approve", callback_data:`buyapprove_${chatId}`},
+{ text:"❌ Reject", callback_data:`buyreject_${chatId}`}
+]
+]
+}
+});
+});
+}
+
+/* PROFILE */
+if(text==="👤 Profile"){
 bot.sendMessage(chatId,
 `🆔 ${chatId}
 
@@ -236,25 +264,52 @@ bot.sendMessage(chatId,
 🛒 Purchases: ${user.purchases}
 🎁 Redeems: ${user.redeems}
 📊 Progress: ${user.refProgress}/5`);
-
 }
 
 /* REFER */
-if(text === "👥 Refer"){
-
-const link = `https://t.me/${botUsername}?start=${chatId}`;
-
+if(text==="👥 Refer"){
+const link=`https://t.me/${botUsername}?start=${chatId}`;
 bot.sendMessage(chatId,`Invite friends\n${link}`);
+}
+
+/* REDEEM */
+if(text==="🎁 Redeem"){
+
+if(user.refProgress<5){
+bot.sendMessage(chatId,"❌ Need 5 referrals.");
+return;
+}
+
+user.redeemRequest=true;
+saveUsers();
+
+ADMIN_IDS.forEach(admin=>{
+bot.sendMessage(admin,
+`🎁 Redeem Request
+User: ${chatId}`,
+{
+reply_markup:{
+inline_keyboard:[
+[
+{ text:"✅ Approve", callback_data:`approve_${chatId}`},
+{ text:"❌ Reject", callback_data:`reject_${chatId}`}
+]
+]
+}
+});
+});
+
+bot.sendMessage(chatId,"✅ Redeem request sent.");
 
 }
 
 /* HELP */
-if(text === "Help ❓"){
+if(text==="Help ❓"){
 bot.sendMessage(chatId,"Contact support: @Mark41_helperBot");
 }
 
-/* BUY CODE */
-if(text === "🛒 Buy Code"){
+/* BUY MENU */
+if(text==="🛒 Buy Code"){
 
 bot.sendMessage(chatId,"Select code:",{
 reply_markup:{
@@ -269,20 +324,10 @@ inline_keyboard:[
 
 });
 
-/* ================= ADMIN SYSTEM ================= */
-
-let adminStates = {
-broadcast:false,
-userInfo:false,
-msgUser:false,
-msgTarget:null
-};
-
 /* ADMIN PANEL */
-bot.onText(/\/admin/, (msg)=>{
+bot.onText(/\/admin/,msg=>{
 
-const chatId = msg.chat.id;
-
+const chatId=msg.chat.id;
 if(!ADMIN_IDS.includes(chatId)) return;
 
 bot.sendMessage(chatId,
@@ -290,32 +335,27 @@ bot.sendMessage(chatId,
 reply_markup:{
 keyboard:[
 ["📊 Status","📢 Broadcast"],
-["👤 User Info","✉ Msg User"]
+["👤 User Info"]
 ],
 resize_keyboard:true
 }
 });
-
 });
 
-/* ADMIN MESSAGE HANDLER */
-bot.on("message",(msg)=>{
+/* ADMIN COMMANDS */
+bot.on("message",msg=>{
 
-const chatId = msg.chat.id;
-const text = msg.text || "";
+const chatId=msg.chat.id;
+const text=msg.text || "";
 
 if(!ADMIN_IDS.includes(chatId)) return;
 
 /* STATUS */
-if(text === "📊 Status"){
+if(text==="📊 Status"){
 
-let totalUsers = Object.keys(users).length;
-
-let totalPurchases = Object.values(users)
-.reduce((sum,u)=>sum+u.purchases,0);
-
-let totalRedeems = Object.values(users)
-.reduce((sum,u)=>sum+u.redeems,0);
+let totalUsers=Object.keys(users).length;
+let totalPurchases=Object.values(users).reduce((a,b)=>a+b.purchases,0);
+let totalRedeems=Object.values(users).reduce((a,b)=>a+b.redeems,0);
 
 bot.sendMessage(chatId,
 `📊 BOT STATUS
@@ -323,30 +363,41 @@ bot.sendMessage(chatId,
 👤 Users: ${totalUsers}
 🛒 Purchases: ${totalPurchases}
 🎁 Redeems: ${totalRedeems}`);
-
 }
 
 /* BROADCAST */
-if(text === "📢 Broadcast"){
+if(text.startsWith("/broadcast ")){
 
-adminStates.broadcast = true;
-
-bot.sendMessage(chatId,"Send message to broadcast");
-
-return;
-
-}
-
-if(adminStates.broadcast){
+const message=text.replace("/broadcast ","");
 
 Object.keys(users).forEach(id=>{
-bot.sendMessage(id,text).catch(()=>{});
+bot.sendMessage(id,message).catch(()=>{});
 });
 
 bot.sendMessage(chatId,"✅ Broadcast sent");
+}
 
-adminStates.broadcast = false;
+/* USER INFO */
+if(text.startsWith("/user ")){
 
+const id=text.split(" ")[1];
+
+if(!users[id]){
+bot.sendMessage(chatId,"❌ User not found");
+return;
+}
+
+const u=users[id];
+
+bot.sendMessage(chatId,
+`👤 USER INFO
+
+ID: ${id}
+
+Referrals: ${u.ref}
+Purchases: ${u.purchases}
+Redeems: ${u.redeems}
+Status: ${u.orderStatus}`);
 }
 
 });
