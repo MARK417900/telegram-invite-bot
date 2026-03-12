@@ -235,8 +235,7 @@ let adminState = { mode:null, targetUser:null };
 
 bot.on("message", async(msg)=>{
     const chatId = msg.chat.id;
-    const text = msg.text || "";
-
+    const text = msg.text || msg.caption || "";
     createUser(chatId);
     const user = users[chatId];
 
