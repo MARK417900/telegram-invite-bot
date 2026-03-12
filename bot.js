@@ -213,7 +213,7 @@ if(data.startsWith("approve_") || data.startsWith("reject_")){
 
     bot.deleteMessage(query.message.chat.id, query.message.message_id).catch(()=>{});
 }
-
+});
 /* ================= SINGLE MESSAGE HANDLER ================= */
 let adminState = { mode:null, targetUser:null };
 
