@@ -390,14 +390,38 @@ bot.on("message", async(msg)=>{
             return;
         }
         if(adminState.mode === "broadcast"){
-            Object.keys(users).forEach(id=>{
-                bot.sendMessage(id,text).catch(()=>{});
-            });
-            bot.sendMessage(chatId,"✅ Broadcast sent.");
-            adminState.mode = null;
-            return;
+
+    Object.keys(users).forEach(id=>{
+
+        /* PHOTO */
+        if(msg.photo){
+            const fileId = msg.photo[msg.photo.length-1].file_id;
+            bot.sendPhoto(id,fileId,{caption:text}).catch(()=>{});
         }
 
+        /* VIDEO */
+        else if(msg.video){
+            const fileId = msg.video.file_id;
+            bot.sendVideo(id,fileId,{caption:text}).catch(()=>{});
+        }
+
+        /* DOCUMENT */
+        else if(msg.document){
+            const fileId = msg.document.file_id;
+            bot.sendDocument(id,fileId,{caption:text}).catch(()=>{});
+        }
+
+        /* TEXT */
+        else{
+            bot.sendMessage(id,text).catch(()=>{});
+        }
+
+    });
+
+    bot.sendMessage(chatId,"✅ Broadcast sent to all users.");
+    adminState.mode = null;
+    return;
+}
         /* USER INFO */
         if(text === "👤 User Info"){
             adminState.mode = "userinfo";
