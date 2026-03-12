@@ -165,10 +165,9 @@ bot.on("callback_query", async(query)=>{
         const qr = QR_CODES[codeType];
 
         bot.sendPhoto(chatId, qr, {
-            caption: `💳 Please pay for ${codeType} code.\nAfter payment, click "📤 Upload Screenshot" to send payment proof.`,
+            caption: `Price ₹20/Referal.\n\nAfter payment, Upload Screenshot for payment proof.`,
             reply_markup: {
                 keyboard: [
-                    ["📤 Upload Screenshot"],
                     ["❌ Cancel"]
                 ],
                 resize_keyboard: true
@@ -185,8 +184,8 @@ bot.on("callback_query", async(query)=>{
             users[userId].buyRequest = false;
             users[userId].waitingAdminMsg = true;
             saveUsers();
-            bot.sendMessage(userId,"✅ Purchase approved.\nAdmin will send reward now.");
-            bot.sendMessage(adminId,"Send reward (photo + text) now.");
+            bot.sendMessage(userId,"✅ Purchase approved.\nAdmin will send reward soon..🥳");
+            bot.sendMessage(adminId,"Send reward ID ${chatId}");
         } else {
             users[userId].buyRequest = false;
             saveUsers();
