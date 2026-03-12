@@ -24,7 +24,27 @@ const ADMIN_IDS = [8521844327,8809115899];
 
 /* CHANNELS */
 const channels = ["@earnwithmark41","@Marks_community"];
+/* ================= ADMIN PANEL COMMAND ================= */
+bot.onText(/\/admin/, (msg) => {
+    const chatId = msg.chat.id;
 
+    if(!ADMIN_IDS.includes(chatId)){
+        bot.sendMessage(chatId, "❌ You are not an admin.");
+        return;
+    }
+
+    const adminKeyboard = [
+        ["📊 Status","📢 Broadcast"],
+        ["👤 User Info","✉ Msg User"]
+    ];
+
+    bot.sendMessage(chatId, "🛠 Admin Panel", {
+        reply_markup: {
+            keyboard: adminKeyboard,
+            resize_keyboard: true
+        }
+    });
+});
 /* DATABASE */
 const DATA_FILE = __dirname + "/users.json";
 let users = {};
