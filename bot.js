@@ -264,20 +264,49 @@ bot.on("message", async(msg)=>{
 }
     /* ================= ADMIN SEND REWARD ================= */
     if(ADMIN_IDS.includes(chatId)){
-        const pendingUser = Object.keys(users).find(id=>users[id].waitingAdminMsg);
-        if(pendingUser){
-            if(msg.photo){
-                const fileId = msg.photo[msg.photo.length-1].file_id;
-                bot.sendPhoto(pendingUser,fileId,{caption:"🎁 Your reward"});
-            } else if(msg.text){
-                bot.sendMessage(pendingUser,msg.text);
-            }
-            users[pendingUser].waitingAdminMsg=false;
-            saveUsers();
-            bot.sendMessage(chatId,"✅ Reward sent.");
-            return;
+    const pendingUser = Object.keys(users).find(id=>users[id].waitingAdminMsg);
+
+    if(pendingUser){
+
+        /* PHOTO */
+        if(msg.photo){
+            const fileId = msg.photo[msg.photo.length-1].file_id;
+            bot.sendPhoto(pendingUser,fileId,{caption:text});
         }
+
+        /* VIDEO */
+        else if(msg.video){
+            const fileId = msg.video.file_id;
+            bot.sendVideo(pendingUser,fileId,{caption:text});
+        }
+
+        /* DOCUMENT */
+        else if(msg.document){
+            const fileId = msg.document.file_id;
+            bot.sendDocument(pendingUser,fileId,{caption:text});
+        }
+
+        /* TEXT */
+        else{
+            bot.sendMessage(pendingUser,text);
+        }
+
+        users[pendingUser].waitingAdminMsg=false;
+        saveUsers();
+
+        bot.sendMessage(chatId,"✅ Reward sent.",{
+            reply_markup:{
+                keyboard:[
+                    ["📊 Status","📢 Broadcast"],
+                    ["👤 User Info","✉ Msg User"]
+                ],
+                resize_keyboard:true
+            }
+        });
+
+        return;
     }
+}
 
     /* ================= RECEIVE SCREENSHOT ================= */
     if(msg.photo && user.buyRequest){
@@ -359,7 +388,7 @@ bot.on("message", async(msg)=>{
         if(text === "❌ Cancel"){
             adminState.mode = null;
             adminState.targetUser = null;
-            bot.sendMessage(chatId,"Action Cancle ❌",{
+            bot.sendMessage(chatId,"Action Cancelled ❌",{
                 reply_markup:{
                     keyboard:[
                         ["📊 Status","📢 Broadcast"],
@@ -473,12 +502,44 @@ return;
             return;
         }
         if(adminState.mode === "msg_send"){
-            bot.sendMessage(adminState.targetUser,text);
-            bot.sendMessage(chatId,"✅ Message sent to user.");
-            adminState.mode = null;
-            adminState.targetUser = null;
-            return;
+
+    /* PHOTO */
+    if(msg.photo){
+        const fileId = msg.photo[msg.photo.length-1].file_id;
+        bot.sendPhoto(adminState.targetUser,fileId,{caption:text});
+    }
+
+    /* VIDEO */
+    else if(msg.video){
+        const fileId = msg.video.file_id;
+        bot.sendVideo(adminState.targetUser,fileId,{caption:text});
+    }
+
+    /* DOCUMENT */
+    else if(msg.document){
+        const fileId = msg.document.file_id;
+        bot.sendDocument(adminState.targetUser,fileId,{caption:text});
+    }
+
+    /* TEXT */
+    else{
+        bot.sendMessage(adminState.targetUser,text);
+    }
+
+    bot.sendMessage(chatId,"✅ Message sent to user.",{
+        reply_markup:{
+            keyboard:[
+                ["📊 Status","📢 Broadcast"],
+                ["👤 User Info","✉ Msg User"]
+            ],
+            resize_keyboard:true
         }
+    });
+
+    adminState.mode = null;
+    adminState.targetUser = null;
+    return;
+}
 
     }
 
