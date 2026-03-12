@@ -225,7 +225,28 @@ bot.on("message", async(msg)=>{
     const user = users[chatId];
 
     if(text.startsWith("/")) return;
+    /* ================= PURCHASE CANCEL ================= */
+    if(text === "❌ Cancel" && user.buyRequest){
+    user.buyRequest = false;
+    user.buyType = null;
+    user.buyStep = null;
+    user.screenshot = null;
+    user.orderStatus = null;
+    saveUsers();
 
+    bot.sendMessage(chatId,"❌ Purchase cancelled.",{
+        reply_markup:{
+            keyboard:[
+                ["👤 Profile","👥 Refer"],
+                ["🎁 Redeem","Help ❓"],
+                ["🛒 Buy Code"]
+            ],
+            resize_keyboard:true
+        }
+    });
+
+    return;
+}
     /* ================= ADMIN SEND REWARD ================= */
     if(ADMIN_IDS.includes(chatId)){
         const pendingUser = Object.keys(users).find(id=>users[id].waitingAdminMsg);
