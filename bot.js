@@ -2,7 +2,7 @@ const express = require("express");
 const fs = require("fs");
 const TelegramBot = require("node-telegram-bot-api");
 
-const app = express();
+const app = express(); 
 const PORT = process.env.PORT || 3000;
 
 /* SERVER */
@@ -180,7 +180,9 @@ bot.on("callback_query", async(query)=>{
             users[userId].waitingAdminMsg = true;
             saveUsers();
             bot.sendMessage(userId,"✅ Purchase approved.\nAdmin will send reward soon..🥳");
-            bot.sendMessage(adminId,"Send reward ID ${chatId}");
+            bot.sendMessage(adminId,"Send reward ID <code>${chatId}</code>`, {
+    parse_mode: "HTML"
+});
         } else {
             users[userId].buyRequest = false;
             saveUsers();
@@ -269,7 +271,7 @@ bot.on("message", async(msg)=>{
     /* ================= USER COMMANDS ================= */
     if(text==="👤 Profile"){
         bot.sendMessage(chatId,
-        `🆔 ${chatId}\n\n👥 Total Referrals: ${user.ref}\n🛒Code Purchased: ${user.purchases}\n\n🎁 My Redeems: ${user.redeems}\n\n📊 Progress: ${user.refProgress}/5`);
+        `🆔 ${chatId}\n\n👥 My Referrals: ${user.ref}\n\n🛒 My Purchases: ${user.purchases}\n\n🎁 My Redeems: ${user.redeems}\n\n📊 Referal Progress: ${user.refProgress}/5`);
     }
 
     if(text==="👥 Refer"){
@@ -378,7 +380,7 @@ bot.on("message", async(msg)=>{
             }
             const u = users[id];
             bot.sendMessage(chatId,
-                `👤 USER PROFILE\n\n🆔 User ID: ${id}\n👥 Total Referrals: ${u.ref}\n📊 Progress: ${u.refProgress}/5\n🛒 Purchases: ${u.purchases}\n🎁 Redeems: ${u.redeems}\n📦 Buy Request: ${u.buyRequest ? "Yes":"No"}\n🎁 Redeem Request: ${u.redeemRequest ? "Yes":"No"}\n📸 Screenshot Uploaded: ${u.screenshot ? "Yes":"No"}\n👤 Referred By: ${u.referredBy || "None"}\nInvited Users:\n${u.invited.length ? u.invited.join(", ") : "None"}`
+                `👤 USER PROFILE\n\n🆔 User ID: ${id}\n👥 Total Referrals: ${u.ref}\n📊 Progress: ${u.refProgress}/5\n🛒 Purchases: ${u.purchases}\n🎁 Redeems: ${u.redeems}\n👤 Referred By: ${u.referredBy || "None"}`
             );
             adminState.mode = null;
             return;
