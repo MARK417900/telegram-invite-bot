@@ -359,7 +359,7 @@ bot.on("message", async(msg)=>{
         if(text === "❌ Cancel"){
             adminState.mode = null;
             adminState.targetUser = null;
-            bot.sendMessage(chatId,"❌ Action cancelled.",{
+            bot.sendMessage(chatId,"",{
                 reply_markup:{
                     keyboard:[
                         ["📊 Status","📢 Broadcast"],
@@ -417,9 +417,18 @@ bot.on("message", async(msg)=>{
 
     });
 
-    bot.sendMessage(chatId,"✅ Broadcast sent to all users.");
-    adminState.mode = null;
-    return;
+    bot.sendMessage(chatId,"✅ Broadcast sent to all users.",{
+    reply_markup:{
+        keyboard:[
+            ["📊 Status","📢 Broadcast"],
+            ["👤 User Info","✉ Msg User"]
+        ],
+        resize_keyboard:true
+    }
+});
+
+adminState.mode = null;
+return;
 }
         /* USER INFO */
         if(text === "👤 User Info"){
