@@ -190,7 +190,47 @@ bot.sendMessage(userId,"❌ Purchase rejected.");
 
 bot.deleteMessage(query.message.chat.id,query.message.message_id).catch(()=>{});
 }
+/* APPROVE REDEEM */
 
+if(data.startsWith("approve_")){
+
+const userId = data.split("_")[1];
+
+if(!ADMIN_IDS.includes(adminId)) return;
+if(!users[userId]) return;
+
+users[userId].redeems += 1;
+users[userId].redeemRequest = false;
+users[userId].refProgress = users[userId].refProgress - 5;
+users[userId].waitingAdminMsg = true;
+
+saveUsers();
+
+bot.sendMessage(userId,"🎉 Redeem approved.\nAdmin sending reward.");
+bot.sendMessage(adminId,"Send reward now.");
+
+bot.deleteMessage(query.message.chat.id,query.message.message_id).catch(()=>{});
+
+}
+
+/* REJECT REDEEM */
+
+if(data.startsWith("reject_")){
+
+const userId = data.split("_")[1];
+
+if(!ADMIN_IDS.includes(adminId)) return;
+if(!users[userId]) return;
+
+users[userId].redeemRequest = false;
+
+saveUsers();
+
+bot.sendMessage(userId,"❌ Redeem request rejected.");
+
+bot.deleteMessage(query.message.chat.id,query.message.message_id).catch(()=>{});
+
+}
 });
 
 /* MESSAGE HANDLER */
@@ -349,7 +389,7 @@ targetUser: null
 
 function showAdminMenu(chatId){
 
-bot.sendMessage(chatId,{
+bot.sendMessage(chatId,"👑 ADMIN PANEL",{
 reply_markup:{
 keyboard:[
 ["📊 Status","📢 Broadcast"],
@@ -366,7 +406,6 @@ resize_keyboard:true
 bot.onText(/\/admin/, (msg)=>{
 
 const chatId = msg.chat.id;
-bot.sendMessage(chatId,"👑 ADMIN PANEL");
 if(!ADMIN_IDS.includes(chatId)) return;
 
 showAdminMenu(chatId);
@@ -390,8 +429,6 @@ adminState.mode = null;
 adminState.targetUser = null;
 
 bot.sendMessage(chatId,"❌ Action cancelled.");
-
-showAdminMenu(chatId);
 
 return;
 
@@ -447,8 +484,6 @@ bot.sendMessage(id,text).catch(()=>{});
 bot.sendMessage(chatId,"✅ Broadcast sent.");
 
 adminState.mode = null;
-
-showAdminMenu(chatId);
 
 return;
 
@@ -509,8 +544,6 @@ ${u.invited.length ? u.invited.join(", ") : "None"}
 
 adminState.mode = null;
 
-showAdminMenu(chatId);
-
 return;
 
 }
@@ -568,7 +601,6 @@ bot.sendMessage(chatId,"✅ Message sent to user.");
 adminState.mode = null;
 adminState.targetUser = null;
 
-showAdminMenu(chatId);
 
 return;
 
