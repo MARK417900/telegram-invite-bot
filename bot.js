@@ -133,63 +133,74 @@ resize_keyboard:true
 });
 }
 
-/* BUY HOTYA */
-if(data==="Hotya_CODE"){
-users[chatId].buyRequest=true;
-users[chatId].buyType="Hotya";
-saveUsers();
+/* ================= BUY FLOW ================= */
 
-bot.sendMessage(chatId,
-"🔥 Hotya Code\nSend payment screenshot after payment.");
-}
+/* Single QR per code type */
+const QR_CODES = {
+  Hotya: "YOUR_HOTYA_QR_FILE_ID",
+  GOSH: "YOUR_GOSH_QR_FILE_ID"
+};
 
-/* BUY GOSH */
-if(data==="GOSH_CODE"){
-users[chatId].buyRequest=true;
-users[chatId].buyType="GOSH";
-saveUsers();
+/* CALLBACKS FOR BUY */
+bot.on("callback_query", async (query)=>{
+  const chatId = query.message.chat.id;
+  const data = query.data;
+  const adminId = query.from.id;
 
-bot.sendMessage(chatId,
-"⚡ GOSH Code\nSend payment screenshot after payment.");
-}
+  bot.answerCallbackQuery(query.id);
 
-/* APPROVE PURCHASE */
-if(data.startsWith("buyapprove_")){
+  /* SELECT HOTYA */
+  if(data === "buy_hotya" || data === "buy_gosh"){
+    const codeType = data === "buy_hotya" ? "Hotya" : "GOSH";
+    users[chatId].buyType = codeType;
+    users[chatId].buyStep = "payment";
+    users[chatId].buyRequest = true;
+    saveUsers();
 
-const userId=data.split("_")[1];
+    const qr = QR_CODES[codeType];
 
-if(!ADMIN_IDS.includes(adminId)) return;
+    bot.sendPhoto(chatId, qr, {
+      caption: `💳 Please pay for ${codeType} code.\nAfter payment, click "📤 Upload Screenshot" to send payment proof.`,
+      reply_markup: {
+        keyboard: [
+          ["📤 Upload Screenshot"],
+          ["❌ Cancel"]
+        ],
+        resize_keyboard: true
+      }
+    });
+  }
 
-users[userId].purchases++;
-users[userId].orderStatus="Approved";
-users[userId].buyRequest=false;
-users[userId].waitingAdminMsg=true;
+  /* ADMIN APPROVE PURCHASE */
+  if(data.startsWith("buyapprove_")){
+    const userId = data.split("_")[1];
 
-saveUsers();
+    if(!ADMIN_IDS.includes(adminId)) return;
 
-bot.sendMessage(userId,"✅ Purchase approved.\nAdmin sending reward.");
-bot.sendMessage(adminId,"Send reward now.");
+    users[userId].buyRequest = false;
+    users[userId].waitingAdminMsg = true;
+    saveUsers();
 
-bot.deleteMessage(query.message.chat.id,query.message.message_id).catch(()=>{});
+    bot.sendMessage(userId,"✅ Purchase approved.\nAdmin will send reward now.");
+    bot.sendMessage(adminId,"Send reward (photo + text) now.");
 
-}
+    bot.deleteMessage(query.message.chat.id,query.message.message_id).catch(()=>{});
+  }
 
-/* REJECT PURCHASE */
-if(data.startsWith("buyreject_")){
+  /* ADMIN REJECT PURCHASE */
+  if(data.startsWith("buyreject_")){
+    const userId = data.split("_")[1];
 
-const userId=data.split("_")[1];
+    if(!ADMIN_IDS.includes(adminId)) return;
 
-if(!ADMIN_IDS.includes(adminId)) return;
+    users[userId].buyRequest = false;
+    saveUsers();
 
-users[userId].buyRequest=false;
-users[userId].orderStatus="Rejected";
+    bot.sendMessage(userId,"❌ Purchase rejected.");
 
-saveUsers();
-
-bot.sendMessage(userId,"❌ Purchase rejected.");
-
-bot.deleteMessage(query.message.chat.id,query.message.message_id).catch(()=>{});
-}
+    bot.deleteMessage(query.message.chat.id,query.message.message_id).catch(()=>{});
+  }
+});
 /* APPROVE REDEEM */
 
 if(data.startsWith("approve_")){
@@ -268,31 +279,30 @@ if(text.startsWith("/")) return;
 
 /* RECEIVE SCREENSHOT */
 if(msg.photo && user.buyRequest){
+  const fileId = msg.photo[msg.photo.length-1].file_id;
 
-const fileId = msg.photo[msg.photo.length-1].file_id;
+  user.screenshot=fileId;
+  user.orderStatus="Submitted";
 
-user.screenshot=fileId;
-user.orderStatus="Submitted";
+  saveUsers();
 
-saveUsers();
+  bot.sendMessage(chatId,"✅ Screenshot received.");
 
-bot.sendMessage(chatId,"✅ Screenshot received.");
-
-ADMIN_IDS.forEach(admin=>{
-bot.sendPhoto(admin,fileId,{
-caption:`🛒 Purchase Request
+  ADMIN_IDS.forEach(admin=>{
+    bot.sendPhoto(admin,fileId,{
+      caption:`🛒 Purchase Request
 User: ${chatId}
 Type: ${user.buyType}`,
-reply_markup:{
-inline_keyboard:[
-[
-{ text:"✅ Approve", callback_data:`buyapprove_${chatId}`},
-{ text:"❌ Reject", callback_data:`buyreject_${chatId}`}
-]
-]
-}
-});
-});
+      reply_markup:{
+        inline_keyboard:[
+          [
+            { text:"✅ Approve", callback_data:`buyapprove_${chatId}`},
+            { text:"❌ Reject", callback_data:`buyreject_${chatId}`}
+          ]
+        ]
+      }
+    });
+  });
 }
 
 /* PROFILE */
@@ -363,20 +373,18 @@ bot.sendMessage(chatId,"Contact support: @Mark41_helperBot");
 }
 
 /* BUY MENU */
-if(text==="🛒 Buy Code"){
+if(text === "🛒 Buy Code"){
 
-bot.sendMessage(chatId,"Select code:",{
+bot.sendMessage(chatId,"Select Code:",{
 reply_markup:{
 inline_keyboard:[
-[{text:"🔥 Hotya",callback_data:"Hotya_CODE"}],
-[{text:"⚡ GOSH",callback_data:"GOSH_CODE"}]
+[{text:"🔥 Hotya",callback_data:"buy_hotya"}],
+[{text:"⚡ GOSH",callback_data:"buy_gosh"}]
 ]
 }
 });
 
 }
-
-});
 
 /* ================= ADMIN PANEL SYSTEM ================= */
 
