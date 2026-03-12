@@ -130,8 +130,8 @@ bot.on("callback_query", async(query)=>{
 
     /* ================= BUY FLOW ================= */
     const QR_CODES = {
-        Hotya: "YOUR_HOTYA_QR_FILE_ID",
-        GOSH: "YOUR_GOSH_QR_FILE_ID"
+        Hotya: "paymentQR.jpg",
+        GOSH: "paymentQR.jpg"
     };
 
     /* SELECT CODE */
