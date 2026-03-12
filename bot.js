@@ -273,33 +273,47 @@ bot.sendMessage(chatId,`Invite friends\n${link}`);
 }
 
 /* REDEEM */
+
 if(text==="🎁 Redeem"){
-user.refProgress=5;//temperory for test
-if(user.refProgress<5){
-bot.sendMessage(chatId,"❌ Need 5 referrals.");
+
+if(user.refProgress < 5){
+bot.sendMessage(chatId,"❌ Need 5 referrals to redeem.");
 return;
 }
 
-user.redeemRequest=true;
+user.redeemRequest = true;
 saveUsers();
 
 ADMIN_IDS.forEach(admin=>{
+
 bot.sendMessage(admin,
-`🎁 Redeem Request
-User: ${chatId}`,
+`🎁 REDEEM REQUEST
+
+👤 User ID: ${chatId}
+
+👥 Total Referrals: ${user.ref}
+📊 Progress: ${user.refProgress}/5
+
+🛒 Purchases: ${user.purchases}
+🎁 Previous Redeems: ${user.redeems}
+
+Invited:
+${user.invited.length ? user.invited.join(", ") : "None"}
+`,
 {
 reply_markup:{
 inline_keyboard:[
 [
-{ text:"✅ Approve", callback_data:`approve_${chatId}`},
-{ text:"❌ Reject", callback_data:`reject_${chatId}`}
+{ text:"✅ Approve", callback_data:`approve_${chatId}` },
+{ text:"❌ Reject", callback_data:`reject_${chatId}` }
 ]
 ]
 }
 });
+
 });
 
-bot.sendMessage(chatId,"✅ Redeem request sent.");
+bot.sendMessage(chatId,"✅ Redeem request sent to admin.");
 
 }
 
