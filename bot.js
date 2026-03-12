@@ -612,4 +612,5 @@ adminState.mode = null;
 adminState.targetUser = null;
 return;
 }
+}
 });
