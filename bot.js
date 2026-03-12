@@ -104,22 +104,8 @@ createUser(chatId);
 
 /* ===== REFERRAL SYSTEM ===== */
 if(referrerId && referrerId != chatId && !users[chatId].referredBy){
-
-    if(users[referrerId]){
-
-        users[chatId].referredBy = referrerId;
-
-        users[referrerId].ref += 1;          // total referrals
-        users[referrerId].refProgress += 1;  // progress for redeem
-        users[referrerId].invited.push(chatId);
-
-        bot.sendMessage(referrerId,
-            `🎉 New Referral Joined!\n\n👤 User: ${chatId}\n📊 Progress: ${users[referrerId].refProgress}/5`
-        );
-
-    }
+    users[chatId].tempRef = referrerId;
 }
-
 saveUsers();
 
     const buttons = [
@@ -145,23 +131,49 @@ bot.on("callback_query", async(query)=>{
 
     /* JOIN CHECK */
     if(data==="check_join"){
-        const joined = await checkMembership(chatId);
-        if(!joined){
-            bot.sendMessage(chatId,"❌ Join all channels first.");
-            return;
+    const joined = await checkMembership(chatId);
+
+    if(!joined){
+        bot.sendMessage(chatId,"❌ Join all channels first.");
+        return;
+    }
+
+    const user = users[chatId];
+
+    if(user.tempRef && !user.referredBy){
+
+        const referrerId = user.tempRef;
+
+        if(users[referrerId]){
+
+            user.referredBy = referrerId;
+
+            users[referrerId].ref += 1;
+            users[referrerId].refProgress += 1;
+            users[referrerId].invited.push(chatId);
+
+            bot.sendMessage(referrerId,
+                `🎉 New Referral Joined!\n\n👤 User: ${chatId}\n📊 Progress: ${users[referrerId].refProgress}/5`
+            );
+
         }
 
-        bot.sendMessage(chatId,"✅ Access Granted!",{
-            reply_markup:{
-                keyboard:[
-                    ["👤 Profile","👥 Refer"],
-                    ["🎁 Redeem","Help ❓"],
-                    ["🛒 Buy Code"]
-                ],
-                resize_keyboard:true
-            }
-        });
+        user.tempRef = null;
+
+        saveUsers();
     }
+
+    bot.sendMessage(chatId,"✅ Access Granted!",{
+        reply_markup:{
+            keyboard:[
+                ["👤 Profile","👥 Refer"],
+                ["🎁 Redeem","Help ❓"],
+                ["🛒 Buy Code"]
+            ],
+            resize_keyboard:true
+        }
+    });
+}
 
     /* ================= BUY FLOW ================= */
     const QR_CODES = {
