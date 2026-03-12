@@ -326,8 +326,16 @@ bot.on("message", async(msg)=>{
         user.screenshot=fileId;
         user.orderStatus="Submitted";
         saveUsers();
-        bot.sendMessage(chatId,"✅ Screenshot received.");
-
+        bot.sendMessage(chatId,"✅ Screenshot received.\nAdmin will review your payment.",{
+    reply_markup:{
+        keyboard:[
+            ["👤 Profile","👥 Refer"],
+            ["🎁 Redeem","Help ❓"],
+            ["🛒 Buy Code"]
+        ],
+        resize_keyboard:true
+    }
+});
         ADMIN_IDS.forEach(admin=>{
             bot.sendPhoto(admin,fileId,{
                 caption:`🛒 Purchase Request\nUser: ${chatId}\nType: ${user.buyType}`,
@@ -355,28 +363,38 @@ bot.on("message", async(msg)=>{
     }
 
     if(text==="🎁 Redeem"){
-        if(user.refProgress < 5){
-            bot.sendMessage(chatId,"❌ Need 5 referrals to redeem.");
-            return;
-        }
-        user.redeemRequest = true;
-        saveUsers();
-        ADMIN_IDS.forEach(admin=>{
-            bot.sendMessage(admin,
-                `🎁 REDEEM REQUEST\n👤 User ID: ${chatId}\n\n👥 Total Referrals: ${user.ref}\n📊 Progress: ${user.refProgress}/5\n\n🛒 Purchases: ${user.purchases}\n🎁 Previous Redeems: ${user.redeems}\n\nInvited:\n${user.invited.length ? user.invited.join(", ") : "None"}`,
-                {
-                    reply_markup:{
-                        inline_keyboard:[
-                            [
-                                { text:"✅ Approve", callback_data:`approve_${chatId}` },
-                                { text:"❌ Reject", callback_data:`reject_${chatId}` }
-                            ]
-                        ]
-                    }
-                });
-        });
-        bot.sendMessage(chatId,"✅ Redeem request sent to admin.");
+     user.refProgress = 5; 
+    if(user.refProgress < 5){
+        bot.sendMessage(chatId,"❌ Need 5 referrals to redeem.");
+        return;
     }
+
+    /* PREVENT MULTIPLE REQUESTS */
+    if(user.redeemRequest){
+        bot.sendMessage(chatId,"⚠️ Redeem request already submitted.\nPlease wait for admin approval.");
+        return;
+    }
+
+    user.redeemRequest = true;
+    saveUsers();
+
+    ADMIN_IDS.forEach(admin=>{
+        bot.sendMessage(admin,
+            `🎁 REDEEM REQUEST\n👤 User ID: ${chatId}\n\n👥 Total Referrals: ${user.ref}\n📊 Progress: ${user.refProgress}/5\n\n🛒 Purchases: ${user.purchases}\n🎁 Previous Redeems: ${user.redeems}`,
+            {
+                reply_markup:{
+                    inline_keyboard:[
+                        [
+                            { text:"✅ Approve", callback_data:`approve_${chatId}` },
+                            { text:"❌ Reject", callback_data:`reject_${chatId}` }
+                        ]
+                    ]
+                }
+            });
+    });
+
+    bot.sendMessage(chatId,"✅ Redeem request sent to admin.");
+}
 
     if(text==="Help ❓"){
         bot.sendMessage(chatId,"Contact support: @Mark41_helperBot");
