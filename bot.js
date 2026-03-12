@@ -67,6 +67,8 @@ function createUser(id){
             refProgress:0,
             redeems:0,
             purchases:0,
+            buyQty:0,
+            buyPrice:0,
             redeemRequest:false,
             buyRequest:false,
             buyRefs:0,
@@ -182,21 +184,72 @@ bot.on("callback_query", async(query)=>{
     };
 
     /* SELECT CODE */
-    if(data === "buy_hotya" || data === "buy_gosh"){
-        const codeType = data === "buy_hotya" ? "Hotya" : "GOSH";
-        users[chatId].buyType = codeType;
-        users[chatId].buyStep = "payment";
-        users[chatId].buyRequest = true;
-        saveUsers();
+if(data === "buy_hotya" || data === "buy_gosh"){
 
-        const qr = QR_CODES[codeType];
+    const codeType = data === "buy_hotya" ? "Hotya" : "GOSH";
 
-        bot.sendPhoto(chatId, qr, {
-            caption: `Price ₹20/Referal.\n\nAfter payment, Upload Screenshot for payment proof.`,
-            reply_markup:{keyboard:[["❌ Cancel"]], resize_keyboard:true}
-        });
+    users[chatId].buyType = codeType;
+    users[chatId].buyStep = "select_qty";
+    saveUsers();
+
+    bot.sendMessage(chatId,
+`🛒 ${codeType} Purchase
+
+Select quantity:`,
+{
+    reply_markup:{
+        inline_keyboard:[
+            [
+                {text:"1",callback_data:"qty_1"},
+                {text:"2",callback_data:"qty_2"},
+                {text:"5",callback_data:"qty_5"},
+                {text:"10",callback_data:"qty_10"}
+            ]
+        ]
     }
+});
+}
+/* SELECT QUANTITY */
+if(data.startsWith("qty_")){
 
+    const qty = parseInt(data.split("_")[1]);
+    const user = users[chatId];
+
+    if(!user.buyType) return;
+
+    let price = 0;
+
+    if(qty === 1) price = 20;
+    if(qty === 2) price = 30;
+    if(qty === 5) price = 70;
+    if(qty === 10) price = 100;
+
+    user.buyQty = qty;
+    user.buyPrice = price;
+    user.buyRequest = true;
+    user.buyStep = "payment";
+
+    saveUsers();
+
+    const qr = QR_CODES[user.buyType];
+
+    bot.sendPhoto(chatId, qr,{
+        caption:
+`🛒 Purchase Summary
+
+Code: ${user.buyType}
+Quantity: ${qty}
+Total Price: ₹${price}
+
+💳 Pay using this QR and upload payment screenshot.
+
+⚠️ Price is non-refundable.`,
+        reply_markup:{
+            keyboard:[["❌ Cancel"]],
+            resize_keyboard:true
+        }
+    });
+            }
     /* ADMIN APPROVE/REJECT PURCHASE */
     if(data.startsWith("buyapprove_") || data.startsWith("buyreject_")){
         const userId = data.split("_")[1];
@@ -338,7 +391,11 @@ bot.on("message", async(msg)=>{
 });
         ADMIN_IDS.forEach(admin=>{
             bot.sendPhoto(admin,fileId,{
-                caption:`🛒 Purchase Request\nUser: ${chatId}\nType: ${user.buyType}`,
+                caption:`🛒 Purchase Request
+                User: ${chatId}
+                 Code: ${user.buyType}
+                Quantity: ${user.buyQty}
+                Price: ₹${user.buyPrice}`,
                 reply_markup:{
                     inline_keyboard:[
                         [
