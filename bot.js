@@ -275,7 +275,7 @@ bot.sendMessage(chatId,`Invite friends\n${link}`);
 /* REDEEM */
 
 if(text==="🎁 Redeem"){
-
+user.refProgress = 5; //temperory redeem for test
 if(user.refProgress < 5){
 bot.sendMessage(chatId,"❌ Need 5 referrals to redeem.");
 return;
@@ -349,7 +349,7 @@ targetUser: null
 
 function showAdminMenu(chatId){
 
-bot.sendMessage(chatId,"👑 ADMIN PANEL",{
+bot.sendMessage(chatId,{
 reply_markup:{
 keyboard:[
 ["📊 Status","📢 Broadcast"],
@@ -366,7 +366,7 @@ resize_keyboard:true
 bot.onText(/\/admin/, (msg)=>{
 
 const chatId = msg.chat.id;
-
+bot.sendMessage(chatId,"👑 ADMIN PANEL");
 if(!ADMIN_IDS.includes(chatId)) return;
 
 showAdminMenu(chatId);
