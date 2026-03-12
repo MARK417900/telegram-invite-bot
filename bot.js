@@ -180,9 +180,7 @@ bot.on("callback_query", async(query)=>{
             users[userId].waitingAdminMsg = true;
             saveUsers();
             bot.sendMessage(userId,"✅ Purchase approved.\nAdmin will send reward soon..🥳");
-            bot.sendMessage(adminId,"Send reward ID <code>${chatId}</code>`, {
-    parse_mode: "HTML"
-});
+            bot.sendMessage(adminId,"Send reward Purchased Code");
         } else {
             users[userId].buyRequest = false;
             saveUsers();
