@@ -278,7 +278,6 @@ bot.on("message", async(msg)=>{
     }
 
     if(text==="🎁 Redeem"){
-        user.refProgress = 5; // temporary for test
         if(user.refProgress < 5){
             bot.sendMessage(chatId,"❌ Need 5 referrals to redeem.");
             return;
