@@ -95,17 +95,32 @@ async function checkMembership(userId){
 }
 
 /* START */
-bot.onText(/\/start(?: (.+))?/, async(msg,match)=>{
-    const chatId = msg.chat.id;
-    const referrerId = match[1];
+bot.onText(/\/start(?: (.+))?/, async (msg, match) => {
 
-    createUser(chatId);
+const chatId = msg.chat.id;
+const referrerId = match[1];
 
-    if(referrerId && referrerId!=chatId && !users[chatId].referredBy){
+createUser(chatId);
+
+/* ===== REFERRAL SYSTEM ===== */
+if(referrerId && referrerId != chatId && !users[chatId].referredBy){
+
+    if(users[referrerId]){
+
         users[chatId].referredBy = referrerId;
-    }
 
-    saveUsers();
+        users[referrerId].ref += 1;          // total referrals
+        users[referrerId].refProgress += 1;  // progress for redeem
+        users[referrerId].invited.push(chatId);
+
+        bot.sendMessage(referrerId,
+            `🎉 New Referral Joined!\n\n👤 User: ${chatId}\n📊 Progress: ${users[referrerId].refProgress}/5`
+        );
+
+    }
+}
+
+saveUsers();
 
     const buttons = [
         [
@@ -178,6 +193,7 @@ bot.on("callback_query", async(query)=>{
         if(data.startsWith("buyapprove_")){
             users[userId].buyRequest = false;
             users[userId].waitingAdminMsg = true;
+            users[userId].purchases += 1; 
             saveUsers();
             bot.sendMessage(userId,"✅ Purchase approved.\nAdmin will send reward soon..🥳");
             bot.sendMessage(adminId,"Send reward Purchased Code");
