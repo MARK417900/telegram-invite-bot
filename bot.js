@@ -166,12 +166,7 @@ bot.on("callback_query", async(query)=>{
 
         bot.sendPhoto(chatId, qr, {
             caption: `Price ₹20/Referal.\n\nAfter payment, Upload Screenshot for payment proof.`,
-            reply_markup: {
-                keyboard: [
-                    ["❌ Cancel"]
-                ],
-                resize_keyboard: true
-            }
+            reply_markup:{keyboard:[["❌ Cancel"]], resize_keyboard:true}
         });
     }
 
