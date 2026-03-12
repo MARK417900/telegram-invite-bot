@@ -324,80 +324,241 @@ inline_keyboard:[
 
 });
 
-/* ADMIN PANEL */
-bot.onText(/\/admin/,msg=>{
+/* ================= ADMIN PANEL SYSTEM ================= */
 
-const chatId=msg.chat.id;
-if(!ADMIN_IDS.includes(chatId)) return;
+let adminState = {
+mode: null,
+targetUser: null
+};
 
-bot.sendMessage(chatId,
-"👑 ADMIN PANEL",{
+/* ADMIN MENU FUNCTION */
+
+function showAdminMenu(chatId){
+
+bot.sendMessage(chatId,"👑 ADMIN PANEL",{
 reply_markup:{
 keyboard:[
 ["📊 Status","📢 Broadcast"],
-["👤 User Info"]
+["👤 User Info","✉ Msg User"]
 ],
 resize_keyboard:true
 }
 });
-});
 
-/* ADMIN COMMANDS */
-bot.on("message",msg=>{
+}
 
-const chatId=msg.chat.id;
-const text=msg.text || "";
+/* OPEN ADMIN PANEL */
+
+bot.onText(/\/admin/, (msg)=>{
+
+const chatId = msg.chat.id;
 
 if(!ADMIN_IDS.includes(chatId)) return;
 
-/* STATUS */
-if(text==="📊 Status"){
+showAdminMenu(chatId);
 
-let totalUsers=Object.keys(users).length;
-let totalPurchases=Object.values(users).reduce((a,b)=>a+b.purchases,0);
-let totalRedeems=Object.values(users).reduce((a,b)=>a+b.redeems,0);
+});
+
+/* ADMIN MESSAGE HANDLER */
+
+bot.on("message",(msg)=>{
+
+const chatId = msg.chat.id;
+const text = msg.text || "";
+
+if(!ADMIN_IDS.includes(chatId)) return;
+
+/* CANCEL BUTTON */
+
+if(text === "❌ Cancel"){
+
+adminState.mode = null;
+adminState.targetUser = null;
+
+bot.sendMessage(chatId,"❌ Action cancelled.");
+
+showAdminMenu(chatId);
+
+return;
+
+}
+
+/* STATUS */
+
+if(text === "📊 Status"){
+
+let totalUsers = Object.keys(users).length;
+
+let totalPurchases = Object.values(users)
+.reduce((sum,u)=>sum+u.purchases,0);
+
+let totalRedeems = Object.values(users)
+.reduce((sum,u)=>sum+u.redeems,0);
 
 bot.sendMessage(chatId,
 `📊 BOT STATUS
 
-👤 Users: ${totalUsers}
-🛒 Purchases: ${totalPurchases}
-🎁 Redeems: ${totalRedeems}`);
+👤 Total Users: ${totalUsers}
+🛒 Total Purchases: ${totalPurchases}
+🎁 Total Redeems: ${totalRedeems}`);
+
 }
 
 /* BROADCAST */
-if(text.startsWith("/broadcast ")){
 
-const message=text.replace("/broadcast ","");
+if(text === "📢 Broadcast"){
 
-Object.keys(users).forEach(id=>{
-bot.sendMessage(id,message).catch(()=>{});
+adminState.mode = "broadcast";
+
+bot.sendMessage(chatId,
+"📢 Send message to broadcast to all users.",{
+reply_markup:{
+keyboard:[["❌ Cancel"]],
+resize_keyboard:true
+}
 });
 
-bot.sendMessage(chatId,"✅ Broadcast sent");
+return;
+
+}
+
+/* PROCESS BROADCAST */
+
+if(adminState.mode === "broadcast"){
+
+Object.keys(users).forEach(id=>{
+bot.sendMessage(id,text).catch(()=>{});
+});
+
+bot.sendMessage(chatId,"✅ Broadcast sent.");
+
+adminState.mode = null;
+
+showAdminMenu(chatId);
+
+return;
+
 }
 
 /* USER INFO */
-if(text.startsWith("/user ")){
 
-const id=text.split(" ")[1];
+if(text === "👤 User Info"){
+
+adminState.mode = "userinfo";
+
+bot.sendMessage(chatId,
+"Send User ID to check profile.",{
+reply_markup:{
+keyboard:[["❌ Cancel"]],
+resize_keyboard:true
+}
+});
+
+return;
+
+}
+
+/* PROCESS USER INFO */
+
+if(adminState.mode === "userinfo"){
+
+const id = text;
 
 if(!users[id]){
-bot.sendMessage(chatId,"❌ User not found");
+bot.sendMessage(chatId,"❌ User not found.");
 return;
 }
 
-const u=users[id];
+const u = users[id];
 
 bot.sendMessage(chatId,
-`👤 USER INFO
+`👤 USER PROFILE
 
-ID: ${id}
+🆔 User ID: ${id}
 
-Referrals: ${u.ref}
-Purchases: ${u.purchases}
-Redeems: ${u.redeems}
-Status: ${u.orderStatus}`);
+👥 Total Referrals: ${u.ref}
+📊 Progress: ${u.refProgress}/5
+
+🛒 Purchases: ${u.purchases}
+🎁 Redeems: ${u.redeems}
+
+📦 Buy Request: ${u.buyRequest ? "Yes":"No"}
+🎁 Redeem Request: ${u.redeemRequest ? "Yes":"No"}
+
+📸 Screenshot Uploaded: ${u.screenshot ? "Yes":"No"}
+
+👤 Referred By: ${u.referredBy || "None"}
+
+Invited Users:
+${u.invited.length ? u.invited.join(", ") : "None"}
+`);
+
+adminState.mode = null;
+
+showAdminMenu(chatId);
+
+return;
+
 }
 
+/* MSG USER STEP 1 */
+
+if(text === "✉ Msg User"){
+
+adminState.mode = "msg_userid";
+
+bot.sendMessage(chatId,
+"Send User ID to message.",{
+reply_markup:{
+keyboard:[["❌ Cancel"]],
+resize_keyboard:true
+}
+});
+
+return;
+
+}
+
+/* GET USER ID */
+
+if(adminState.mode === "msg_userid"){
+
+if(!users[text]){
+bot.sendMessage(chatId,"❌ User not found.");
+return;
+}
+
+adminState.targetUser = text;
+adminState.mode = "msg_send";
+
+bot.sendMessage(chatId,
+"Send message for this user.",{
+reply_markup:{
+keyboard:[["❌ Cancel"]],
+resize_keyboard:true
+}
+});
+
+return;
+
+}
+
+/* SEND MESSAGE */
+
+if(adminState.mode === "msg_send"){
+
+bot.sendMessage(adminState.targetUser,text);
+
+bot.sendMessage(chatId,"✅ Message sent to user.");
+
+adminState.mode = null;
+adminState.targetUser = null;
+
+showAdminMenu(chatId);
+
+return;
+
+}
+
+});
 });
