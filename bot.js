@@ -190,27 +190,29 @@ bot.on("callback_query", async(query)=>{
         bot.deleteMessage(query.message.chat.id,query.message.message_id).catch(()=>{});
     }
 
-    /* APPROVE/REJECT REDEEM */
-    if(data.startsWith("approve_") || data.startsWith("reject_")){
-        const userId = data.split("_")[1];
-        if(!ADMIN_IDS.includes(adminId) || !users[userId]) return;
+/* APPROVE/REJECT REDEEM */
+if(data.startsWith("approve_") || data.startsWith("reject_")){
+    const userId = Number(data.split("_")[1]); // Convert to number
+    if(!ADMIN_IDS.includes(adminId) || !users[userId]) return;
 
-        if(data.startsWith("approve_")){
-            users[userId].redeems += 1;
-            users[userId].redeemRequest = false;
-            users[userId].refProgress -= 5;
-            users[userId].waitingAdminMsg = true;
-            bot.sendMessage(userId,"🎉 Redeem approved.\nAdmin sending reward.");
-            bot.sendMessage(adminId,"Send reward now.");
-        } else {
-            users[userId].redeemRequest = false;
-            bot.sendMessage(userId,"❌ Redeem request rejected.");
-        }
-
+    if(data.startsWith("approve_")){
+        users[userId].redeems += 1;
+        users[userId].redeemRequest = false;
+        users[userId].refProgress = Math.max(0, users[userId].refProgress - 5);
+        users[userId].waitingAdminMsg = true;
         saveUsers();
-        bot.deleteMessage(query.message.chat.id,query.message.message_id).catch(()=>{});
+
+        bot.sendMessage(userId,"🎉 Redeem approved.\nAdmin sending reward.");
+        bot.sendMessage(adminId,"✅ Redeem approved. Send reward now.");
+    } else {
+        users[userId].redeemRequest = false;
+        saveUsers();
+        bot.sendMessage(userId,"❌ Redeem request rejected.");
+        bot.sendMessage(adminId,"✅ Redeem rejected.");
     }
-});
+
+    bot.deleteMessage(query.message.chat.id, query.message.message_id).catch(()=>{});
+}
 
 /* ================= SINGLE MESSAGE HANDLER ================= */
 let adminState = { mode:null, targetUser:null };
@@ -267,7 +269,7 @@ bot.on("message", async(msg)=>{
     /* ================= USER COMMANDS ================= */
     if(text==="👤 Profile"){
         bot.sendMessage(chatId,
-        `🆔 ${chatId}\n👥 Referrals: ${user.ref}\n🛒 Purchases: ${user.purchases}\n🎁 Redeems: ${user.redeems}\n📊 Progress: ${user.refProgress}/5`);
+        `🆔 ${chatId}\n\n👥 Total Referrals: ${user.ref}\n🛒Code Purchased: ${user.purchases}\n\n🎁 My Redeems: ${user.redeems}\n\n📊 Progress: ${user.refProgress}/5`);
     }
 
     if(text==="👥 Refer"){
@@ -285,7 +287,7 @@ bot.on("message", async(msg)=>{
         saveUsers();
         ADMIN_IDS.forEach(admin=>{
             bot.sendMessage(admin,
-                `🎁 REDEEM REQUEST\n\n👤 User ID: ${chatId}\n👥 Total Referrals: ${user.ref}\n📊 Progress: ${user.refProgress}/5\n🛒 Purchases: ${user.purchases}\n🎁 Previous Redeems: ${user.redeems}\nInvited:\n${user.invited.length ? user.invited.join(", ") : "None"}`,
+                `🎁 REDEEM REQUEST\n👤 User ID: ${chatId}\n\n👥 Total Referrals: ${user.ref}\n📊 Progress: ${user.refProgress}/5\n\n🛒 Purchases: ${user.purchases}\n🎁 Previous Redeems: ${user.redeems}\n\nInvited:\n${user.invited.length ? user.invited.join(", ") : "None"}`,
                 {
                     reply_markup:{
                         inline_keyboard:[
