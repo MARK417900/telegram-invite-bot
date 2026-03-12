@@ -274,7 +274,7 @@ bot.sendMessage(chatId,`Invite friends\n${link}`);
 
 /* REDEEM */
 if(text==="🎁 Redeem"){
-
+user.refProgress=5;//temperory for test
 if(user.refProgress<5){
 bot.sendMessage(chatId,"❌ Need 5 referrals.");
 return;
@@ -560,5 +560,4 @@ return;
 
 }
 
-});
 });
