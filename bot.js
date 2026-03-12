@@ -141,13 +141,7 @@ const QR_CODES = {
   GOSH: "YOUR_GOSH_QR_FILE_ID"
 };
 
-/* CALLBACKS FOR BUY */
-bot.on("callback_query", async (query)=>{
-  const chatId = query.message.chat.id;
-  const data = query.data;
-  const adminId = query.from.id;
-
-  bot.answerCallbackQuery(query.id);
+/*FOR BUY */
 
   /* SELECT HOTYA */
   if(data === "buy_hotya" || data === "buy_gosh"){
