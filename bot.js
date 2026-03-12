@@ -428,7 +428,11 @@ if(text === "❌ Cancel"){
 adminState.mode = null;
 adminState.targetUser = null;
 
-bot.sendMessage(chatId,"❌ Action cancelled.");
+bot.sendMessage(chatId,"❌ Action cancelled.",{
+reply_markup:{
+remove_keyboard:true
+}
+});
 
 return;
 
