@@ -359,7 +359,7 @@ bot.on("message", async(msg)=>{
         if(text === "❌ Cancel"){
             adminState.mode = null;
             adminState.targetUser = null;
-            bot.sendMessage(chatId,"",{
+            bot.sendMessage(chatId,"Action Cancle ❌",{
                 reply_markup:{
                     keyboard:[
                         ["📊 Status","📢 Broadcast"],
