@@ -430,7 +430,11 @@ adminState.targetUser = null;
 
 bot.sendMessage(chatId,"❌ Action cancelled.",{
 reply_markup:{
-remove_keyboard:true
+keyboard:[
+["📊 Status","📢 Broadcast"],
+["👤 User Info","✉ Msg User"]
+],
+resize_keyboard:true
 }
 });
 
