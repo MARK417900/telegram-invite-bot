@@ -613,5 +613,3 @@ adminState.targetUser = null;
 return;
 }
 });
-
-});
