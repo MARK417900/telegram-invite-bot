@@ -128,7 +128,6 @@ bot.on("callback_query", async(query)=>{
     const chatId = query.message.chat.id;
     const data = query.data;
     const adminId = query.from.id;
- bot.answerCallbackQuery(query.id).catch(()=>{});
     /* JOIN CHECK */
     if(data==="check_join"){
 const joined = await checkMembership(chatId);
