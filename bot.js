@@ -129,16 +129,19 @@ bot.on("callback_query", async(query)=>{
     const data = query.data;
     const adminId = query.from.id;
 
-    bot.answerCallbackQuery(query.id);
-
     /* JOIN CHECK */
     if(data==="check_join"){
-    const joined = await checkMembership(chatId);
+const joined = await checkMembership(chatId);
 
-    if(!joined){
-        bot.sendMessage(chatId,"❌ Join all channels first.");
-        return;
-    }
+if(!joined){
+
+bot.answerCallbackQuery(query.id,{
+text:"❌ Please join all channels first.",
+show_alert:true
+});
+
+return;
+}
 
     const user = users[chatId];
 
@@ -308,7 +311,7 @@ After payment, send the payment screenshot here. & screenshot must contains UTR
 Your purchase has been approved.🥳
 
 🎁 Admin will send your code soon..`);
-            bot.sendMessage(adminId,"Send the purchased code to the user now.");
+            bot.sendMessage(adminId,`Send the purchased code to ID: <code>${userId}</code>`,{parse_mode:"HTML"}`);
         } else {
             users[userId].buyRequest = false;
             saveUsers();
@@ -337,7 +340,8 @@ if(data.startsWith("approve_") || data.startsWith("reject_")){
         bot.sendMessage(userId,`🎉 Redeem Approved!
 
 Your reward is being sent by the admin.`);
-        bot.sendMessage(adminId,"✅ Redeem approved. Send reward now.");
+        bot.sendMessage(adminId,`✅ Redeem approved. Send reward to ID: <code>${userId}</code>`,
+{parse_mode:"HTML"});
     } else {
         users[userId].redeemRequest = false;
         saveUsers();
@@ -412,7 +416,9 @@ bot.on("message", async(msg)=>{
         users[pendingUser].waitingAdminMsg=false;
         saveUsers();
 
-        bot.sendMessage(chatId,"✅ Reward sent.",{
+        bot.sendMessage(chatId,
+`✅ Reward sent successfully to ID: <code>${pendingUser}</code>`,
+{parse_mode:"HTML",
             reply_markup:{
                 keyboard:[
                     ["📊 Status","📢 Broadcast"],
