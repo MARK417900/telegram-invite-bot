@@ -449,22 +449,15 @@ bot.sendMessage(chatId,
 
 🆔 <b>User ID:</b> <code>${chatId}</code>
 
-━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📦 <b>Activity</b>
 🛒 Purchases : ${user.purchases}
 🎁 Redeems : ${user.redeems}
-
-━━━━━━━━━━━━━━
-
-👥 <b>Referral System</b>
 Total Referrals : ${user.ref}
 
-📊 Progress
+📊 Referal Progress
 ${bar} ${progress}/4
 
-🎯 Invite <b>4 friends</b> to unlock reward 🎁`,
-{parse_mode:"HTML"});
 }
     if(text==="👥 Refer"){
         const link=`https://t.me/${botUsername}?start=${chatId}`;
@@ -499,13 +492,11 @@ bot.sendMessage(chatId,
 
 You need <b>${refLeft} more referrals</b> to unlock your reward.
 
-━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 📊 <b>Referral Progress</b>
 
 ${bar} ${user.refProgress}/4
-
-━━━━━━━━━━━━━━
 
 👥 <b>Option 1 (Free)</b>
 Invite friends using your referral link.
@@ -515,8 +506,7 @@ Buy any code and get <b>+1 referral bonus</b> instantly.
 
 🚀 Unlock redeem faster without waiting for friends.
 
-━━━━━━━━━━━━━━
-
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
 💡 <i>Tip: Share your link in groups to get referrals quickly.</i>`,
 { parse_mode:"HTML" }
 );
