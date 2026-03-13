@@ -444,20 +444,14 @@ if(progress==3) bar="██████░░░░";
 if(progress>=4) bar="██████████";
 
 bot.sendMessage(chatId,
-`👤 <b>Your Profile</b>
-
-🆔 <b>User ID:</b> <code>${chatId}</code>
-
-━━━━━━━━━━━━━━━━━━━━
+`      👤 <b>Your Profile</b>
+ <b>User ID:</b> <code>${chatId}</code>
 
 🛒 <b>Purchases :</b> ${user.purchases}
 🎁 <b>Redeems :</b> ${user.redeems}
 👥 <b>Total Referrals :</b> ${user.ref}
 
-━━━━━━━━━━━━━━━━━━━━
-
 📊 <b>Referral Progress</b>
-
 ${bar} ${progress}/4
 `,
 {parse_mode:"HTML"});
@@ -496,8 +490,7 @@ bot.sendMessage(chatId,
 
 You need <b>${refLeft} more referrals</b> to unlock your reward.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
+━━━━━━━━━━━━━━━━━━━━
 📊 <b>Referral Progress</b>
 
 ${bar} ${user.refProgress}/4
@@ -510,7 +503,7 @@ Buy any code and get <b>+1 referral bonus</b> instantly.
 
 🚀 Unlock redeem faster without waiting for friends.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━
 💡 <i>Tip: Share your link in groups to get referrals quickly.</i>`,
 { parse_mode:"HTML" }
 );
