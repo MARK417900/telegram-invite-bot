@@ -196,21 +196,7 @@ parse_mode:"Markdown"
 });
 
             }
-    // BACK BUTTON FOR HELP
-if(data === "help_back"){
-
-bot.sendMessage(chatId,"⬅ Back to main menu",{
-reply_markup:{
-keyboard:[
-["👤 Profile","👥 Refer"],
-["🎁 Redeem","Help ❓"],
-["🛒 Buy Code"]
-],
-resize_keyboard:true
-}
-});
-
-}
+    
     /* ================= BUY FLOW ================= */
     const QR_CODES = {
         Hotya: "paymentQR.jpg",
@@ -580,8 +566,7 @@ inline_keyboard:[
 { text:"👥 Community", url:"https://t.me/Marks_community"}
 ],
 [
-{ text:"💬 Contact Support", url:"https://t.me/Mark41_helperBot"},
-{ text:"🔙 Back", callback_data:"help_back"}
+{ text:"💬 Contact Support", url:"https://t.me/Mark41_helperBot"}
 ]
 ]
 }
