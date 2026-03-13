@@ -446,8 +446,7 @@ Your order has been submitted for review.🥳
 });
         ADMIN_IDS.forEach(admin=>{
             bot.sendPhoto(admin,fileId,{
-                caption:`
-                🛒 Purchase Request
+                caption:`🛒 Purchase Request
                 User ID: <code>${chatId}</code>
                 Code: ${user.buyType}
                 Quantity: ${user.buyQty}
