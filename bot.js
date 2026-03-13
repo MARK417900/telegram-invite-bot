@@ -504,7 +504,7 @@ ${link}
 
     if(text==="🎁 Redeem"){
 
-const REQUIRED_REFERRALS = 1;
+const REQUIRED_REFERRALS = 4;
 const refLeft = REQUIRED_REFERRALS - user.refProgress;
 
 /* PROGRESS BAR */
