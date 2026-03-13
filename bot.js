@@ -471,10 +471,10 @@ ${bar} ${progress}/4
 }
     if(text==="👥 Refer"){
         const link=`https://t.me/${botUsername}?start=${chatId}`;
-        bot.sendMessage(chatId,`<b> Invite Friends & Earn Rewards 🥳!</b>
+        bot.sendMessage(chatId,`Invite Friends & Earn Rewards 🥳!
 
 🎁 Your referral Link 
-${link},{ parse_mode:"HTML" }
+${link}
 
 `);
     }
