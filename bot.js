@@ -204,7 +204,7 @@ if(data === "buy_hotya" || data === "buy_gosh"){
     bot.sendMessage(chatId,
 `🛒 ${codeType} Code Purchase
 
-Select how many codes you want to buy. ???`,
+Select Quantity that you wants  to purchase.`,
 {
     reply_markup:{
         inline_keyboard:[
@@ -335,9 +335,7 @@ bot.on("message", async(msg)=>{
     user.orderStatus = null;
     saveUsers();
 
-    bot.sendMessage(chatId,`❌ Order Cancelled
-
-Your purchase process has been cancelled.💔`,{
+    bot.sendMessage(chatId,`Order Cancelled 💔`,{
         reply_markup:{
             keyboard:[
                 ["👤 Profile","👥 Refer"],
@@ -419,10 +417,10 @@ Your order has been submitted for review.🥳
         ADMIN_IDS.forEach(admin=>{
             bot.sendPhoto(admin,fileId,{
                 caption:`🛒 Purchase Request
-                User: ${chatId}
+                User ID: <code>${chatId}</code>
                  Code: ${user.buyType}
                 Quantity: ${user.buyQty}
-                Price: ₹${user.buyPrice}`,
+                Price: ₹${user.buyPrice}`,parse_mode:"HTML",
                 reply_markup:{
                     inline_keyboard:[
                         [
@@ -438,9 +436,7 @@ Your order has been submitted for review.🥳
     /* ================= USER COMMANDS ================= */
     if(text==="👤 Profile"){
         bot.sendMessage(chatId,
-        `👤 Your Profile
-
-User ID: ${chatId}
+        `👤 User ID: ${chatId}
 
 🎁 Redeems: ${user.redeems}
 
@@ -454,6 +450,7 @@ User ID: ${chatId}
     if(text==="👥 Refer"){
         const link=`https://t.me/${botUsername}?start=${chatId}`;
         bot.sendMessage(chatId,` Invite Friends & Earn Rewards 🥳!
+Your referral Link 
 ${link}
 
 🎁 Every successful referral increases your redeem progress by +1.
@@ -494,7 +491,7 @@ This helps you unlock redeem faster 🚀 without waiting for friends.`
 
     ADMIN_IDS.forEach(admin=>{
         bot.sendMessage(admin,
-            `🎁 REDEEM REQUEST\n👤 User ID: ${chatId}\n\n👥 Total Referrals: ${user.ref}\n📊 Progress: ${user.refProgress}/4\n\n🛒 Purchases: ${user.purchases}\n🎁 Previous Redeems: ${user.redeems}`,
+            `🎁 REDEEM REQUEST\n👤 User ID: <code>${chatId}</code>\n\n👥 Total Referrals: ${user.ref}\n📊 Progress: ${user.refProgress}/4\n\n🛒 Purchases: ${user.purchases}\n🎁 Previous Redeems: ${user.redeems}`,parse_mode:"HTML",
             {
                 reply_markup:{
                     inline_keyboard:[
@@ -554,7 +551,7 @@ This helps you unlock redeem faster 🚀 without waiting for friends.`
             let totalPurchases = Object.values(users).reduce((sum,u)=>sum+u.purchases,0);
             let totalRedeems = Object.values(users).reduce((sum,u)=>sum+u.redeems,0);
             bot.sendMessage(chatId,
-                `📊 BOT STATUS\n\n👤 Total Users: ${totalUsers}\n🛒 Total Purchases: ${totalPurchases}\n🎁 Total Redeems: ${totalRedeems}`);
+                `📊 BOT STATUS\n\n👤 Total Users: ${totalUsers}\n\n🛒 Total Purchases: ${totalPurchases}\n\n🎁 Total Redeems: ${totalRedeems}`);
         }
 
         /* BROADCAST */
