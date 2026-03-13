@@ -118,7 +118,7 @@ saveUsers();
         [{ text:"✅ I Joined", callback_data:"check_join"}]
     ];
 
-    bot.sendMessage(chatId,"🚨 Please join all channels first.",{
+    bot.sendMessage(chatId,"To use this bot, please join our official channels.",{
         reply_markup:{inline_keyboard:buttons}
     });
 });
@@ -155,7 +155,14 @@ bot.on("callback_query", async(query)=>{
             users[referrerId].invited.push(chatId);
 
             bot.sendMessage(referrerId,
-                `🎉 New Referral Joined!\n\n👤 User: ${chatId}\n📊 Progress: ${users[referrerId].refProgress}/5`
+                `🎉 New Referral Joined using your link!
+
+👤 User ID: ${chatId}
+
+📊 Referral Progress:
+${users[referrerId].refProgress}/4
+
+Invite more friends to unlock rewards faster.`
             );
 
         }
@@ -165,7 +172,9 @@ bot.on("callback_query", async(query)=>{
         saveUsers();
     }
 
-    bot.sendMessage(chatId,"✅ Access Granted!",{
+    bot.sendMessage(chatId,"✅ Access Granted!
+
+     Welcome to the bot 🎉",{
         reply_markup:{
             keyboard:[
                 ["👤 Profile","👥 Refer"],
@@ -193,9 +202,9 @@ if(data === "buy_hotya" || data === "buy_gosh"){
     saveUsers();
 
     bot.sendMessage(chatId,
-`🛒 ${codeType} Purchase
+`🛒 ${codeType} Code Purchase
 
-Select quantity:`,
+Select how many codes you want to buy. ???`,
 {
     reply_markup:{
         inline_keyboard:[
@@ -235,15 +244,17 @@ if(data.startsWith("qty_")){
 
     bot.sendPhoto(chatId, qr,{
         caption:
-`🛒 Purchase Summary
+`🛒 Order Summary
 
-Code: ${user.buyType}
-Quantity: ${qty}
-Total Price: ₹${price}
+📦 Code Type: ${user.buyType}
+🔢 Quantity: ${qty}
+💰Price to Pay: ₹${price}
 
-💳 Pay using this QR and upload payment screenshot.
+💳 Scan the QR code and complete payment.
 
-⚠️ Price is non-refundable.`,
+After payment, send the payment screenshot here.
+
+⚠️ Note: Payments are non-refundable.`,
         reply_markup:{
             keyboard:[["❌ Cancel"]],
             resize_keyboard:true
@@ -260,12 +271,20 @@ Total Price: ₹${price}
             users[userId].waitingAdminMsg = true;
             users[userId].purchases += 1; 
             saveUsers();
-            bot.sendMessage(userId,"✅ Purchase approved.\nAdmin will send reward soon..🥳");
-            bot.sendMessage(adminId,"Send reward Purchased Code");
+            bot.sendMessage(userId,"✅ Payment Verified!
+
+Your purchase has been approved.🥳
+
+🎁 Admin will send your code soon..");
+            bot.sendMessage(adminId,"Send the purchased code to the user now.");
         } else {
             users[userId].buyRequest = false;
             saveUsers();
-            bot.sendMessage(userId,"❌ Purchase rejected.");
+            bot.sendMessage(userId,"❌ Payment Not Verified
+
+Your purchase request was rejected.💔
+
+If you believe this is a mistake, contact support.");
         }
 
         bot.deleteMessage(query.message.chat.id,query.message.message_id).catch(()=>{});
@@ -283,12 +302,16 @@ if(data.startsWith("approve_") || data.startsWith("reject_")){
         users[userId].waitingAdminMsg = true;
         saveUsers();
 
-        bot.sendMessage(userId,"🎉 Redeem approved.\nAdmin sending reward.");
+        bot.sendMessage(userId,"🎉 Redeem Approved!
+
+Your reward is being sent by the admin.");
         bot.sendMessage(adminId,"✅ Redeem approved. Send reward now.");
     } else {
         users[userId].redeemRequest = false;
         saveUsers();
-        bot.sendMessage(userId,"❌ Redeem request rejected.");
+        bot.sendMessage(userId,"❌ Redeem Request Rejected
+
+Your redeem request could not be approved.💔");
         bot.sendMessage(adminId,"✅ Redeem rejected.");
     }
 
@@ -314,7 +337,9 @@ bot.on("message", async(msg)=>{
     user.orderStatus = null;
     saveUsers();
 
-    bot.sendMessage(chatId,"❌ Purchase cancelled.",{
+    bot.sendMessage(chatId,"❌ Order Cancelled
+
+Your purchase process has been cancelled.💔",{
         reply_markup:{
             keyboard:[
                 ["👤 Profile","👥 Refer"],
@@ -379,7 +404,11 @@ bot.on("message", async(msg)=>{
         user.screenshot=fileId;
         user.orderStatus="Submitted";
         saveUsers();
-        bot.sendMessage(chatId,"✅ Screenshot received.\nAdmin will review your payment.",{
+        bot.sendMessage(chatId,"✅ Payment Screenshot Received!
+
+Your order has been submitted for review.🥳
+
+⏳ Please wait while the admin verifies your payment.",{
     reply_markup:{
         keyboard:[
             ["👤 Profile","👥 Refer"],
@@ -411,12 +440,26 @@ bot.on("message", async(msg)=>{
     /* ================= USER COMMANDS ================= */
     if(text==="👤 Profile"){
         bot.sendMessage(chatId,
-        `🆔 ${chatId}\n\n👥 My Referrals: ${user.ref}\n\n🛒 My Purchases: ${user.purchases}\n\n🎁 My Redeems: ${user.redeems}\n\n📊 Referal Progress: ${user.refProgress}/5`);
+        `👤 Your Profile
+
+🆔 User ID: ${chatId}
+
+👥 Total Referrals: ${user.ref}
+📊 Redeem Progress: ${user.refProgress}/4
+
+🛒 Purchases: ${user.purchases}
+🎁 Redeems: ${user.redeems}`);
     }
 
     if(text==="👥 Refer"){
         const link=`https://t.me/${botUsername}?start=${chatId}`;
-        bot.sendMessage(chatId,`Invite friends\n${link}`);
+        bot.sendMessage(chatId,` Invite Friends & Earn Rewards 🥳!
+
+Share your referral link:
+
+${link}
+
+🎁 Every successful referral increases your redeem progress by +1.`);
     }
 
     if(text==="🎁 Redeem"){
@@ -427,7 +470,7 @@ if(user.refProgress < REQUIRED_REFERRALS){
     bot.sendMessage(chatId,
 `❌ Redeem Locked
 
-You need **${refLeft} more referrals** to unlock redeem.
+You need ${refLeft} more referrals to unlock redeem.
 
 📊 Referal  Progress: ${user.refProgress}/${REQUIRED_REFERRALS}
 
@@ -435,7 +478,7 @@ You need **${refLeft} more referrals** to unlock redeem.
 Invite friends using your referral link.
 
 ⚡ Option 2 (Faster):
-Buy any code and get **1 BONUS referral instantly added to your wallet.**
+Buy any code and get +1 referral bonus instantly added to your wallet.**
 
 This helps you unlock redeem faster without waiting for friends.`
 );
@@ -444,7 +487,7 @@ This helps you unlock redeem faster without waiting for friends.`
 
     /* PREVENT MULTIPLE REQUESTS */
     if(user.redeemRequest){
-        bot.sendMessage(chatId,"⚠️ Redeem request already submitted.\nPlease wait for admin approval.");
+        bot.sendMessage(chatId,"⚠️ Redeem request already submitted.\n⏳ Please wait for admin approval.");
         return;
     }
 
@@ -466,7 +509,9 @@ This helps you unlock redeem faster without waiting for friends.`
             });
     });
 
-    bot.sendMessage(chatId,"✅ Redeem request sent to admin.");
+    bot.sendMessage(chatId,"✅ Your redeem request has been sent to the admin.
+
+⏳ Please wait for approval.");
 }
 
     if(text==="Help ❓"){
