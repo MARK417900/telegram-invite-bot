@@ -271,20 +271,20 @@ After payment, send the payment screenshot here.
             users[userId].waitingAdminMsg = true;
             users[userId].purchases += 1; 
             saveUsers();
-            bot.sendMessage(userId,"✅ Payment Verified!
+            bot.sendMessage(userId,`✅ Payment Verified!
 
 Your purchase has been approved.🥳
 
-🎁 Admin will send your code soon..");
+🎁 Admin will send your code soon..`);
             bot.sendMessage(adminId,"Send the purchased code to the user now.");
         } else {
             users[userId].buyRequest = false;
             saveUsers();
-            bot.sendMessage(userId,"❌ Payment Not Verified
+            bot.sendMessage(userId,`❌ Payment Not Verified
 
 Your purchase request was rejected.💔
 
-If you believe this is a mistake, contact support.");
+If you believe this is a mistake, contact support.`);
         }
 
         bot.deleteMessage(query.message.chat.id,query.message.message_id).catch(()=>{});
@@ -298,20 +298,18 @@ if(data.startsWith("approve_") || data.startsWith("reject_")){
     if(data.startsWith("approve_")){
         users[userId].redeems += 1;
         users[userId].redeemRequest = false;
-        users[userId].refProgress = Math.max(0, users[userId].refProgress - 5);
+        users[userId].refProgress = Math.max(0, users[userId].refProgress - 4);
         users[userId].waitingAdminMsg = true;
         saveUsers();
 
-        bot.sendMessage(userId,"🎉 Redeem Approved!
+        bot.sendMessage(userId,`🎉 Redeem Approved!
 
-Your reward is being sent by the admin.");
+Your reward is being sent by the admin.`);
         bot.sendMessage(adminId,"✅ Redeem approved. Send reward now.");
     } else {
         users[userId].redeemRequest = false;
         saveUsers();
-        bot.sendMessage(userId,"❌ Redeem Request Rejected
-
-Your redeem request could not be approved.💔");
+        bot.sendMessage(userId,`❌ Redeem Request Rejected`);
         bot.sendMessage(adminId,"✅ Redeem rejected.");
     }
 
@@ -337,9 +335,9 @@ bot.on("message", async(msg)=>{
     user.orderStatus = null;
     saveUsers();
 
-    bot.sendMessage(chatId,"❌ Order Cancelled
+    bot.sendMessage(chatId,`❌ Order Cancelled
 
-Your purchase process has been cancelled.💔",{
+Your purchase process has been cancelled.💔`,{
         reply_markup:{
             keyboard:[
                 ["👤 Profile","👥 Refer"],
@@ -404,11 +402,11 @@ Your purchase process has been cancelled.💔",{
         user.screenshot=fileId;
         user.orderStatus="Submitted";
         saveUsers();
-        bot.sendMessage(chatId,"✅ Payment Screenshot Received!
+        bot.sendMessage(chatId,`✅ Payment Screenshot Received!
 
 Your order has been submitted for review.🥳
 
-⏳ Please wait while the admin verifies your payment.",{
+⏳ Please wait while the admin verifies your payment.`,{
     reply_markup:{
         keyboard:[
             ["👤 Profile","👥 Refer"],
@@ -509,9 +507,9 @@ This helps you unlock redeem faster without waiting for friends.`
             });
     });
 
-    bot.sendMessage(chatId,"✅ Your redeem request has been sent to the admin.
+    bot.sendMessage(chatId,`✅ Your redeem request has been sent to the admin.
 
-⏳ Please wait for approval.");
+⏳ Please wait for approval.`);
 }
 
     if(text==="Help ❓"){
