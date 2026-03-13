@@ -468,13 +468,14 @@ You need ${refLeft} more referrals to unlock Gift 🎁.
 
 📊 Referal  Progress: ${user.refProgress}/${REQUIRED_REFERRALS}
 
->👥 Option 1:
->Invite friends using your referral link.
+<blockquote>
+👥 Option 1:
+Invite friends using your referral link.
 
->⚡ Option 2 (Faster):
+⚡ Option 2 (Faster):
 Buy any code and get +1 referral bonus instantly added to your wallet.
 
->This helps you unlock redeem faster 🚀 without waiting for friends.`,{ parse_mode: "Markdown" }
+This helps you unlock redeem faster 🚀 without waiting for friends.</blockquote>`,{ parse_mode: "HTML" }
 );
     return;
 }
