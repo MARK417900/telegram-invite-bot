@@ -64,7 +64,7 @@ function createUser(id){
     if(!users[id]){
         users[id]={
             ref:0,
-            refProgress:4,
+            refProgress:0,
             redeems:0,
             purchases:0,
             buyQty:0,
@@ -157,12 +157,9 @@ bot.on("callback_query", async(query)=>{
             bot.sendMessage(referrerId,
                 `🎉 New Referral Joined using your link!
 
-👤 User ID: ${chatId}
+📊 Your Referral Progress:${users[referrerId].refProgress}/4
 
-📊 Referral Progress:
-${users[referrerId].refProgress}/4
-
-Invite more friends to unlock rewards faster.`
+Invite more friends to unlock rewards faster.🎁`
             );
 
         }
@@ -187,12 +184,13 @@ if(data === "help_claim"){
 
 bot.sendPhoto(chatId,"claim.jpg",{
 caption:
-`🎁 How to Claim Reward
+`🎁 <b>How to Claim Reward</b>
 
 1️⃣ Invite 4 friends using your referral link and get id and code
+
 2️⃣ You if you dont want to referal you can purchase it
 `,
-parse_mode:"Markdown"
+parse_mode:"HTML"
 });
 
             }
@@ -213,10 +211,10 @@ if(data === "buy_hotya" || data === "buy_gosh"){
     saveUsers();
 
     bot.sendMessage(chatId,
-`🛒 ${codeType} Code Purchase
+`🛒 <b>${codeType} Code Purchase</b>
 
 Select Quantity that you wants  to purchase.`,
-{
+{parse_mode: "HTML" ,
     reply_markup:{
         inline_keyboard:[
             [
@@ -255,7 +253,7 @@ if(data.startsWith("qty_")){
 
     bot.sendPhoto(chatId, qr,{
         caption:
-`🛒 Order Summary
+`🛒 <b>Order Summary</b>
 
 📦 Code Type: ${user.buyType}
 🔢 Quantity: ${qty}
@@ -265,7 +263,7 @@ if(data.startsWith("qty_")){
 
 After payment, send the payment screenshot here.
 
-⚠️ Note: Payments are non-refundable.`,
+⚠️ Note: Payments are non-refundable.`,parse_mode: "HTML",
         reply_markup:{
             keyboard:[["❌ Cancel"]],
             resize_keyboard:true
@@ -427,9 +425,10 @@ Your order has been submitted for review.🥳
 });
         ADMIN_IDS.forEach(admin=>{
             bot.sendPhoto(admin,fileId,{
-                caption:`🛒 Purchase Request
+                caption:`
+                🛒 Purchase Request
                 User ID: <code>${chatId}</code>
-                 Code: ${user.buyType}
+                Code: ${user.buyType}
                 Quantity: ${user.buyQty}
                 Price: ₹${user.buyPrice}`,parse_mode:"HTML",
                 reply_markup:{
@@ -472,12 +471,11 @@ ${bar} ${progress}/4
 }
     if(text==="👥 Refer"){
         const link=`https://t.me/${botUsername}?start=${chatId}`;
-        bot.sendMessage(chatId,` Invite Friends & Earn Rewards 🥳!
+        bot.sendMessage(chatId,`<b> Invite Friends & Earn Rewards 🥳!</b>
 
-Your referral Link 
+🎁 Your referral Link 
 ${link}
 
-🎁 Every successful referral increases your redeem progress by +1.
 `);
     }
 
@@ -556,7 +554,7 @@ return;
     if(text==="Help ❓"){
 
 bot.sendMessage(chatId,
-`Help Center ❓❓❓`,
+`How may i help you ?`,
 {
 parse_mode:"Markdown",
 reply_markup:{
