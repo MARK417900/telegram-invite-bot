@@ -435,7 +435,6 @@ Your order has been submitted for review.🥳
     if(text==="👤 Profile"){
 
 const progress = user.refProgress;
-const required = 4;
 
 let bar = "░░░░░░░░░░";
 
@@ -449,14 +448,19 @@ bot.sendMessage(chatId,
 
 🆔 <b>User ID:</b> <code>${chatId}</code>
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━
 
-🛒 Purchases : ${user.purchases}
-🎁 Redeems : ${user.redeems}
-Total Referrals : ${user.ref}
+🛒 <b>Purchases :</b> ${user.purchases}
+🎁 <b>Redeems :</b> ${user.redeems}
+👥 <b>Total Referrals :</b> ${user.ref}
 
-📊 Referal Progress
+━━━━━━━━━━━━━━━━━━━━
+
+📊 <b>Referral Progress</b>
+
 ${bar} ${progress}/4
+`,
+{parse_mode:"HTML"});
 
 }
     if(text==="👥 Refer"){
@@ -654,7 +658,7 @@ return;
             }
             const u = users[id];
             bot.sendMessage(chatId,
-                `👤 USER PROFILE\n\n🆔 User ID: ${id}\n👥 Total Referrals: ${u.ref}\n📊 Progress: ${u.refProgress}/5\n🛒 Purchases: ${u.purchases}\n🎁 Redeems: ${u.redeems}\n👤 Referred By: ${u.referredBy || "None"}`
+                `👤 USER PROFILE\n\n🆔 User ID: ${id}\n👥 Total Referrals: ${u.ref}\n📊 Referal Progress: ${u.refProgress}/4\n🛒 Purchases: ${u.purchases}\n🎁 Redeems: ${u.redeems}\n👤 Referred By: ${u.referredBy || "None"}`
             );
             adminState.mode = null;
             return;
