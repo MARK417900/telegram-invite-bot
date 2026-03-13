@@ -115,7 +115,7 @@ saveUsers();
             { text:"📢 Channel", url:`https://t.me/${channels[0].replace("@","")}` },
             { text:"📢 Community", url:`https://t.me/${channels[1].replace("@","")}` }
         ],
-        [{ text:"✅ I Joined", callback_data:"check_join"}]
+        [{ text:" Joined ✅", callback_data:"check_join"}]
     ];
 
     bot.sendMessage(chatId,"To use this bot, please join our official channels.",{
@@ -172,9 +172,7 @@ Invite more friends to unlock rewards faster.`
         saveUsers();
     }
 
-    bot.sendMessage(chatId,`✅ Access Granted!
-
-     Welcome to the bot 🎉`,{
+    bot.sendMessage(chatId,`✅ Access Granted!`,{
         reply_markup:{
             keyboard:[
                 ["👤 Profile","👥 Refer"],
@@ -436,7 +434,7 @@ Your order has been submitted for review.🥳
     /* ================= USER COMMANDS ================= */
     if(text==="👤 Profile"){
         bot.sendMessage(chatId,
-        `👤 User ID: ${chatId}
+        `👤 ID: ${chatId}
 
 🎁 Redeems: ${user.redeems}
 
@@ -450,6 +448,7 @@ Your order has been submitted for review.🥳
     if(text==="👥 Refer"){
         const link=`https://t.me/${botUsername}?start=${chatId}`;
         bot.sendMessage(chatId,` Invite Friends & Earn Rewards 🥳!
+
 Your referral Link 
 ${link}
 
@@ -465,17 +464,17 @@ if(user.refProgress < REQUIRED_REFERRALS){
     bot.sendMessage(chatId,
 `Redeem Locked 🔒
 
-You need ${refLeft} more referrals to unlock redeem.
+You need ${refLeft} more referrals to unlock Gift 🎁.
 
 📊 Referal  Progress: ${user.refProgress}/${REQUIRED_REFERRALS}
 
-👥 Option 1:
-Invite friends using your referral link.
+>👥 Option 1:
+>Invite friends using your referral link.
 
-⚡ Option 2 (Faster):
+>⚡ Option 2 (Faster):
 Buy any code and get +1 referral bonus instantly added to your wallet.
 
-This helps you unlock redeem faster 🚀 without waiting for friends.`
+>This helps you unlock redeem faster 🚀 without waiting for friends.`,{ parse_mode: "Markdown" }
 );
     return;
 }
