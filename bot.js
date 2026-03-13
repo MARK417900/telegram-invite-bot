@@ -118,7 +118,7 @@ saveUsers();
         [{ text:" Joined ✅", callback_data:"check_join"}]
     ];
 
-    bot.sendMessage(chatId,"To use this bot, please join our official channels.",{
+    bot.sendMessage(chatId,"To use this bot, please join our official channels first 🥳.",{
         reply_markup:{inline_keyboard:buttons}
     });
 });
@@ -474,7 +474,7 @@ ${bar} ${progress}/4
         bot.sendMessage(chatId,`<b> Invite Friends & Earn Rewards 🥳!</b>
 
 🎁 Your referral Link 
-${link}
+${link},{ parse_mode:"HTML" }
 
 `);
     }
