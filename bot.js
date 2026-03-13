@@ -172,9 +172,9 @@ Invite more friends to unlock rewards faster.`
         saveUsers();
     }
 
-    bot.sendMessage(chatId,"✅ Access Granted!
+    bot.sendMessage(chatId,`✅ Access Granted!
 
-     Welcome to the bot 🎉",{
+     Welcome to the bot 🎉`,{
         reply_markup:{
             keyboard:[
                 ["👤 Profile","👥 Refer"],
