@@ -491,8 +491,8 @@ This helps you unlock redeem faster 🚀 without waiting for friends.`
 
     ADMIN_IDS.forEach(admin=>{
         bot.sendMessage(admin,
-            `🎁 REDEEM REQUEST\n👤 User ID: <code>${chatId}</code>\n\n👥 Total Referrals: ${user.ref}\n📊 Progress: ${user.refProgress}/4\n\n🛒 Purchases: ${user.purchases}\n🎁 Previous Redeems: ${user.redeems}`,parse_mode:"HTML",
-            {
+            `🎁 REDEEM REQUEST\n👤 User ID: <code>${chatId}</code>\n\n👥 Total Referrals: ${user.ref}\n📊 Progress: ${user.refProgress}/4\n\n🛒 Purchases: ${user.purchases}\n🎁 Previous Redeems: ${user.redeems}`,
+            { parse_mode:"HTML",
                 reply_markup:{
                     inline_keyboard:[
                         [
