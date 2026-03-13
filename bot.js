@@ -64,7 +64,7 @@ function createUser(id){
     if(!users[id]){
         users[id]={
             ref:0,
-            refProgress:0,
+            refProgress:4,
             redeems:0,
             purchases:0,
             buyQty:0,
