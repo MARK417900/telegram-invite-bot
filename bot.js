@@ -194,7 +194,30 @@ parse_mode:"HTML"
 });
 
             }
-    
+// user profile on purchase request 
+    if(data.startsWith("checkuser_")){
+
+const userId = data.split("_")[1];
+
+if(!users[userId]){
+bot.sendMessage(adminId,"❌ User not found.");
+return;
+}
+
+const u = users[userId];
+
+bot.sendMessage(adminId,
+`👤 USER PROFILE
+
+🆔 User ID: <code>${userId}</code>
+👥 Total Referrals: ${u.ref}
+📊 Referral Progress: ${u.refProgress}/4
+🛒 Purchases: ${u.purchases}
+🎁 Redeems: ${u.redeems}
+👤 Referred By: ${u.referredBy ? `<code>${u.referredBy}</code>` : "None"}`,
+{ parse_mode:"HTML" });
+
+        }
     /* ================= BUY FLOW ================= */
     const QR_CODES = {
         Hotya: "paymentQR.jpg",
@@ -431,11 +454,14 @@ Your order has been submitted for review.🥳
                 Price: ₹${user.buyPrice}`, parse_mode:"HTML" ,
                 reply_markup:{
                     inline_keyboard:[
-                        [
-                            { text:"✅ Approve", callback_data:`buyapprove_${chatId}`},
-                            { text:"❌ Reject", callback_data:`buyreject_${chatId}`}
-                        ]
-                    ]
+[
+{ text:"✅ Approve", callback_data:`buyapprove_${chatId}`},
+{ text:"❌ Reject", callback_data:`buyreject_${chatId}`}
+],
+[
+{ text:"👤 Check Profile", callback_data:`checkuser_${chatId}`}
+]
+]
                 }
             });
         });
