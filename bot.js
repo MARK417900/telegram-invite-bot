@@ -128,7 +128,7 @@ bot.on("callback_query", async(query)=>{
     const chatId = query.message.chat.id;
     const data = query.data;
     const adminId = query.from.id;
-
+ bot.answerCallbackQuery(query.id).catch(()=>{});
     /* JOIN CHECK */
     if(data==="check_join"){
 const joined = await checkMembership(chatId);
@@ -311,7 +311,7 @@ After payment, send the payment screenshot here. & screenshot must contains UTR
 Your purchase has been approved.🥳
 
 🎁 Admin will send your code soon..`);
-            bot.sendMessage(adminId,`Send the purchased code to ID: <code>${userId}</code>`,{parse_mode:"HTML"}`);
+            bot.sendMessage(adminId,`Send the purchased code to ID: <code>${userId}</code>`,{parse_mode:"HTML"});
         } else {
             users[userId].buyRequest = false;
             saveUsers();
