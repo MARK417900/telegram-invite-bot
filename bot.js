@@ -259,9 +259,8 @@ if(data.startsWith("qty_")){
 🔢 Quantity: ${qty}
 💰Price to Pay: ₹${price}
 
-💳 Scan the QR code and complete payment.
-
 After payment, send the payment screenshot here.
+( Payment screenshot must contains UTR )
 
 ⚠️ Note: Payments are non-refundable.`,parse_mode: "HTML",
         reply_markup:{
