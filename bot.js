@@ -433,18 +433,39 @@ Your order has been submitted for review.🥳
 
     /* ================= USER COMMANDS ================= */
     if(text==="👤 Profile"){
-        bot.sendMessage(chatId,
-        `👤 ID: ${chatId}
 
-🎁 Redeems: ${user.redeems}
+const progress = user.refProgress;
+const required = 4;
 
-🛒 Purchases: ${user.purchases}
+let bar = "░░░░░░░░░░";
 
-👥 Total Referrals: ${user.ref}
+if(progress==1) bar="██░░░░░░░░";
+if(progress==2) bar="████░░░░░░";
+if(progress==3) bar="██████░░░░";
+if(progress>=4) bar="██████████";
 
-📊 Referral Progress: ${user.refProgress}/4`);
-    }
+bot.sendMessage(chatId,
+`👤 <b>Your Profile</b>
 
+🆔 <b>User ID:</b> <code>${chatId}</code>
+
+━━━━━━━━━━━━━━
+
+📦 <b>Activity</b>
+🛒 Purchases : ${user.purchases}
+🎁 Redeems : ${user.redeems}
+
+━━━━━━━━━━━━━━
+
+👥 <b>Referral System</b>
+Total Referrals : ${user.ref}
+
+📊 Progress
+${bar} ${progress}/4
+
+🎯 Invite <b>4 friends</b> to unlock reward 🎁`,
+{parse_mode:"HTML"});
+}
     if(text==="👥 Refer"){
         const link=`https://t.me/${botUsername}?start=${chatId}`;
         bot.sendMessage(chatId,` Invite Friends & Earn Rewards 🥳!
@@ -457,27 +478,50 @@ ${link}
     }
 
     if(text==="🎁 Redeem"){
- const REQUIRED_REFERRALS = 4;
+
+const REQUIRED_REFERRALS = 4;
 const refLeft = REQUIRED_REFERRALS - user.refProgress;
 
+/* PROGRESS BAR */
+let progress = user.refProgress;
+let bar = "░░░░░░░░░░";
+
+if(progress==1) bar="██░░░░░░░░";
+if(progress==2) bar="████░░░░░░";
+if(progress==3) bar="██████░░░░";
+if(progress>=4) bar="██████████";
+
+/* LOCKED REDEEM MESSAGE */
 if(user.refProgress < REQUIRED_REFERRALS){
-    bot.sendMessage(chatId,
-`Redeem Locked 🔒
 
-You need ${refLeft} more referrals to unlock Gift 🎁.
+bot.sendMessage(chatId,
+`🎁 <b>REDEEM LOCKED</b> 🔒
 
-📊 Referal  Progress: ${user.refProgress}/${REQUIRED_REFERRALS}
+You need <b>${refLeft} more referrals</b> to unlock your reward.
 
-<blockquote>
-👥 Option 1:
+━━━━━━━━━━━━━━
+
+📊 <b>Referral Progress</b>
+
+${bar} ${user.refProgress}/4
+
+━━━━━━━━━━━━━━
+
+👥 <b>Option 1 (Free)</b>
 Invite friends using your referral link.
 
-⚡ Option 2 (Faster):
-Buy any code and get +1 referral bonus instantly added to your wallet.
+⚡ <b>Option 2 (Faster)</b>
+Buy any code and get <b>+1 referral bonus</b> instantly.
 
-This helps you unlock redeem faster 🚀 without waiting for friends.</blockquote>`,{ parse_mode: "HTML" }
+🚀 Unlock redeem faster without waiting for friends.
+
+━━━━━━━━━━━━━━
+
+💡 <i>Tip: Share your link in groups to get referrals quickly.</i>`,
+{ parse_mode:"HTML" }
 );
-    return;
+
+return;
 }
 
     /* PREVENT MULTIPLE REQUESTS */
