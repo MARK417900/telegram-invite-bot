@@ -139,7 +139,6 @@ bot.sendMessage(chatId,"❌ Please join all channels first.");
 return;
 }
 
-const user = users[chatId];
 
     const user = users[chatId];
 
