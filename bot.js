@@ -440,15 +440,15 @@ Your order has been submitted for review.🥳
         bot.sendMessage(chatId,
         `👤 Your Profile
 
-🆔 User ID: ${chatId}
+User ID: ${chatId}
 
-👥 Total Referrals: ${user.ref}
-
-📊 Referral Progress: ${user.refProgress}/4
+🎁 Redeems: ${user.redeems}
 
 🛒 Purchases: ${user.purchases}
 
-🎁 Redeems: ${user.redeems}`);
+👥 Total Referrals: ${user.ref}
+
+📊 Referral Progress: ${user.refProgress}/4`);
     }
 
     if(text==="👥 Refer"){
@@ -494,7 +494,7 @@ This helps you unlock redeem faster 🚀 without waiting for friends.`
 
     ADMIN_IDS.forEach(admin=>{
         bot.sendMessage(admin,
-            `🎁 REDEEM REQUEST\n👤 User ID: ${chatId}\n\n👥 Total Referrals: ${user.ref}\n📊 Progress: ${user.refProgress}/5\n\n🛒 Purchases: ${user.purchases}\n🎁 Previous Redeems: ${user.redeems}`,
+            `🎁 REDEEM REQUEST\n👤 User ID: ${chatId}\n\n👥 Total Referrals: ${user.ref}\n📊 Progress: ${user.refProgress}/4\n\n🛒 Purchases: ${user.purchases}\n🎁 Previous Redeems: ${user.redeems}`,
             {
                 reply_markup:{
                     inline_keyboard:[
@@ -517,14 +517,17 @@ This helps you unlock redeem faster 🚀 without waiting for friends.`
     }
 
     if(text === "🛒 Buy Code"){
-        bot.sendMessage(chatId,"Select which Code you wants to buy.",{
-            reply_markup:{
-                inline_keyboard:[
-                    [{text:"🔥 Hotya",callback_data:"buy_hotya"}],  [{text:"⚡ GOSH",callback_data:"buy_gosh"}]
+    bot.sendMessage(chatId,"Select which Code you wants to buy.",{
+        reply_markup:{
+            inline_keyboard:[
+                [
+                    {text:"🔥 Hotya",callback_data:"buy_hotya"},
+                    {text:"⚡ GOSH",callback_data:"buy_gosh"}
                 ]
-            }
-        });
-    }
+            ]
+        }
+    });
+}
 
     /* ================= ADMIN PANEL HANDLER ================= */
     if(ADMIN_IDS.includes(chatId)){
