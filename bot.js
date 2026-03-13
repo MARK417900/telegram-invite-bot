@@ -220,8 +220,8 @@ if(data.startsWith("qty_")){
     let price = 0;
 
     if(qty === 1) price = 20;
-    if(qty === 2) price = 30;
-    if(qty === 5) price = 70;
+    if(qty === 2) price = 35;
+    if(qty === 5) price = 80;
     if(qty === 10) price = 100;
 
     user.buyQty = qty;
@@ -420,11 +420,27 @@ bot.on("message", async(msg)=>{
     }
 
     if(text==="🎁 Redeem"){
-     user.refProgress = 5; 
-    if(user.refProgress < 5){
-        bot.sendMessage(chatId,"❌ Need 5 referrals to redeem.");
-        return;
-    }
+ const REQUIRED_REFERRALS = 4;
+const refLeft = REQUIRED_REFERRALS - user.refProgress;
+
+if(user.refProgress < REQUIRED_REFERRALS){
+    bot.sendMessage(chatId,
+`❌ Redeem Locked
+
+You need **${refLeft} more referrals** to unlock redeem.
+
+📊 Referal  Progress: ${user.refProgress}/${REQUIRED_REFERRALS}
+
+👥 Option 1:
+Invite friends using your referral link.
+
+⚡ Option 2 (Faster):
+Buy any code and get **1 BONUS referral instantly added to your wallet.**
+
+This helps you unlock redeem faster without waiting for friends.`
+);
+    return;
+}
 
     /* PREVENT MULTIPLE REQUESTS */
     if(user.redeemRequest){
