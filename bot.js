@@ -677,8 +677,24 @@ return;
             }
             const u = users[id];
             bot.sendMessage(chatId,
-                `👤 USER PROFILE\n\n🆔 User ID: ${id}\n👥 Total Referrals: ${u.ref}\n📊 Referal Progress: ${u.refProgress}/4\n🛒 Purchases: ${u.purchases}\n🎁 Redeems: ${u.redeems}\n👤 Referred By: ${u.referredBy || "None"}`
-            );
+`👤 USER PROFILE
+
+🆔 User ID: ${id}
+👥 Total Referrals: ${u.ref}
+📊 Referal Progress: ${u.refProgress}/4
+🛒 Purchases: ${u.purchases}
+🎁 Redeems: ${u.redeems}
+👤 Referred By: <code>${u.referredBy || "None"}</code>`,
+{
+parse_mode:"HTML",
+reply_markup:{
+keyboard:[
+["📊 Status","📢 Broadcast"],
+["👤 User Info","✉ Msg User"]
+],
+resize_keyboard:true
+}
+});
             adminState.mode = null;
             return;
         }
