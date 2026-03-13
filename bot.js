@@ -259,10 +259,9 @@ if(data.startsWith("qty_")){
 🔢 Quantity: ${qty}
 💰Price to Pay: ₹${price}
 
-After payment, send the payment screenshot here.
-( Payment screenshot must contains UTR )
+After payment, send the payment screenshot here. & screenshot must contains UTR 
 
-⚠️ Note: Payments are non-refundable.`,parse_mode: "HTML",
+⚠️ Payments are Non-refundable.`,parse_mode: "HTML",
         reply_markup:{
             keyboard:[["❌ Cancel"]],
             resize_keyboard:true
@@ -429,7 +428,7 @@ Your order has been submitted for review.🥳
                 User ID: <code>${chatId}</code>
                 Code: ${user.buyType}
                 Quantity: ${user.buyQty}
-                Price: ₹${user.buyPrice}`,parse_mode:"HTML",
+                Price: ₹${user.buyPrice}`, parse_mode:"HTML" ,
                 reply_markup:{
                     inline_keyboard:[
                         [
