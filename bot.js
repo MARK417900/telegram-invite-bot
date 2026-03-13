@@ -300,6 +300,8 @@ After payment, send the payment screenshot here. & screenshot must contains UTR
             users[userId].buyRequest = false;
             users[userId].waitingAdminMsg = true;
             users[userId].purchases += 1; 
+              // +1 referral bonus
+    users[userId].refProgress += 1;
             saveUsers();
             bot.sendMessage(userId,`✅ Payment Verified!
 
