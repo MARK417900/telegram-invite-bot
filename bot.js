@@ -183,7 +183,34 @@ Invite more friends to unlock rewards faster.`
         }
     });
 }
+if(data === "help_claim"){
 
+bot.sendPhoto(chatId,"claim.jpg",{
+caption:
+`🎁 How to Claim Reward
+
+1️⃣ Invite 4 friends using your referral link and get id and code
+2️⃣ You if you dont want to referal you can purchase it
+`,
+parse_mode:"Markdown"
+});
+
+            }
+    // BACK BUTTON FOR HELP
+if(data === "help_back"){
+
+bot.sendMessage(chatId,"⬅ Back to main menu",{
+reply_markup:{
+keyboard:[
+["👤 Profile","👥 Refer"],
+["🎁 Redeem","Help ❓"],
+["🛒 Buy Code"]
+],
+resize_keyboard:true
+}
+});
+
+}
     /* ================= BUY FLOW ================= */
     const QR_CODES = {
         Hotya: "paymentQR.jpg",
@@ -541,8 +568,26 @@ return;
 }
 
     if(text==="Help ❓"){
-        bot.sendMessage(chatId,"Contact support: @Mark41_helperBot");
-    }
+
+bot.sendMessage(chatId,
+`Help Center ❓❓❓`,
+{
+parse_mode:"Markdown",
+reply_markup:{
+inline_keyboard:[
+[
+{ text:"🎁 How to Claim", callback_data:"help_claim"},
+{ text:"👥 Community", url:"https://t.me/Marks_community"}
+],
+[
+{ text:"💬 Contact Support", url:"https://t.me/Mark41_helperBot"},
+{ text:"🔙 Back", callback_data:"help_back"}
+]
+]
+}
+});
+
+}
 
     if(text === "🛒 Buy Code"){
     bot.sendMessage(chatId,"Select which Code you wants to buy.",{
