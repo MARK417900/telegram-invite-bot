@@ -112,8 +112,8 @@ saveUsers();
 
     const buttons = [
         [
-            { text:"📢 Join Channel 1", url:`https://t.me/${channels[0].replace("@","")}` },
-            { text:"📢 Join Channel 2", url:`https://t.me/${channels[1].replace("@","")}` }
+            { text:"📢 Channel", url:`https://t.me/${channels[0].replace("@","")}` },
+            { text:"📢 Community", url:`https://t.me/${channels[1].replace("@","")}` }
         ],
         [{ text:"✅ I Joined", callback_data:"check_join"}]
     ];
@@ -443,21 +443,21 @@ Your order has been submitted for review.🥳
 🆔 User ID: ${chatId}
 
 👥 Total Referrals: ${user.ref}
-📊 Redeem Progress: ${user.refProgress}/4
+
+📊 Referral Progress: ${user.refProgress}/4
 
 🛒 Purchases: ${user.purchases}
+
 🎁 Redeems: ${user.redeems}`);
     }
 
     if(text==="👥 Refer"){
         const link=`https://t.me/${botUsername}?start=${chatId}`;
         bot.sendMessage(chatId,` Invite Friends & Earn Rewards 🥳!
-
-Share your referral link:
-
 ${link}
 
-🎁 Every successful referral increases your redeem progress by +1.`);
+🎁 Every successful referral increases your redeem progress by +1.
+`);
     }
 
     if(text==="🎁 Redeem"){
@@ -466,7 +466,7 @@ const refLeft = REQUIRED_REFERRALS - user.refProgress;
 
 if(user.refProgress < REQUIRED_REFERRALS){
     bot.sendMessage(chatId,
-`❌ Redeem Locked
+`Redeem Locked 🔒
 
 You need ${refLeft} more referrals to unlock redeem.
 
@@ -476,9 +476,9 @@ You need ${refLeft} more referrals to unlock redeem.
 Invite friends using your referral link.
 
 ⚡ Option 2 (Faster):
-Buy any code and get +1 referral bonus instantly added to your wallet.**
+Buy any code and get +1 referral bonus instantly added to your wallet.
 
-This helps you unlock redeem faster without waiting for friends.`
+This helps you unlock redeem faster 🚀 without waiting for friends.`
 );
     return;
 }
@@ -517,11 +517,10 @@ This helps you unlock redeem faster without waiting for friends.`
     }
 
     if(text === "🛒 Buy Code"){
-        bot.sendMessage(chatId,"Select Code:",{
+        bot.sendMessage(chatId,"Select which Code you wants to buy.",{
             reply_markup:{
                 inline_keyboard:[
-                    [{text:"🔥 Hotya",callback_data:"buy_hotya"}],
-                    [{text:"⚡ GOSH",callback_data:"buy_gosh"}]
+                    [{text:"🔥 Hotya",callback_data:"buy_hotya"}],  [{text:"⚡ GOSH",callback_data:"buy_gosh"}]
                 ]
             }
         });
