@@ -24,6 +24,11 @@ const ADMIN_IDS = [8521844327,8809115899];
 
 /* CHANNELS */
 const channels = ["@earnwithmark41","@Marks_community"];
+/* STOCK STATUS */
+let stock = {
+    Hotya: "available",
+    GOSH: "available"
+};
 /* ================= ADMIN PANEL COMMAND ================= */
 bot.onText(/\/admin/, (msg) => {
     const chatId = msg.chat.id;
@@ -290,8 +295,6 @@ return;
 users[chatId].buyType = codeType;
 users[chatId].buyStep = "select_qty";
 saveUsers();
-
-    const codeType = data === "buy_hotya" ? "Hotya" : "GOSH";
 
     users[chatId].buyType = codeType;
     users[chatId].buyStep = "select_qty";
