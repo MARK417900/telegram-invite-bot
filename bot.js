@@ -34,9 +34,10 @@ bot.onText(/\/admin/, (msg) => {
     }
 
     const adminKeyboard = [
-        ["📊 Status","📢 Broadcast"],
-        ["👤 User Info","✉ Msg User"]
-    ];
+    ["📊 Status","📢 Broadcast"],
+    ["👤 User Info","✉ Msg User"],
+    ["📦 Stock Manager"]
+];
 
     bot.sendMessage(chatId, "🛠 Admin Panel", {
         reply_markup: {
@@ -194,6 +195,37 @@ parse_mode:"HTML"
 });
 
             }
+    /* STOCK HOTYA MENU */
+if(data === "stock_hotya"){
+bot.sendMessage(adminId,
+`🔥 Hotya Stock Control`,
+{
+reply_markup:{
+inline_keyboard:[
+[
+{ text:"✅ Available", callback_data:"hotya_available"},
+{ text:"❌ Over", callback_data:"hotya_over"}
+]
+]
+}
+});
+}
+
+/* STOCK GOSH MENU */
+if(data === "stock_gosh"){
+bot.sendMessage(adminId,
+`⚡ GOSH Stock Control`,
+{
+reply_markup:{
+inline_keyboard:[
+[
+{ text:"✅ Available", callback_data:"gosh_available"},
+{ text:"❌ Over", callback_data:"gosh_over"}
+]
+]
+}
+});
+}
 // user profile on purchase request 
     if(data.startsWith("checkuser_")){
 
@@ -218,6 +250,26 @@ bot.sendMessage(adminId,
 { parse_mode:"HTML" });
 
         }
+    // stock controler
+    if(data === "hotya_available"){
+stock.Hotya = "available";
+bot.sendMessage(adminId,"✅ Hotya Stock set to AVAILABLE");
+}
+
+if(data === "hotya_over"){
+stock.Hotya = "over";
+bot.sendMessage(adminId,"❌ Hotya Stock set to OVER");
+}
+
+if(data === "gosh_available"){
+stock.GOSH = "available";
+bot.sendMessage(adminId,"✅ GOSH Stock set to AVAILABLE");
+}
+
+if(data === "gosh_over"){
+stock.GOSH = "over";
+bot.sendMessage(adminId,"❌ GOSH Stock set to OVER");
+    }
     /* ================= BUY FLOW ================= */
     const QR_CODES = {
         Hotya: "paymentQR.jpg",
@@ -226,6 +278,18 @@ bot.sendMessage(adminId,
 
     /* SELECT CODE */
 if(data === "buy_hotya" || data === "buy_gosh"){
+
+const codeType = data === "buy_hotya" ? "Hotya" : "GOSH";
+
+/* STOCK CHECK */
+if(stock[codeType] === "over"){
+bot.sendMessage(chatId,`❌ ${codeType} Code is currently Out of Stock.`);
+return;
+}
+
+users[chatId].buyType = codeType;
+users[chatId].buyStep = "select_qty";
+saveUsers();
 
     const codeType = data === "buy_hotya" ? "Hotya" : "GOSH";
 
@@ -260,9 +324,9 @@ if(data.startsWith("qty_")){
 
     let price = 0;
 
-    if(qty === 1) price = 20;
-    if(qty === 2) price = 35;
-    if(qty === 5) price = 80;
+    if(qty === 1) price = 10;
+    if(qty === 2) price = 20;
+    if(qty === 5) price = 50;
     if(qty === 10) price = 100;
 
     user.buyQty = qty;
@@ -310,15 +374,19 @@ Your purchase has been approved.🥳
 🎁 Admin will send your code soon..`);
             bot.sendMessage(adminId,`Send the purchased code to ID: <code>${userId}</code>`,{parse_mode:"HTML"});
         } else {
-            users[userId].buyRequest = false;
-            saveUsers();
-            bot.sendMessage(userId,`❌ Payment Not Verified
+    users[userId].buyRequest = false;
+    saveUsers();
+
+    bot.sendMessage(userId,`❌ Payment Not Verified
 
 Your purchase request was rejected.💔
 
 If you believe this is a mistake, contact support.`);
-        }
 
+    bot.sendMessage(adminId,
+`❌ Purchase Rejected ID: <code>${userId}</code>`,
+{ parse_mode:"HTML" });
+}
         bot.deleteMessage(query.message.chat.id,query.message.message_id).catch(()=>{});
     }
 
@@ -340,11 +408,15 @@ Your reward is being sent by the admin.`);
         bot.sendMessage(adminId,`✅ Redeem approved. Send reward to ID: <code>${userId}</code>`,
 {parse_mode:"HTML"});
     } else {
-        users[userId].redeemRequest = false;
-        saveUsers();
-        bot.sendMessage(userId,`❌ Redeem Request Rejected`);
-        bot.sendMessage(adminId,"✅ Redeem rejected.");
-    }
+    users[userId].redeemRequest = false;
+    saveUsers();
+
+    bot.sendMessage(userId,`❌ Redeem Request Rejected`);
+
+    bot.sendMessage(adminId,
+`❌ Redeem Rejected ID: <code>${userId}</code>`,
+{ parse_mode:"HTML" });
+}
 
     bot.deleteMessage(query.message.chat.id, query.message.message_id).catch(()=>{});
 }
@@ -428,7 +500,27 @@ bot.on("message", async(msg)=>{
         return;
     }
 }
+/* STOCK MANAGER */
+if(text === "📦 Stock Manager"){
 
+bot.sendMessage(chatId,
+`📦 STOCK MANAGER
+
+Select code to manage stock`,
+{
+reply_markup:{
+inline_keyboard:[
+[
+{ text:"🔥 Hotya", callback_data:"stock_hotya"}
+],
+[
+{ text:"⚡ GOSH", callback_data:"stock_gosh"}
+]
+]
+}
+});
+
+                }
     /* ================= RECEIVE SCREENSHOT ================= */
     if(msg.photo && user.buyRequest){
         const fileId = msg.photo[msg.photo.length-1].file_id;
@@ -634,12 +726,27 @@ inline_keyboard:[
 
         /* STATUS */
         if(text === "📊 Status"){
-            let totalUsers = Object.keys(users).length;
-            let totalPurchases = Object.values(users).reduce((sum,u)=>sum+u.purchases,0);
-            let totalRedeems = Object.values(users).reduce((sum,u)=>sum+u.redeems,0);
-            bot.sendMessage(chatId,
-                `📊 BOT STATUS\n\n👤 Total Users: ${totalUsers}\n\n🛒 Total Purchases: ${totalPurchases}\n\n🎁 Total Redeems: ${totalRedeems}`);
-        }
+
+let totalUsers = Object.keys(users).length;
+let totalPurchases = Object.values(users).reduce((sum,u)=>sum+u.purchases,0);
+let totalRedeems = Object.values(users).reduce((sum,u)=>sum+u.redeems,0);
+
+/* STOCK STATUS */
+let hotyaStock = stock.Hotya === "available" ? "✅ Available" : "❌ Over";
+let goshStock = stock.GOSH === "available" ? "✅ Available" : "❌ Over";
+
+bot.sendMessage(chatId,
+`📊 BOT STATUS
+👤 Total Users: ${totalUsers}
+🛒 Total Purchases: ${totalPurchases}
+🎁 Total Redeems: ${totalRedeems}
+
+📦 STOCK STATUS
+🔥 Hotya: ${hotyaStock}
+⚡ GOSH: ${goshStock}
+`);
+
+}
 
         /* BROADCAST */
         if(text === "📢 Broadcast"){
