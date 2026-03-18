@@ -292,10 +292,6 @@ bot.sendMessage(chatId,`❌ ${codeType} Code is currently Out of Stock.`);
 return;
 }
 
-users[chatId].buyType = codeType;
-users[chatId].buyStep = "select_qty";
-saveUsers();
-
     users[chatId].buyType = codeType;
     users[chatId].buyStep = "select_qty";
     saveUsers();
@@ -306,15 +302,19 @@ saveUsers();
 Select Quantity that you wants  to purchase.`,
 {parse_mode: "HTML" ,
     reply_markup:{
-        inline_keyboard:[
-            [
-                {text:"1",callback_data:"qty_1"},
-                {text:"2",callback_data:"qty_2"},
-                {text:"5",callback_data:"qty_5"},
-                {text:"10",callback_data:"qty_10"}
-            ]
-        ]
-    }
+ inline_keyboard:[
+  [
+   {text:"1",callback_data:"qty_1"},
+   {text:"2",callback_data:"qty_2"},
+   {text:"3",callback_data:"qty_3"},
+    {text:"4",callback_data:"qty_4"}
+  ],
+  [
+   {text:"5",callback_data:"qty_5"},
+   {text:"10",callback_data:"qty_10"}
+  ]
+ ]
+}
 });
 }
 /* SELECT QUANTITY */
@@ -328,9 +328,11 @@ if(data.startsWith("qty_")){
     let price = 0;
 
     if(qty === 1) price = 10;
-    if(qty === 2) price = 20;
-    if(qty === 5) price = 50;
-    if(qty === 10) price = 100;
+if(qty === 2) price = 20;
+if(qty === 3) price = 30;
+if(qty === 4) price = 40;
+if(qty === 5) price = 50;
+if(qty === 10) price = 100;
 
     user.buyQty = qty;
     user.buyPrice = price;
