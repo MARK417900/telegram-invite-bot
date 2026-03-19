@@ -680,10 +680,9 @@ bot.sendMessage(chatId,
 
 🎁 <b>Redeems :</b> ${user.redeems}
 👥 <b>Total Referrals :</b> ${user.ref}
-🛒 <b>Transactions :</b> ${user.transactionCount || 0}
-🎯 <b>Redeem Limit :</b> ${user.redeemLimit || 0}
+🛒 <b>Purchased:</b> ${user.transactionCount || 0}
 
-📊 <b>Reward Progress</b>
+📊 <b>Referral Progress</b>
 ${bar} ${progress}/4
 `,
 {parse_mode:"HTML"});
