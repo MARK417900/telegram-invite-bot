@@ -229,8 +229,7 @@ bot.on("callback_query", async (query) => {
         stock.Hotya = "over";
         bot.sendMessage(adminId,"❌ Hotya Over");
         return;
-    
-
+    }
 // redeem request controller
     if(data === "redeem_hotya" || data === "redeem_gosh"){
 
@@ -655,7 +654,8 @@ inline_keyboard:[
 [
 { text:"✅ Approve", callback_data:`buyapprove_${chatId}`},
 { text:"❌ Reject", callback_data:`buyreject_${chatId}`}
-],
+]
+                ]
                 }
             });
         });
@@ -694,7 +694,7 @@ ${bar} ${progress}/4
 Invite your friends using your referral link 👇
 
 🔗 Your Link:
-{link}
+${link}
 
 💡 For every successful referral, your progress increases.
 🚀 Reach 4 referrals to unlock rewards!
