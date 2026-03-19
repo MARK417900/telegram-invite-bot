@@ -283,7 +283,7 @@ inline_keyboard:[
 /* USER MSG */
 bot.sendMessage(chatId,
 `✅ Redeem request sent!
-🎯 Selected Code: ${type}
+
 ⏳ Wait for admin approval.`);
 
 }
@@ -427,8 +427,8 @@ if (data.startsWith("buyapprove_") || data.startsWith("buyreject_")) {
         // ✅ Approval message
         bot.sendMessage(userId,
 `✅ Payment Verified!
-Your purchase has been approved. 🥳
-Admin will send your code soon.. 🎁`
+
+Your purchase has been approved. 🥳`
         );
 
         // ✅ Bonus logic
@@ -442,9 +442,10 @@ Admin will send your code soon.. 🎁`
 
             bot.sendMessage(userId,
 `🎁 BONUS UNLOCKED!
+
 🔥 You completed ${users[userId].transactionCount} transactions!
-🎉 You received +${newBonus * 4} referral progress
-🚀 You can now redeem reward!`
+
+🎉 You received +${newBonus * 4} referral progress`
             );
         }
 
@@ -631,8 +632,8 @@ inline_keyboard:[
         user.orderStatus="Submitted";
         saveUsers();
         bot.sendMessage(chatId,`✅ Screenshot Received!
-⏳ Your payment is under verification.
-💡 Usually approved within a few minutes.Please wait… 🚀`,{
+        
+⏳ Your payment is under verification.`,{
     reply_markup:{
         keyboard:[
             ["👤 Profile","👥 Refer"],
@@ -753,7 +754,7 @@ Complete 5 purchase and instantly unlock reward 🚀
     // 3️⃣ Prevent duplicate request
     if(user.redeemRequest){
         bot.sendMessage(chatId,
-"⚠️ Redeem request already submitted.\n⏳ Wait for admin.");
+"⚠️ Redeem request already submitted.\n⏳ Wait for admin approval.");
         return;
     }
 
