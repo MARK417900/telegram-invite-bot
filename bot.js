@@ -625,7 +625,6 @@ users[pendingUser].adminTarget = null;
         });
 
         return;
-    }
 }
 /* STOCK MANAGER */
 if(text === "📦 Stock Manager"){
