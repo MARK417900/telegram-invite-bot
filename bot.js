@@ -92,7 +92,7 @@ function createUser(id){
             invited:[],
             referredBy:null,
             orderStatus:null
-            warnings: 0,
+            warnings: 0
         };
         saveUsers();
     }
