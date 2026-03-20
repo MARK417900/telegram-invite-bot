@@ -91,7 +91,7 @@ function createUser(id){
             waitingAdminMsg:false,
             invited:[],
             referredBy:null,
-            orderStatus:null
+            orderStatus:null,
             warnings: 0
         };
         saveUsers();
