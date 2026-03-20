@@ -472,52 +472,73 @@ Your purchase has been approved. 🥳`
     }
 
     // ================= REJECT =================
+ if (
+  data.startsWith("buyapprove_") || 
+  data.startsWith("buyreject_") || 
+  data.startsWith("buywarn_")
+) {
+    const userId = data.split("_")[1];
+
+    if (!ADMIN_IDS.includes(adminId)) return;
+    if (!users[userId]) return;
+
+    // ✅ APPROVE
+    if (data.startsWith("buyapprove_")) {
+
+        users[userId].buyRequest = false;
+        users[userId].buyStep = null;
+        users[userId].buyType = null;
+        users[userId].screenshot = null;
+        users[userId].orderStatus = null;
+        users[userId].waitingAdminMsg = true;
+        users[userId].adminTarget = userId;
+
+        users[userId].totalQty += users[userId].buyQty;
+        users[userId].transactionCount += 1;
+        users[userId].redeemLimit += 1;
+
+        bot.sendMessage(userId, `✅ Payment Verified!\n\nYour purchase has been approved. 🥳`);
+
+        saveUsers();
+    }
+
+    // ❌ REJECT
     else if (data.startsWith("buyreject_")) {
 
-       users[userId].buyRequest = false;
-users[userId].buyStep = null;
-users[userId].buyType = null;
-users[userId].screenshot = null;
-users[userId].orderStatus = null;
-saveUsers();
+        users[userId].buyRequest = false;
+        users[userId].buyStep = null;
+        users[userId].buyType = null;
+        users[userId].screenshot = null;
+        users[userId].orderStatus = null;
+
+        saveUsers();
 
         bot.sendMessage(userId,
 `❌ Payment Not Verified
-Your purchase request was rejected. 💔
-If you believe this is a mistake, contact support.`);
+Your purchase request was rejected.`);
+    }
 
-        bot.sendMessage(adminId,
-`❌ Purchase Rejected ID: <code>${userId}</code>`,
+    // ⚠️ WARN + CANCEL
+    else if (data.startsWith("buywarn_")) {
+
+        users[userId].buyRequest = false;
+        users[userId].warnings += 1;
+        users[userId].buyStep = null;
+        users[userId].buyType = null;
+        users[userId].screenshot = null;
+        users[userId].orderStatus = null;
+
+        saveUsers();
+
+        bot.sendMessage(userId,
+`⚠️ <b>Order Cancelled & Warning Issed</b>
+
+🚫 Reason:
+Fake / Invalid Payment Screenshot.`,
         { parse_mode: "HTML" });
     }
 
     bot.deleteMessage(query.message.chat.id, query.message.message_id).catch(()=>{});
-}
-    // ================= WARN + CANCEL =================
-else if (data.startsWith("buywarn_")) {
-
-    users[userId].buyRequest = false;
-    users[userId].warnings += 1;
-    users[userId].buyStep = null;
-    users[userId].buyType = null;
-    users[userId].screenshot = null;
-    users[userId].orderStatus = null;
-
-    saveUsers();
-
-    // 🔴 Send warning message to user
-    bot.sendMessage(userId,
-`⚠️ <b>Order Cancelled & Warning Issued</b>
-
-🚫 Reason:
-Fake / Invalid Payment Screenshot.`,
-{ parse_mode:"HTML" });
-
-    bot.sendMessage(adminId,
-`⚠️ User Warned & Order Cancelled
-
-👤 ID: <code>${userId}</code>`,
-{ parse_mode:"HTML" });
 }
 
 /* APPROVE/REJECT REDEEM */
