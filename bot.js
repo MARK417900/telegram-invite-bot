@@ -92,6 +92,7 @@ function createUser(id){
             invited:[],
             referredBy:null,
             orderStatus:null
+            warnings: 0,
         };
         saveUsers();
     }
@@ -389,7 +390,6 @@ if(qty === 10) price = 100;
 
     user.buyQty = qty;
     user.buyPrice = price;
-    user.buyRequest = true;
     user.buyStep = "payment";
 
     saveUsers();
@@ -414,7 +414,7 @@ After payment, send the payment screenshot here. & screenshot must contains UTR
     });
             }
   /* ADMIN APPROVE/REJECT PURCHASE */
-if (data.startsWith("buyapprove_") || data.startsWith("buyreject_")) {
+if (data.startsWith("buyapprove_") || data.startsWith("buyreject_") || data.startsWith("buywarn_")) {
     const userId = data.split("_")[1];
 
     if (!ADMIN_IDS.includes(adminId)) return;
@@ -424,6 +424,10 @@ if (data.startsWith("buyapprove_") || data.startsWith("buyreject_")) {
     if (data.startsWith("buyapprove_")) {
 
         users[userId].buyRequest = false;
+        users[userId].buyStep = null;
+        users[userId].buyType = null;
+        users[userId].screenshot = null;
+        users[userId].orderStatus = null;
         users[userId].waitingAdminMsg = true;
         users[userId].adminTarget = userId;
 
@@ -470,8 +474,12 @@ Your purchase has been approved. 🥳`
     // ================= REJECT =================
     else if (data.startsWith("buyreject_")) {
 
-        users[userId].buyRequest = false;
-        saveUsers();
+       users[userId].buyRequest = false;
+users[userId].buyStep = null;
+users[userId].buyType = null;
+users[userId].screenshot = null;
+users[userId].orderStatus = null;
+saveUsers();
 
         bot.sendMessage(userId,
 `❌ Payment Not Verified
@@ -484,6 +492,32 @@ If you believe this is a mistake, contact support.`);
     }
 
     bot.deleteMessage(query.message.chat.id, query.message.message_id).catch(()=>{});
+}
+    // ================= WARN + CANCEL =================
+else if (data.startsWith("buywarn_")) {
+
+    users[userId].buyRequest = false;
+    users[userId].warnings += 1;
+    users[userId].buyStep = null;
+    users[userId].buyType = null;
+    users[userId].screenshot = null;
+    users[userId].orderStatus = null;
+
+    saveUsers();
+
+    // 🔴 Send warning message to user
+    bot.sendMessage(userId,
+`⚠️ <b>Order Cancelled & Warning Issued</b>
+
+🚫 Reason:
+Fake / Invalid Payment Screenshot.`,
+{ parse_mode:"HTML" });
+
+    bot.sendMessage(adminId,
+`⚠️ User Warned & Order Cancelled
+
+👤 ID: <code>${userId}</code>`,
+{ parse_mode:"HTML" });
 }
 
 /* APPROVE/REJECT REDEEM */
@@ -539,7 +573,7 @@ bot.on("message", async(msg)=>{
 
     if(text.startsWith("/")) return;
     /* ================= PURCHASE CANCEL ================= */
-    if(text === "❌ Cancel" && user.buyRequest){
+    if(text === "❌ Cancel" && (user.buyRequest || user.buyStep)){
     user.buyRequest = false;
     user.buyType = null;
     user.buyStep = null;
@@ -561,9 +595,8 @@ bot.on("message", async(msg)=>{
     return;
 }
     /* ================= ADMIN SEND REWARD ================= */
-    if(ADMIN_IDS.includes(chatId)){
- const pendingUser = Object.keys(users).find(
-  id => users[id].waitingAdminMsg === true && users[id].adminTarget
+   const pendingUser = Object.keys(users).find(
+  id => users[id].waitingAdminMsg === true
 );
 
     if(pendingUser){
@@ -633,10 +666,11 @@ inline_keyboard:[
 
                 }
     /* ================= RECEIVE SCREENSHOT ================= */
-    if(msg.photo && user.buyRequest){
+   if(msg.photo && user.buyStep === "payment"){
         const fileId = msg.photo[msg.photo.length-1].file_id;
         user.screenshot=fileId;
         user.orderStatus="Submitted";
+        user.buyRequest = true;
         saveUsers();
         bot.sendMessage(chatId,`✅ Screenshot Received!
         
@@ -658,13 +692,16 @@ inline_keyboard:[
                 Quantity: ${user.buyQty}
                 Price: ₹${user.buyPrice}`, parse_mode:"HTML" ,
                 reply_markup:{
-                    inline_keyboard:[
+    inline_keyboard:[
 [
 { text:"✅ Approve", callback_data:`buyapprove_${chatId}`},
 { text:"❌ Reject", callback_data:`buyreject_${chatId}`}
+],
+[
+{ text:"⚠️ Warn + Cancel", callback_data:`buywarn_${chatId}`}
 ]
-                ]
-                }
+]
+}
             });
         });
     }
@@ -803,18 +840,33 @@ inline_keyboard:[
 
 }
 
-    if(text === "🛒 Buy Code"){
-        if(user.buyRequest){
-    bot.sendMessage(chatId,
+ if(text === "🛒 Buy Code"){
+
+    // 🔴 Already submitted (real pending)
+    if(user.buyRequest){
+        bot.sendMessage(chatId,
 `⚠️ <b>Pending Order Detected</b>
 
-⏳ You already have a purchase request under review.
+⏳ Your payment is under verification.
 
-📸 Please wait for admin approval or rejection before placing a new order.`,
-{ parse_mode:"HTML" });
+📸 Please wait for admin approval or rejection.`,
+        { parse_mode:"HTML" });
+        return;
+    }
 
-    return;
-}
+    // 🟡 In progress (not paid yet)
+    if(user.buyStep){
+        bot.sendMessage(chatId,
+`⚠️ <b>Order In Progress</b>
+
+💳 You have not completed payment yet.
+
+📸 Please send payment screenshot or press ❌ Cancel.`,
+        { parse_mode:"HTML" });
+        return;
+    }
+
+    // 🟢 Fresh order
     bot.sendMessage(chatId,"Select which Code you wants to buy.",{
         reply_markup:{
             inline_keyboard:[
@@ -954,17 +1006,20 @@ return;
     } catch (e) {
         console.log("Could not fetch username for", id);
     }
-           bot.sendMessage(chatId,
+          bot.sendMessage(chatId,
 `👤 <b>USER PROFILE</b>
 
 🆔 User ID: <code>${id}</code>
 👤 Username: ${username}
+
 👥 Total Referrals: ${u.ref}
 📊 Referral Progress: ${u.refProgress}/4
+
 🎁 Redeems: ${u.redeems}/${u.redeemLimit || 0}
 🛒 Total Purchases: ${u.transactionCount || 0}
-📦 Quantity Bought: ${u.totalQty || 0}
-💰 Last Purchase Price: ₹${u.buyPrice || 0}
+📦 Quantity Purchased: ${u.totalQty || 0}
+
+⚠️ <b>Warnings:</b> ${u.warnings || 0}
 👤 Referred By: <code>${u.referredBy || "None"}</code>`,
 { parse_mode: "HTML",
 reply_markup:{
