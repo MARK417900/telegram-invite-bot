@@ -963,7 +963,7 @@ return;
 📊 Referral Progress: ${u.refProgress}/4
 🎁 Redeems: ${u.redeems}/${u.redeemLimit || 0}
 🛒 Total Purchases: ${u.transactionCount || 0}
-📦 Total Quantity Bought: ${u.totalQty || 0}
+📦 Quantity Bought: ${u.totalQty || 0}
 💰 Last Purchase Price: ₹${u.buyPrice || 0}
 👤 Referred By: <code>${u.referredBy || "None"}</code>`,
 { parse_mode: "HTML",
