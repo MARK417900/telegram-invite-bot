@@ -414,34 +414,6 @@ After payment, send the payment screenshot here. & screenshot must contains UTR
     });
             }
  
-        // ✅ Bonus logic
-        let eligibleBonus = Math.floor(users[userId].transactionCount / 5);
-
-        if (eligibleBonus > users[userId].bonusUnlocked) {
-            let newBonus = eligibleBonus - users[userId].bonusUnlocked;
-
-            users[userId].refProgress += (newBonus * 4);
-            users[userId].bonusUnlocked = eligibleBonus;
-
-            bot.sendMessage(userId,
-`🎁 BONUS UNLOCKED!
-
-🔥 You completed ${users[userId].transactionCount} transactions!
-
-🎉 You received +${newBonus * 4} referral progress`
-            );
-        }
-
-        saveUsers();
-
-        const user = users[userId];
-
-        bot.sendMessage(adminId,
-`<b>Order Delivering to</b> ID:<code>${userId}</code>
-📦 <b>Code Type:</b> ${user.buyType}
-🔢 <b>Quantity:</b> ${user.buyQty}`,
-        { parse_mode: "HTML" });
-    }
 
  /* ADMIN APPROVE/REJECT PURCHASE */
  if (
@@ -471,8 +443,26 @@ After payment, send the payment screenshot here. & screenshot must contains UTR
 
         bot.sendMessage(userId, `✅ Payment Verified!\n\nYour purchase has been approved. 🥳`);
 
-        saveUsers();
+      // ✅ BONUS LOGIC (correct place)
+    let eligibleBonus = Math.floor(users[userId].transactionCount / 5);
+
+    if (eligibleBonus > users[userId].bonusUnlocked) {
+        let newBonus = eligibleBonus - users[userId].bonusUnlocked;
+
+        users[userId].refProgress += (newBonus * 4);
+        users[userId].bonusUnlocked = eligibleBonus;
+
+        bot.sendMessage(userId,
+`🎁 BONUS UNLOCKED!
+
+🔥 You completed ${users[userId].transactionCount} transactions!
+
+🎉 You received +${newBonus * 4} referral progress`
+        );
     }
+
+    saveUsers();
+}
 
     // ❌ REJECT
     else if (data.startsWith("buyreject_")) {
