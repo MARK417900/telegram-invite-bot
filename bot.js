@@ -219,16 +219,42 @@ bot.on("callback_query", async (query) => {
         return;
     }
 
-    if (data === "hotya_available") {
-        stock.Hotya = "available";
-        bot.sendMessage(adminId,"✅ Hotya Available");
+    if (data === "stock_gosh") {
+    bot.sendMessage(adminId, "⚡ GOSH Stock Control", {
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    { text: "✅ Available", callback_data: "gosh_available" },
+                    { text: "❌ Over", callback_data: "gosh_over" }
+                ]
+            ]
+        }
+    });
+    return;
+}
+        // stock controler
+    if(data === "hotya_available"){
+stock.Hotya = "available";
+bot.sendMessage(adminId,"✅ Hotya Stock set to AVAILABLE");
         return;
-    }
+}
 
-    if (data === "hotya_over") {
-        stock.Hotya = "over";
-        bot.sendMessage(adminId,"❌ Hotya Over");
-        return;
+if(data === "hotya_over"){
+stock.Hotya = "over";
+bot.sendMessage(adminId,"❌ Hotya Stock set to OVER");
+    return;
+}
+
+if(data === "gosh_available"){
+stock.GOSH = "available";
+bot.sendMessage(adminId,"✅ GOSH Stock set to AVAILABLE");
+    return;
+}
+
+if(data === "gosh_over"){
+stock.GOSH = "over";
+bot.sendMessage(adminId,"❌ GOSH Stock set to OVER");
+    return;
     }
 // redeem request controller
     if(data === "redeem_hotya" || data === "redeem_gosh"){
@@ -287,26 +313,7 @@ bot.sendMessage(chatId,
 ⏳ Wait for admin approval.`);
 
 }
-    // stock controler
-    if(data === "hotya_available"){
-stock.Hotya = "available";
-bot.sendMessage(adminId,"✅ Hotya Stock set to AVAILABLE");
-}
 
-if(data === "hotya_over"){
-stock.Hotya = "over";
-bot.sendMessage(adminId,"❌ Hotya Stock set to OVER");
-}
-
-if(data === "gosh_available"){
-stock.GOSH = "available";
-bot.sendMessage(adminId,"✅ GOSH Stock set to AVAILABLE");
-}
-
-if(data === "gosh_over"){
-stock.GOSH = "over";
-bot.sendMessage(adminId,"❌ GOSH Stock set to OVER");
-    }
     /* ================= BUY FLOW ================= */
     const QR_CODES = {
         Hotya: "paymentQR.jpg",
@@ -555,8 +562,8 @@ bot.on("message", async(msg)=>{
 }
     /* ================= ADMIN SEND REWARD ================= */
     if(ADMIN_IDS.includes(chatId)){
-  const pendingUser = Object.keys(users).find(
-  id => users[id].waitingAdminMsg === true
+ const pendingUser = Object.keys(users).find(
+  id => users[id].waitingAdminMsg === true && users[id].adminTarget
 );
 
     if(pendingUser){
@@ -730,7 +737,7 @@ ${bar} ${user.refProgress}/4
 Invite friends using your referral link.
 
 ⚡ <b>Option 2 (Faster)</b>
-Complete 5 purchase and instantly unlock reward 🚀
+Complete 5 purchase and get +4 referral progress instantly🚀
 
 ━━━━━━━━━━━━━━━━━━━━━
 💡 <i>Tip: Share your link in groups to get referrals quickly.</i>`,
