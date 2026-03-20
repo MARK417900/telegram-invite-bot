@@ -413,35 +413,7 @@ After payment, send the payment screenshot here. & screenshot must contains UTR
         }
     });
             }
-  /* ADMIN APPROVE/REJECT PURCHASE */
-if (data.startsWith("buyapprove_") || data.startsWith("buyreject_") || data.startsWith("buywarn_")) {
-    const userId = data.split("_")[1];
-
-    if (!ADMIN_IDS.includes(adminId)) return;
-    if (!users[userId]) return;
-
-    // ================= APPROVE =================
-    if (data.startsWith("buyapprove_")) {
-
-        users[userId].buyRequest = false;
-        users[userId].buyStep = null;
-        users[userId].buyType = null;
-        users[userId].screenshot = null;
-        users[userId].orderStatus = null;
-        users[userId].waitingAdminMsg = true;
-        users[userId].adminTarget = userId;
-
-        users[userId].totalQty += users[userId].buyQty;
-        users[userId].transactionCount += 1;
-        users[userId].redeemLimit += 1;
-
-        // ✅ Approval message
-        bot.sendMessage(userId,
-`✅ Payment Verified!
-
-Your purchase has been approved. 🥳`
-        );
-
+ 
         // ✅ Bonus logic
         let eligibleBonus = Math.floor(users[userId].transactionCount / 5);
 
@@ -471,7 +443,7 @@ Your purchase has been approved. 🥳`
         { parse_mode: "HTML" });
     }
 
-    // ================= REJECT =================
+ /* ADMIN APPROVE/REJECT PURCHASE */
  if (
   data.startsWith("buyapprove_") || 
   data.startsWith("buyreject_") || 
