@@ -249,7 +249,7 @@ bot.on("callback_query", async (query) => {
 
 ${downlineText}
 
-💡 Each downline purchase gives you +1 progress.`,
+💡 Each downline purchase gives you +1 progress Point.`,
     { parse_mode: "HTML" });
 
     return;
@@ -341,7 +341,7 @@ ADMIN_IDS.forEach(admin=>{
 🎯 Code Type: ${type}
 
 👥 Total Referrals: ${user.ref}
-📊 Progress: ${user.refProgress}/10
+📊 Points Progress: ${user.refProgress}/10
 🏆 Total Redeemed: ${user.totalRedeems}`,
 {
 parse_mode:"HTML",
@@ -805,7 +805,6 @@ Invite your friends using your referral link 👇
 🔗 Your Link:
 ${link}
 
-💡 For every successful referral, your progress increases.
 `);
     }
 
@@ -821,8 +820,8 @@ if(text==="🎁 Redeem"){
 ${getProgressBar(progress,10)}
 ━━━━━━━━━━━━━━━━━━━
 🎁 <b>EARNING SYSTEM</b>
-➊ Every downline purchase = +1 Progress
-➋ Buy 5 Codes yourself = +10 Progress
+➊ Every downline purchase = +1 Progress Point
+➋ Buy 5 Codes yourself = +10 Progress Points
 
 💡 <b>HOW TO UNLOCK FASTER</b>
 Invite active users who will purchase Or buy yourself to unlock instantly 
