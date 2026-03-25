@@ -400,7 +400,6 @@ Select the quantity you want to purchase.`,
     reply_markup:{
  inline_keyboard:[
   [
-   {text:"1",callback_data:"qty_1"},
    {text:"2",callback_data:"qty_2"},
    {text:"3",callback_data:"qty_3"},
     {text:"4",callback_data:"qty_4"}
@@ -816,16 +815,17 @@ if(text==="🎁 Redeem"){
         bot.sendMessage(chatId,
 `<b>REDEEM LOCKED</b> 🔒
 
-<b>Points Progress: ${progress}</b>
+❗ Required <b>${10 - progress} more points</b> to unlock your free redeem code
+<b>Your Points Progress: ${progress}</b>
 ${getProgressBar(progress,10)}
 ━━━━━━━━━━━━━━━━━━━
 🎁 <b>Points Kaise Milega?</b>
 ➊ Jab aapka invite kiya hua user buy kare to +1 point milega  
-➋ Aap khud 5 codes buy karte ho to +10 points milenge 
+➋ khud 5 codes buy karoge to +10 points milenge 
 
 ⚡ <b>Jaldi Unlock Kaise Kare?</b>
-• Active users ko invite karo jo purchase kare  
-• Ya khud code buy karke unlock karlo
+➊ Active users ko invite karo jo purchase kare  
+➋ Ya khud code buy karke unlock karlo
 ━━━━━━━━━━━━━━━━━━━
 🚀<b>Tip:</b>Top users don’t wait they <b>take action</b> and unlock rewards faster😎`,
 {
