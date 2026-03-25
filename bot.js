@@ -234,7 +234,7 @@ bot.on("callback_query", async (query) => {
     if(data === "view_downline"){
     const user = users[chatId];
 
-    let downlineText = "❌ No downline purchases yet.";
+    let downlineText = "❌ No downline User purchases yet.";
 
     // 📊 DOWNLINE LIST
     if(user.downlineList && Object.keys(user.downlineList).length > 0){
@@ -788,8 +788,7 @@ bot.sendMessage(chatId,
 👥 My Referral: ${user.ref}
 🎁 Code Redeemed: ${user.totalRedeems}
 📦 Quantity Purchased: ${user.totalQty || 0}
-
-<b>Progress Points: ${progress}/10:</b>
+<b>Your Progress Points: ${progress}/10:</b>
 ${getProgressBar(progress,10)}
 
 `,
@@ -815,15 +814,16 @@ if(text==="🎁 Redeem"){
         bot.sendMessage(chatId,
 `<b>REDEEM LOCKED</b> 🔒
 
-❗ Required <b>${10 - progress} more points</b> to unlock your free redeem code
+Required <b>${10 - progress} more points</b> to unlock your free redeem code ❗
+
 <b>Your Points Progress: ${progress}</b>
 ${getProgressBar(progress,10)}
 ━━━━━━━━━━━━━━━━━━━
-🎁 <b>Points Kaise Milega?</b>
-➊ Jab aapka invite kiya hua user buy kare to +1 point milega  
+<b>Points Kaise Milega?</b>
+➊ Jab aapka invite kiya hua user buy karega to +1 point milega  
 ➋ khud 5 codes buy karoge to +10 points milenge 
 
-⚡ <b>Jaldi Unlock Kaise Kare?</b>
+<b>Jaldi Unlock Kaise Kare?</b>
 ➊ Active users ko invite karo jo purchase kare  
 ➋ Ya khud code buy karke unlock karlo
 ━━━━━━━━━━━━━━━━━━━
