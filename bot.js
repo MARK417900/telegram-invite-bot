@@ -366,7 +366,7 @@ bot.sendMessage(chatId,
 
     /* ================= BUY FLOW ================= */
     const QR_CODES = {
-        Hotya: "paymentQR.jpg",
+        Hotya: "PaymentQR2.jpg",
         GOSH: "paymentQR.jpg"
     };
 
@@ -518,7 +518,7 @@ const selfEligible = Math.floor(users[userId].selfPurchases / 5);
 
 if(selfEligible > users[userId].selfRedeems){
 
-    let newRedeems = (selfEligible - users[userId].selfRedeems) * 2;
+    let newRedeems = (selfEligible - users[userId].selfRedeems);
 
     users[userId].redeemLimit += newRedeems;
     users[userId].selfRedeems = selfEligible;
@@ -790,7 +790,7 @@ bot.sendMessage(chatId,
 🎁 Code Redeemed: ${user.totalRedeems}
 📦 Quantity Purchased: ${user.totalQty || 0}
 
-<b>Progress: ${progress}/10:</b>
+<b>Progress Points: ${progress}/10:</b>
 ${getProgressBar(progress,10)}
 
 `,
@@ -816,15 +816,16 @@ if(text==="🎁 Redeem"){
         bot.sendMessage(chatId,
 `<b>REDEEM LOCKED</b> 🔒
 
-<b>Progress: ${progress}/10:</b>
+<b>Points Progress: ${progress}</b>
 ${getProgressBar(progress,10)}
 ━━━━━━━━━━━━━━━━━━━
-🎁 <b>EARNING SYSTEM</b>
-➊ Every downline purchase = +1 Progress Point
-➋ Buy 5 Codes yourself = +10 Progress Points
+🎁 <b>Points Kaise Milega?</b>
+➊ Jab aapka invite kiya hua user buy kare to +1 point milega  
+➋ Aap khud 5 codes buy karte ho to +10 points milenge 
 
-💡 <b>HOW TO UNLOCK FASTER</b>
-Invite active users who will purchase Or buy yourself to unlock instantly 
+⚡ <b>Jaldi Unlock Kaise Kare?</b>
+• Active users ko invite karo jo purchase kare  
+• Ya khud code buy karke unlock karlo
 ━━━━━━━━━━━━━━━━━━━
 🚀<b>Tip:</b>Top users don’t wait they <b>take action</b> and unlock rewards faster😎`,
 {
@@ -1099,13 +1100,13 @@ return;
 👥 Total Referrals: ${user.ref}
 🎁 Redeems: ${user.totalRedeems}/${user.redeemLimit || 0}
 🎟 Available Redeems: ${user.availableRedeems}
-📈<b>Progress: ${progress}/10:</b>
+📈<b>Progress Points: ${progress}/10:</b>
 🛒 Total Transactions: ${user.transactionCount || 0}
 📦 Quantity Purchased: ${user.totalQty || 0}
 👥 <b>Downline Purchases:</b> ${user.downlinePurchases || 0}
 ⚠️ <b>Warnings:</b> ${user.warnings || 0}
 👤 Referred By: <code>${user.referredBy || "None"}</code>
-<b>Progress: ${progress}/10:</b>`,
+<b>Progress Points: ${progress}/10:</b>`,
 { parse_mode: "HTML",
 reply_markup:{
 keyboard:[
