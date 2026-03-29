@@ -26,8 +26,8 @@ const ADMIN_IDS = [8521844327];
 const channels = ["@earnwithmark41","@Marks_community"];
 /* STOCK STATUS */
 let stock = {
-    Hotya: "available",
-    GOSH: "available"
+    Hotya: "over",
+    GOSH: "over"
 };
 /* ================= ADMIN PANEL COMMAND ================= */
 bot.onText(/\/admin/, (msg) => {
@@ -402,11 +402,10 @@ Select the quantity you want to purchase.`,
   [
    {text:"2",callback_data:"qty_2"},
    {text:"3",callback_data:"qty_3"},
-    {text:"4",callback_data:"qty_4"}
+    {text:"5",callback_data:"qty_5"}
   ],
   [
-   {text:"5",callback_data:"qty_5"},
-   {text:"10",callback_data:"qty_10"}
+   {text:"10 + BONUD🎁",callback_data:"qty_10"}
   ]
  ]
 }
@@ -430,8 +429,8 @@ if(data.startsWith("qty_")){
     let price = 0;
 
     if(qty === 1) price = 10;
-if(qty === 2) price = 20;
-if(qty === 3) price = 30;
+if(qty === 2) price = 30;
+if(qty === 3) price = 40;
 if(qty === 4) price = 40;
 if(qty === 5) price = 50;
 if(qty === 10) price = 100;
@@ -513,7 +512,7 @@ Send Purchase CODE to ID: <code>${userId}</code>`,
 
     // self purchase logic
        users[userId].selfPurchases += users[userId].buyQty;
-const selfEligible = Math.floor(users[userId].selfPurchases / 5);
+const selfEligible = Math.floor(users[userId].selfPurchases / 10);
 
 if(selfEligible > users[userId].selfRedeems){
 
@@ -524,7 +523,7 @@ if(selfEligible > users[userId].selfRedeems){
         bot.sendMessage(userId,
 `🎁 <b>CODE PURCHASED BONUS!</b>
 🎉 You earned <b>${newRedeems}</b> FREE redeem(s)!
-💡 <i>5 Codes purchases = 1 redeem</i>`,
+💡 <i>10 Codes purchases = 1 redeem</i>`,
         { parse_mode:"HTML" });
     }
 
@@ -821,7 +820,7 @@ ${getProgressBar(progress,10)}
 ━━━━━━━━━━━━━━━━━━━
 <b>Points Kaise Milega?</b>
 ➊ Jab aapka invite kiya hua user buy karega to +1 point milega  
-➋ khud 5 codes buy karoge to +10 points milenge 
+➋ khud 1 codes buy karoge to +1 points milega
 
 <b>Jaldi Unlock Kaise Kare?</b>
 ➊ Active users ko invite karo jo purchase kare  
