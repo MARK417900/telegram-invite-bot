@@ -1,74 +1,52 @@
-import logging
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters, CallbackQueryHandler
+const { Telegraf, Markup } = require('telegraf');
+require('dotenv').config();
 
-TOKEN = '8605121015:AAFz-OwQB540Lzs7ak8zxSGS_dopDApoetU'
-FORCE_CHANNEL = 'https://t.me/EarnWithMark41'
-SUPPORT_USERNAME = '@MARKS_CS'
+const bot = new Telegraf(process.env.8605121015:AAFz-OwQB540Lzs7ak8zxSGS_dopDApoetU);
+const FORCE_CHANNEL = process.env.FORCE_CHANNEL || '@EarnWithMark41';
+const SUPPORT_USERNAME = process.env.SUPPORT_USERNAME || '@MARKS_CS';
 
-logging.basicConfig(level=logging.INFO)
+const menu = Markup.keyboard([
+  ['Deposit', 'Withdraw'],
+  ['Profile'],
+  ['Classic Ludo', 'Quick Ludo'],
+  ['Popular Ludo'],
+  ['Support']
+]).resize();
 
-MENU = ReplyKeyboardMarkup([
-    [KeyboardButton('Deposit'), KeyboardButton('Withdraw')],
-    [KeyboardButton('Profile')],
-    [KeyboardButton('Classic Ludo'), KeyboardButton('Quick Ludo')],
-    [KeyboardButton('Popular Ludo')],
-    [KeyboardButton('Support')]
-], resize_keyboard=True)
+async function joined(userId) {
+  try {
+    const member = await bot.telegram.getChatMember(FORCE_CHANNEL, userId);
+    return ['member','administrator','creator','owner'].includes(member.status);
+  } catch (e) { return false; }
+}
 
-async def joined(bot, user_id):
-    try:
-        member = await bot.get_chat_member(FORCE_CHANNEL, user_id)
-        return member.status in ['member','administrator','creator']
-    except:
-        return False
+bot.start(async (ctx) => {
+  if (!(await joined(ctx.from.id))) {
+    const username = FORCE_CHANNEL.replace('@','');
+    return ctx.reply('Please join our community first.', Markup.inlineKeyboard([
+      [Markup.button.url('Join Community', `https://t.me/${username}`)],
+      [Markup.button.callback('Check Join', 'check_join')]
+    ]));
+  }
+  ctx.reply('Welcome! Choose an option:', menu);
+});
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user
-    if not await joined(context.bot, user.id):
-        kb = InlineKeyboardMarkup([
-            [InlineKeyboardButton('Join Community', url=f'https://t.me/{FORCE_CHANNEL.replace("@","")}')],
-            [InlineKeyboardButton('Check Join', callback_data='check_join')]
-        ])
-        await update.message.reply_text('Please join our community first.', reply_markup=kb)
-        return
-    await update.message.reply_text('Welcome! Choose an option:', reply_markup=MENU)
+bot.action('check_join', async (ctx) => {
+  await ctx.answerCbQuery();
+  if (await joined(ctx.from.id)) return ctx.reply('Verified! Main menu opened.', menu);
+  ctx.reply('You still need to join the channel.');
+});
 
-async def check_join(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    q = update.callback_query
-    await q.answer()
-    if await joined(context.bot, q.from_user.id):
-        await q.message.reply_text('Verified! Main menu opened.', reply_markup=MENU)
-    else:
-        await q.message.reply_text('You still need to join the channel.')
+bot.hears('Deposit', (ctx) => ctx.reply('Send payment screenshot or UPI TXN ID to admin.'));
+bot.hears('Withdraw', (ctx) => ctx.reply('Send amount and UPI ID for withdrawal request.'));
+bot.hears('Profile', (ctx) => ctx.reply(`Name: ${ctx.from.first_name}\nID: ${ctx.from.id}\nBalance: ₹0`));
+bot.hears('Classic Ludo', (ctx) => ctx.reply('Classic Ludo coming soon.'));
+bot.hears('Quick Ludo', (ctx) => ctx.reply('Quick Ludo coming soon.'));
+bot.hears('Popular Ludo', (ctx) => ctx.reply('Popular Ludo coming soon.'));
+bot.hears('Support', (ctx) => ctx.reply(`Contact support: ${SUPPORT_USERNAME}`));
 
-async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text
-    user = update.effective_user
-    if text == 'Deposit':
-        await update.message.reply_text('Send payment screenshot or UPI TXN ID to admin.')
-    elif text == 'Withdraw':
-        await update.message.reply_text('Send amount and UPI ID for withdrawal request.')
-    elif text == 'Profile':
-        await update.message.reply_text(f'Name: {user.first_name}\nID: {user.id}\nBalance: ₹0')
-    elif text == 'Classic Ludo':
-        await update.message.reply_text('Classic Ludo coming soon.')
-    elif text == 'Quick Ludo':
-        await update.message.reply_text('Quick Ludo coming soon.')
-    elif text == 'Popular Ludo':
-        await update.message.reply_text('Popular Ludo coming soon.')
-    elif text == 'Support':
-        await update.message.reply_text(f'Contact support: {SUPPORT_USERNAME}')
-    else:
-        await update.message.reply_text('Use menu buttons only.')
+bot.launch();
+console.log('Bot running...');
 
-
-def main():
-    app = Application.builder().token(TOKEN).build()
-    app.add_handler(CommandHandler('start', start))
-    app.add_handler(CallbackQueryHandler(check_join, pattern='check_join'))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, buttons))
-    app.run_polling()
-
-if __name__ == '__main__':
-    main()
+process.once('SIGINT', () => bot.stop('SIGINT'));
+process.once('SIGTERM', () => bot.stop('SIGTERM'));
