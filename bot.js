@@ -1,9 +1,11 @@
 const express = require("express");
 const TelegramBot = require("node-telegram-bot-api");
 
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
-const BOT_TOKEN = process.env.BOT_TOKEN;
-const WEBHOOK_URL = process.env.WEBHOOK_URL; // e.g. https://your-app.onrender.com
+// ─── ADD YOUR DETAILS HERE ────────────────────────────────────────────────────
+const BOT_TOKEN = "8605121015:AAFz-OwQB540Lzs7ak8zxSGS_dopDApoetU";           // 👈 Paste your token here
+const WEBHOOK_URL = "https://telegram-invite-bot-ihm1.onrender.com"; // 👈 Paste your Render URL here
+// ─────────────────────────────────────────────────────────────────────────────
+
 const PORT = process.env.PORT || 3000;
 
 const app = express();
@@ -20,12 +22,12 @@ app.post(`/bot${BOT_TOKEN}`, (req, res) => {
   res.sendStatus(200);
 });
 
-// ─── KEEP ALIVE (for UptimeRobot) ─────────────────────────────────────────────
+// Keep alive for UptimeRobot
 app.get("/", (req, res) => {
   res.send("🎲 Ludo Bot is running!");
 });
 
-// ─── MAIN MENU KEYBOARD ───────────────────────────────────────────────────────
+// ─── MAIN MENU ────────────────────────────────────────────────────────────────
 function getMainMenu() {
   return {
     reply_markup: {
@@ -41,59 +43,52 @@ function getMainMenu() {
   };
 }
 
-// ─── /START COMMAND ───────────────────────────────────────────────────────────
+// ─── /START ───────────────────────────────────────────────────────────────────
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   const firstName = msg.from.first_name || "Player";
 
-  const welcomeText = `
-🎲 *Welcome to Ludo Arena, ${firstName}!*
-
-Play Ludo, win real money and enjoy the game!
-
-👇 *Choose an option below to get started:*
-  `;
-
-  bot.sendMessage(chatId, welcomeText, {
-    parse_mode: "Markdown",
-    ...getMainMenu(),
-  });
+  bot.sendMessage(
+    chatId,
+    `🎲 *Welcome to Ludo Arena, ${firstName}!*\n\nPlay Ludo, win real money and enjoy the game!\n\n👇 *Choose an option below to get started:*`,
+    {
+      parse_mode: "Markdown",
+      ...getMainMenu(),
+    }
+  );
 });
 
-// ─── DEPOSIT ──────────────────────────────────────────────────────────────────
+// ─── MESSAGES ─────────────────────────────────────────────────────────────────
 bot.on("message", (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text;
 
+  // DEPOSIT
   if (text === "💰 Deposit") {
-    bot.sendMessage(
-      chatId,
-      `💰 *Deposit*\n\nChoose a deposit amount:`,
-      {
-        parse_mode: "Markdown",
-        reply_markup: {
-          inline_keyboard: [
-            [
-              { text: "₹50", callback_data: "deposit_50" },
-              { text: "₹100", callback_data: "deposit_100" },
-              { text: "₹200", callback_data: "deposit_200" },
-            ],
-            [
-              { text: "₹500", callback_data: "deposit_500" },
-              { text: "₹1000", callback_data: "deposit_1000" },
-            ],
-            [{ text: "🔙 Back to Menu", callback_data: "back_menu" }],
+    bot.sendMessage(chatId, `💰 *Deposit*\n\nChoose a deposit amount:`, {
+      parse_mode: "Markdown",
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: "₹50", callback_data: "deposit_50" },
+            { text: "₹100", callback_data: "deposit_100" },
+            { text: "₹200", callback_data: "deposit_200" },
           ],
-        },
-      }
-    );
+          [
+            { text: "₹500", callback_data: "deposit_500" },
+            { text: "₹1000", callback_data: "deposit_1000" },
+          ],
+          [{ text: "🔙 Back", callback_data: "back_menu" }],
+        ],
+      },
+    });
   }
 
-  // ─── WITHDRAW ───────────────────────────────────────────────────────────────
+  // WITHDRAW
   else if (text === "💸 Withdraw") {
     bot.sendMessage(
       chatId,
-      `💸 *Withdraw*\n\nEnter the amount you want to withdraw.\n\n_Minimum withdrawal: ₹100_`,
+      `💸 *Withdraw*\n\nChoose an amount to withdraw:\n\n_Minimum withdrawal: ₹100_`,
       {
         parse_mode: "Markdown",
         reply_markup: {
@@ -103,38 +98,34 @@ bot.on("message", (msg) => {
               { text: "₹200", callback_data: "withdraw_200" },
               { text: "₹500", callback_data: "withdraw_500" },
             ],
-            [{ text: "🔙 Back to Menu", callback_data: "back_menu" }],
+            [{ text: "🔙 Back", callback_data: "back_menu" }],
           ],
         },
       }
     );
   }
 
-  // ─── CLASSIC LUDO ───────────────────────────────────────────────────────────
+  // CLASSIC LUDO
   else if (text === "🎲 Classic Ludo") {
-    bot.sendMessage(
-      chatId,
-      `🎲 *Classic Ludo*\n\nChoose your entry fee:`,
-      {
-        parse_mode: "Markdown",
-        reply_markup: {
-          inline_keyboard: [
-            [
-              { text: "₹50 Entry", callback_data: "classic_50" },
-              { text: "₹100 Entry", callback_data: "classic_100" },
-            ],
-            [
-              { text: "₹200 Entry", callback_data: "classic_200" },
-              { text: "₹500 Entry", callback_data: "classic_500" },
-            ],
-            [{ text: "🔙 Back to Menu", callback_data: "back_menu" }],
+    bot.sendMessage(chatId, `🎲 *Classic Ludo*\n\nChoose your entry fee:`, {
+      parse_mode: "Markdown",
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: "₹50 Entry", callback_data: "classic_50" },
+            { text: "₹100 Entry", callback_data: "classic_100" },
           ],
-        },
-      }
-    );
+          [
+            { text: "₹200 Entry", callback_data: "classic_200" },
+            { text: "₹500 Entry", callback_data: "classic_500" },
+          ],
+          [{ text: "🔙 Back", callback_data: "back_menu" }],
+        ],
+      },
+    });
   }
 
-  // ─── QUICK LUDO ─────────────────────────────────────────────────────────────
+  // QUICK LUDO
   else if (text === "⚡ Quick Ludo") {
     bot.sendMessage(
       chatId,
@@ -151,14 +142,14 @@ bot.on("message", (msg) => {
               { text: "₹100 Entry", callback_data: "quick_100" },
               { text: "₹250 Entry", callback_data: "quick_250" },
             ],
-            [{ text: "🔙 Back to Menu", callback_data: "back_menu" }],
+            [{ text: "🔙 Back", callback_data: "back_menu" }],
           ],
         },
       }
     );
   }
 
-  // ─── POPULAR LUDO ───────────────────────────────────────────────────────────
+  // POPULAR LUDO
   else if (text === "🏆 Popular Ludo") {
     bot.sendMessage(
       chatId,
@@ -170,33 +161,29 @@ bot.on("message", (msg) => {
             [{ text: "🔥 Hot Table - ₹100", callback_data: "popular_100" }],
             [{ text: "💎 VIP Table - ₹500", callback_data: "popular_500" }],
             [{ text: "👑 Elite Table - ₹1000", callback_data: "popular_1000" }],
-            [{ text: "🔙 Back to Menu", callback_data: "back_menu" }],
+            [{ text: "🔙 Back", callback_data: "back_menu" }],
           ],
         },
       }
     );
   }
 
-  // ─── SUPPORT ────────────────────────────────────────────────────────────────
+  // SUPPORT
   else if (text === "🆘 Support") {
-    bot.sendMessage(
-      chatId,
-      `🆘 *Support*\n\nNeed help? Choose an option:`,
-      {
-        parse_mode: "Markdown",
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "📞 Contact Admin", url: "https://t.me/youradmin" }],
-            [{ text: "❓ FAQ", callback_data: "support_faq" }],
-            [{ text: "🐛 Report a Bug", callback_data: "support_bug" }],
-            [{ text: "🔙 Back to Menu", callback_data: "back_menu" }],
-          ],
-        },
-      }
-    );
+    bot.sendMessage(chatId, `🆘 *Support*\n\nNeed help? Choose an option:`, {
+      parse_mode: "Markdown",
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "📞 Contact Admin", url: "https://t.me/youradmin" }],
+          [{ text: "❓ FAQ", callback_data: "support_faq" }],
+          [{ text: "🐛 Report a Bug", callback_data: "support_bug" }],
+          [{ text: "🔙 Back", callback_data: "back_menu" }],
+        ],
+      },
+    });
   }
 
-  // ─── PROFILE ────────────────────────────────────────────────────────────────
+  // PROFILE
   else if (text === "👤 Profile") {
     const user = msg.from;
     bot.sendMessage(
@@ -213,7 +200,7 @@ bot.on("message", (msg) => {
         reply_markup: {
           inline_keyboard: [
             [{ text: "📊 Game History", callback_data: "profile_history" }],
-            [{ text: "🔙 Back to Menu", callback_data: "back_menu" }],
+            [{ text: "🔙 Back", callback_data: "back_menu" }],
           ],
         },
       }
@@ -221,16 +208,15 @@ bot.on("message", (msg) => {
   }
 });
 
-// ─── CALLBACK QUERY HANDLER ───────────────────────────────────────────────────
+// ─── CALLBACK BUTTONS ─────────────────────────────────────────────────────────
 bot.on("callback_query", (query) => {
   const chatId = query.message.chat.id;
   const data = query.data;
 
-  // Answer the callback to remove loading state
   bot.answerCallbackQuery(query.id);
 
   if (data === "back_menu") {
-    bot.sendMessage(chatId, "🏠 *Main Menu*", {
+    bot.sendMessage(chatId, `🏠 *Main Menu*\n\nChoose an option:`, {
       parse_mode: "Markdown",
       ...getMainMenu(),
     });
@@ -240,7 +226,10 @@ bot.on("callback_query", (query) => {
     const amount = data.split("_")[1];
     bot.sendMessage(
       chatId,
-      `💰 *Deposit ₹${amount}*\n\nSend ₹${amount} to the UPI below:\n\n📲 *UPI ID:* \`yourupi@bank\`\n\nAfter payment, send the UTR/Transaction ID here.`,
+      `💰 *Deposit ₹${amount}*\n\n` +
+        `Send ₹${amount} to the UPI below:\n\n` +
+        `📲 *UPI ID:* \`yourupi@bank\`\n\n` +
+        `After payment, send the UTR/Transaction ID here.`,
       { parse_mode: "Markdown" }
     );
   }
@@ -254,7 +243,11 @@ bot.on("callback_query", (query) => {
     );
   }
 
-  else if (data.startsWith("classic_") || data.startsWith("quick_") || data.startsWith("popular_")) {
+  else if (
+    data.startsWith("classic_") ||
+    data.startsWith("quick_") ||
+    data.startsWith("popular_")
+  ) {
     const parts = data.split("_");
     const type = parts[0];
     const amount = parts[1];
