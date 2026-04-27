@@ -2,7 +2,7 @@ const express = require("express");
 const TelegramBot = require("node-telegram-bot-api");
 
 // ─── ADD YOUR DETAILS HERE ────────────────────────────────────────────────────
-const BOT_TOKEN = "8605121015:AAFz-OwQB540Lzs7ak8zxSGS_dopDApoetU";           // 👈 Paste your token here
+const BOT_TOKEN = "8605121015:AAGyhOqPIbewK8JQ4PK_ASF-iPn6t5g3Oek";           // 👈 Paste your token here
 const WEBHOOK_URL = "https://telegram-invite-bot-ihm1.onrender.com"; // 👈 Paste your Render URL here
 // ─────────────────────────────────────────────────────────────────────────────
 
