@@ -1,9 +1,9 @@
 
 
-const BOT_TOKEN = "8605121015:AAGICOiuBGkVHWsPXiOYEwnSQGh7BVVTo_c";
+const BOT_TOKEN = process.env.BOT_TOKEN;
+const RENDER_URL = process.env.RENDER_URL;
 const ADMIN_ID = 8521844327;
-const GROUP_ID = -1003890515710;
-const RENDER_URL = "https://test-bot-k7wm.onrender.com"; 
+const GROUP_ID = -1003890515710; 
 const GROUP_INVITE_LINK = "https://t.me/+oZ50aEXyGv4zMjY1"; // ← CHANGE THIS
 const PLATFORM_CUT_PERCENT = 5;
 const REFER_REWARD = 20;
