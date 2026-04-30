@@ -3,23 +3,29 @@
 const BOT_TOKEN = "8605121015:AAGICOiuBGkVHWsPXiOYEwnSQGh7BVVTo_c";
 const ADMIN_ID = 8521844327;
 const GROUP_ID = -1003890515710;
+const RENDER_URL = "https://test-bot-k7wm.onrender.com"; 
 const GROUP_INVITE_LINK = "https://t.me/+oZ50aEXyGv4zMjY1"; // ← CHANGE THIS
 const PLATFORM_CUT_PERCENT = 5;
 const REFER_REWARD = 20;
 
 const express = require("express");
 const TelegramBot = require("node-telegram-bot-api");
-const bot = new TelegramBot(BOT_TOKEN, { webHook: true }); 
+
+const bot = new TelegramBot(BOT_TOKEN, { webHook: true });
 const app = express();
 app.use(express.json());
-app.post("/webhook", (req, res) => {
+
+app.post(`/webhook`, (req, res) => {
   bot.processUpdate(req.body);
   res.status(200).send("OK");
 });
-// start express server
+app.get("/", (req, res) => res.send("Bot is running!"));
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-console.log("🚀 LudoAdda Bot is running...");
+app.listen(PORT, async () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  // Set webhook on startup
+  await bot.setWebHook(`${RENDER_URL}/webhook`);
+  console.log(`✅ Webhook set to ${RENDER_URL}/webhook`);
 });
 
 function escMD(text) {
