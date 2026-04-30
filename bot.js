@@ -1,4 +1,4 @@
-const BOT_TOKEN  = process.env.BOT_TOKEN;
+const BOT_TOKEN  = "8605121015:AAEnD_nSnJY-hXK904TdtTYfO3K_qgA2S8o";
 const RENDER_URL = process.env.RENDER_URL;
 const ADMIN_ID   = 8521844327;
 const GROUP_ID   = -1003890515710;
