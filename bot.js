@@ -2,10 +2,10 @@ const TelegramBot = require("node-telegram-bot-api");
 const http        = require("http");
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-const BOT_TOKEN            = process.env.BOT_TOKEN            || "8605121015:AAGyhOqPIbewK8JQ4PK_ASF-iPn6t5g3Oek";
-const ADMIN_ID             = parseInt(process.env.ADMIN_ID)   || 8521844327;
-const GROUP_ID             = parseInt(process.env.GROUP_ID)   || -1003890515710;
-const GROUP_INVITE_LINK    = process.env.GROUP_INVITE_LINK    || "https://t.me/+YOUR_GROUP_INVITE_LINK";
+const BOT_TOKEN            = "8605121015:AAGyhOqPIbewK8JQ4PK_ASF-iPn6t5g3Oek";
+const ADMIN_ID             =  8521844327;
+const GROUP_ID             = -1003890515710;
+const GROUP_INVITE_LINK    = "https://t.me/+oZ50aEXyGv4zMjY1";
 const PLATFORM_CUT_PERCENT = 5;
 const REFER_REWARD         = 20;
 const PORT                 = process.env.PORT                 || 3000;
