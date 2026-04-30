@@ -1,6 +1,6 @@
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const BOT_TOKEN            = "8605121015:AAEnD_nSnJY-hXK904TdtTYfO3K_qgA2S8o";
-const RENDER_URL           = process.env.RENDER_URL;
+const RENDER_URL           = "https://test-bot-5tik.onrender.com";
 const ADMIN_ID             = 8521844327;
 const GROUP_ID             = -1003890515710;
 const GROUP_INVITE_LINK    = "https://t.me/+oZ50aEXyGv4zMjY1";
