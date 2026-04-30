@@ -244,7 +244,7 @@ function sendMD(chatId, text, extra = {}) {
 async function isGroupMember(userId) {
   try {
     const member = await bot.getChatMember(GROUP_ID, userId);
-    return ["member", "administrator", "creator"].includes(member.status);
+    return ["member", "administrator", "creator", "restricted"].includes(member.status);
   } catch {
     return false;
   }
@@ -640,7 +640,6 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
       });
     return;
   }
-
   send(chatId,
     `🎲 Welcome to Ludo Adda, ${msg.from.first_name}!\nLet's Play and Win real money!!!`,
     mainMenu());
