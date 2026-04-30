@@ -1,5 +1,4 @@
 const express = require("express");
-const fs = require("fs");
 const TelegramBot = require("node-telegram-bot-api");
 
 const app = express(); 
@@ -13,8 +12,13 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
     console.log("Server running on port " + PORT);
 });
-const BOT_TOKEN = process.env.BOT_TOKEN;
-const bot = new TelegramBot(BOT_TOKEN, { polling: true });
+const token = process.env.BOT_TOKEN?.trim();
+if (!token) {
+  throw new Error("BOT_TOKEN missing");
+}
+const bot = new TelegramBot(token, {
+  polling: true
+});
 const ADMIN_ID = 8521844327;
 const GROUP_ID = -1003890515710;
 const GROUP_INVITE_LINK = "https://t.me/+YOUR_GROUP_INVITE_LINK"; // ← CHANGE THIS
