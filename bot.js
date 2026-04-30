@@ -1,80 +1,33 @@
-const TelegramBot = require("node-telegram-bot-api");
-const http        = require("http");
 
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
-const BOT_TOKEN            = "8605121015:AAGyhOqPIbewK8JQ4PK_ASF-iPn6t5g3Oek";
-const ADMIN_ID             =  8521844327;
-const GROUP_ID             = -1003890515710;
-const GROUP_INVITE_LINK    = "https://t.me/+oZ50aEXyGv4zMjY1";
+
+const BOT_TOKEN = "8605121015:AAGyhOqPIbewK8JQ4PK_ASF-iPn6t5g3Oek";
+const ADMIN_ID = 8521844327;
+const GROUP_ID = -1003890515710;
+const GROUP_INVITE_LINK = "https://t.me/+YOUR_GROUP_INVITE_LINK"; // ← CHANGE THIS
 const PLATFORM_CUT_PERCENT = 5;
-const REFER_REWARD         = 20;
-const PORT                 = process.env.PORT                 || 3000;
-// ─────────────────────────────────────────────────────────────────────────────
+const REFER_REWARD = 20;
 
-// ─── KEEP-ALIVE HTTP SERVER (Required by Render — also pinged by UptimeRobot) ─
-// Render spins down free instances after inactivity. This server:
-//   1. Satisfies Render's health-check requirement (needs an open port)
-//   2. Gives UptimeRobot a URL to ping every 5 minutes to prevent spin-down
-const server = http.createServer((req, res) => {
-  res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end("LudoAdda Bot is alive!");
+const express = require("express");
+const TelegramBot = require("node-telegram-bot-api");
+const bot = new TelegramBot(BOT_TOKEN);
+const app = express();
+app.use(express.json());
+app.post("/webhook", (req, res) => {
+  bot.processUpdate(req.body);
+  res.status(200).send("OK");
 });
-server.listen(PORT, () => console.log(`✅ Keep-alive server running on port ${PORT}`));
-
-// ─── RESILIENT POLLING ────────────────────────────────────────────────────────
-const bot = new TelegramBot(BOT_TOKEN, {
-  polling: {
-    interval  : 300,
-    autoStart : true,
-    params    : { timeout: 10 },
-  },
-  request: {
-    timeout   : 30000,
-    retryLimit: 5,
-  },
-});
-
+// start express server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
 console.log("🚀 LudoAdda Bot is running...");
-
-// ─── AUTO-RESTART POLLING on network errors ───────────────────────────────────
-// Render's free tier and UptimeRobot pings can cause brief network drops.
-// This handler catches ECONNRESET / ENOTFOUND and restarts polling automatically.
-let isRestarting = false;
-bot.on("polling_error", (err) => {
-  const msg = err.message || "";
-  console.error("Polling error:", msg);
-
-  const isNetworkError =
-    msg.includes("ECONNRESET")   ||
-    msg.includes("ENOTFOUND")    ||
-    msg.includes("ETIMEDOUT")    ||
-    msg.includes("EFATAL")       ||
-    msg.includes("socket hang up");
-
-  if (isNetworkError && !isRestarting) {
-    isRestarting = true;
-    console.log("🔄 Network error — restarting polling in 5s...");
-    bot.stopPolling()
-      .catch(() => {})
-      .finally(() => {
-        setTimeout(() => {
-          bot.startPolling()
-            .then(() => { isRestarting = false; console.log("✅ Polling restarted."); })
-            .catch((e) => { isRestarting = false; console.error("Failed to restart polling:", e.message); });
-        }, 5000);
-      });
-  }
 });
 
-// ─── MARKDOWN ESCAPE ──────────────────────────────────────────────────────────
 function escMD(text) {
   if (!text) return "";
   return String(text).replace(/[_*`\[]/g, "\\$&");
 }
 
 // ─── IN-MEMORY STORE ──────────────────────────────────────────────────────────
-// NOTE: Render free tier resets memory on spin-down/redeploy.
-// For production persistence, replace with a database (MongoDB Atlas free tier recommended).
 let users              = {};
 let tables             = {};
 let pendingDeposits    = {};
@@ -87,7 +40,7 @@ let tableCounter       = 1;
 let txnCounter         = 1;
 let claimCounter       = 1;
 
-// ─── GLOBAL STATS ─────────────────────────────────────────────────────────────
+// ─── GLOBAL STATS TRACKER ─────────────────────────────────────────────────────
 let stats = {
   totalMatches    : 0,
   totalPot        : 0,
@@ -132,7 +85,7 @@ function registerUser(msg, referredBy = null) {
       status         : "idle",
       tableId        : null,
       hasDeposited   : false,
-      referredBy,
+      referredBy     : referredBy,
       referRewardPaid: false,
       referCount     : 0,
     };
@@ -178,10 +131,13 @@ function gameLabel(t) {
 function dname(chatId) {
   const u = users[chatId];
   if (!u) return String(chatId);
+  // FIX: escape markdown in display names
   return u.username !== "N/A" ? `@${escMD(u.username)}` : escMD(u.name);
 }
 
+// tapCopy wraps value in backticks — value must NOT contain backticks itself
 function tapCopy(value) {
+  // FIX: strip any backticks from the value to prevent broken entities
   return `\`${String(value).replace(/`/g, "'")}\``;
 }
 
@@ -204,7 +160,9 @@ function mainMenu() {
 function waitingMenu(tableId) {
   return {
     reply_markup: {
-      keyboard         : [[{ text: `❌ Cancel Table ${tableId}` }]],
+      keyboard: [
+        [{ text: `❌ Cancel Table ${tableId}` }],
+      ],
       resize_keyboard  : true,
       one_time_keyboard: false,
     },
@@ -214,7 +172,9 @@ function waitingMenu(tableId) {
 function acceptDeclineMenu(tableId) {
   return {
     reply_markup: {
-      keyboard         : [[{ text: `✅ Accept ${tableId}` }, { text: `❌ Decline ${tableId}` }]],
+      keyboard: [
+        [{ text: `✅ Accept ${tableId}` }, { text: `❌ Decline ${tableId}` }],
+      ],
       resize_keyboard  : true,
       one_time_keyboard: true,
     },
@@ -237,7 +197,9 @@ function startGameMenu(tableId) {
 function gameResultMenu(tableId) {
   return {
     reply_markup: {
-      keyboard         : [[{ text: `🏆 I Won ${tableId}` }, { text: `😔 I Lost ${tableId}` }]],
+      keyboard: [
+        [{ text: `🏆 I Won ${tableId}` }, { text: `😔 I Lost ${tableId}` }],
+      ],
       resize_keyboard  : true,
       one_time_keyboard: true,
     },
@@ -248,9 +210,9 @@ function adminMenu() {
   return {
     reply_markup: {
       keyboard: [
-        [{ text: "📢 Broadcast" }, { text: "👤 User Info" }, { text: "📊 Bot Status" }],
+        [{ text: "📢 Broadcast" },{ text: "👤 User Info" }, { text: "📊 Bot Status" }],
         [{ text: "👤 MSG User" }, { text: botOnline ? "🔴 Turn Bot OFF" : "🟢 Turn Bot ON" }, { text: "👥 All Users" }],
-        [{ text: "💰 Balance Update" }, { text: "📋 Open Tables" }, { text: "🏆 Win Claims" }],
+        [{ text: "💰 Balance Update" }, { text: "📋 Open Tables" }],
         [{ text: "🔙 User Menu" }],
       ],
       resize_keyboard: true,
@@ -267,16 +229,20 @@ const cancelKb = (label = "❌ Cancel") => ({
 });
 
 function send(chatId, text, extra = {}) {
-  return bot.sendMessage(chatId, text, extra)
-    .catch(err => console.error(`sendMessage to ${chatId} failed:`, err.message));
+  return bot.sendMessage(chatId, text, extra).catch(err =>
+    console.error(`sendMessage to ${chatId} failed:`, err.message)
+  );
 }
 
+// ─── FIX 4: sendMD now falls back gracefully on parse errors ──────────────────
 function sendMD(chatId, text, extra = {}) {
   return bot.sendMessage(chatId, text, { parse_mode: "Markdown", ...extra }).catch(err => {
     console.error(`sendMessage(MD) to ${chatId} failed:`, err.message);
+    // Strip ALL markdown syntax and retry as plain text
     const plain = text.replace(/[`*_\[\]]/g, "");
-    return bot.sendMessage(chatId, plain, extra)
-      .catch(e => console.error(`sendMessage(plain fallback) to ${chatId} failed:`, e.message));
+    return bot.sendMessage(chatId, plain, extra).catch((e) =>
+      console.error(`sendMessage(plain fallback) to ${chatId} also failed:`, e.message)
+    );
   });
 }
 
@@ -296,14 +262,19 @@ async function requireGroupMembership(chatId, onSuccess) {
   send(chatId,
     `🚫 Join Required!\n\nYou must join our group to play Ludo Adda.\n\nJoin the group and then try again!`,
     {
-      reply_markup: { inline_keyboard: [
-        [{ text: "✅ Join Group", url: GROUP_INVITE_LINK }],
-        [{ text: "▶️ I've Joined — Continue", callback_data: "check_membership" }],
-      ]},
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "✅ Join Group", url: GROUP_INVITE_LINK }],
+          [{ text: "▶️ I've Joined — Continue", callback_data: "check_membership" }],
+        ],
+      },
     });
 }
 
-// ─── MATCHMAKING ──────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+//  MATCHMAKING
+// ─────────────────────────────────────────────────────────────────────────────
+
 function handleJoin(chatId, gameType, entryFee) {
   const user = users[chatId];
   if (!user) return;
@@ -324,14 +295,16 @@ function handleJoin(chatId, gameType, entryFee) {
   const winnerGets  = pot - platformCut;
 
   const match = Object.values(tables).find(
-    t => t.gameType === gameType && t.entryFee === entryFee &&
-         t.status === "open" && t.creatorId !== chatId
+    t => t.gameType === gameType &&
+         t.entryFee === entryFee &&
+         t.status   === "open"   &&
+         t.creatorId !== chatId
   );
 
   if (match) {
-    user.balance -= entryFee;
-    user.status   = "waiting";
-    user.tableId  = match.tableId;
+    user.balance  -= entryFee;
+    user.status    = "waiting";
+    user.tableId   = match.tableId;
 
     markUserActive(chatId);
     markUserActive(match.creatorId);
@@ -352,12 +325,18 @@ function handleJoin(chatId, gameType, entryFee) {
     }
 
     send(match.creatorId,
-      `🎯 Opponent Found!\n\nGame: ${gameLabel(gameType)}\nOpponent: ${dname(chatId)}\n` +
-      `Entry: ₹${entryFee} | Winner Gets: ₹${winnerGets}\n\nWaiting for opponent to accept...`);
+      `🎯 Opponent Found!\n\n` +
+      `Game: ${gameLabel(gameType)}\n` +
+      `Opponent: ${dname(chatId)}\n` +
+      `Entry: ₹${entryFee} | Winner Gets: ₹${winnerGets}\n\n` +
+      `Waiting for opponent to accept...`);
 
     send(chatId,
-      `🎯 Match Found!\n\nGame: ${gameLabel(gameType)}\nTable Creator: ${dname(match.creatorId)}\n` +
-      `Entry: ₹${entryFee} | Winner Gets: ₹${winnerGets}\n\nAccept or Decline within 5 minutes!`,
+      `🎯 Match Found!\n\n` +
+      `Game: ${gameLabel(gameType)}\n` +
+      `Table Creator: ${dname(match.creatorId)}\n` +
+      `Entry: ₹${entryFee} | Winner Gets: ₹${winnerGets}\n\n` +
+      `Accept or Decline within 5 minutes!`,
       acceptDeclineMenu(match.tableId));
 
     match.acceptTimer = setTimeout(() => timeoutPendingAccept(match.tableId), 300_000);
@@ -386,17 +365,24 @@ function handleJoin(chatId, gameType, entryFee) {
 
     sendMD(chatId,
       `✅ Table Created!\n\n` +
-      `Table ID: ${tapCopy(tableId)}\nGame: ${gameLabel(gameType)}\n` +
-      `Entry Fee: ₹${entryFee} (deducted)\nWinner Gets: ₹${winnerGets}\n\n` +
+      `Table ID: ${tapCopy(tableId)}\n` +
+      `Game: ${gameLabel(gameType)}\n` +
+      `Entry Fee: ₹${entryFee} (deducted)\n` +
+      `Winner Gets: ₹${winnerGets}\n\n` +
       `Searching for opponent in group...`,
       waitingMenu(tableId));
 
     bot.sendMessage(GROUP_ID,
-      `🎮 New Table Created!\n\nGame Type: ${gameLabel(gameType)}\n` +
-      `Table Creator: ${dname(chatId)}\nEntry: ₹${entryFee}\nWinner Gets: ₹${winnerGets}`,
-      { reply_markup: { inline_keyboard: [[
-        { text: `✅ Join Table (₹${entryFee})`, callback_data: `group_join_${tableId}` },
-      ]]}}
+      `🎮 New Table Created!\n\n` +
+      `Game Type: ${gameLabel(gameType)}\n` +
+      `Table Creator: ${dname(chatId)}\n` +
+      `Entry: ₹${entryFee}\n` +
+      `Winner Gets: ₹${winnerGets}`,
+      {
+        reply_markup: { inline_keyboard: [[
+          { text: `✅ Join Table (₹${entryFee})`, callback_data: `group_join_${tableId}` },
+        ]]},
+      }
     ).then(sent => {
       const t = tables[tableId];
       if (!t) return;
@@ -406,16 +392,18 @@ function handleJoin(chatId, gameType, entryFee) {
   }
 }
 
-// ─── TABLE LIFECYCLE ──────────────────────────────────────────────────────────
+// ─── EXPIRE open table after 10 min ──────────────────────────────────────────
 function expireOpenTable(tableId) {
   const t = tables[tableId];
   if (!t || t.status !== "open") return;
   t.status = "cancelled";
   const u = users[t.creatorId];
   if (u) { u.balance += t.entryFee; u.status = "idle"; u.tableId = null; }
+
   send(t.creatorId,
     `⏰ Table Expired!\n\nNo one joined ${tableId} within 10 minutes.\nRefund: ₹${t.entryFee} | Balance: ₹${users[t.creatorId]?.balance}`,
     mainMenu());
+
   if (t.groupMsgId) {
     bot.editMessageText(`❌ Table ${tableId} expired — no opponent found.`,
       { chat_id: GROUP_ID, message_id: t.groupMsgId }).catch(() => {});
@@ -424,6 +412,7 @@ function expireOpenTable(tableId) {
   }
 }
 
+// ─── TIMEOUT pending_accept ───────────────────────────────────────────────────
 function timeoutPendingAccept(tableId) {
   const t = tables[tableId];
   if (!t || t.status !== "pending_accept") return;
@@ -439,32 +428,42 @@ function timeoutPendingAccept(tableId) {
   });
 }
 
+// ─── STEP 2: Opponent accepted → ask creator for room code ───────────────────
 function askCreatorForRoomCode(tableId) {
   const t = tables[tableId];
   if (!t) return;
   t.status = "room_pending";
   userState[t.creatorId] = { action: "send_room_code", tableId };
   send(t.creatorId,
-    `✅ Opponent Accepted!\n\nOpponent: ${dname(t.opponentId)}\nTable: ${tableId}\n\n` +
+    `✅ Opponent Accepted!\n\n` +
+    `Opponent: ${dname(t.opponentId)}\n` +
+    `Table: ${tableId}\n\n` +
     `Please type and send your Room Code from the Ludo app:`,
     cancelKb("❌ Cancel Game"));
 }
 
+// ─── STEP 3: Creator sends room code → forward to opponent ───────────────────
 function sendRoomCodeToOpponent(tableId, code) {
   const t = tables[tableId];
   if (!t) return;
   t.status   = "room_shared";
+  // FIX: sanitize room code — strip backticks so tapCopy doesn't break
   t.roomCode = String(code).replace(/`/g, "'");
 
   sendMD(t.creatorId,
-    `📤 Room code sent to opponent!\n\nCode: ${tapCopy(t.roomCode)}\n\nWaiting for opponent to tap ▶️ Start Game...`);
+    `📤 Room code sent to opponent!\n\n` +
+    `Code: ${tapCopy(t.roomCode)}\n\n` +
+    `Waiting for opponent to tap ▶️ Start Game...`);
 
   sendMD(t.opponentId,
-    `🔑 Room Code Received!\n\nTable: ${tableId}\nRoom Code: ${tapCopy(t.roomCode)}\n\n` +
+    `🔑 Room Code Received!\n\n` +
+    `Table: ${tableId}\n` +
+    `Room Code: ${tapCopy(t.roomCode)}\n\n` +
     `Tap the code above to copy it, enter it in your Ludo app, then tap ▶️ Start Game!`,
     startGameMenu(tableId));
 }
 
+// ─── STEP 4: Opponent presses Start → activate game ──────────────────────────
 function activateGame(tableId) {
   const t = tables[tableId];
   if (!t) return;
@@ -479,12 +478,19 @@ function activateGame(tableId) {
   const names = `${dname(t.creatorId)} vs ${dname(t.opponentId)}`;
 
   sendMD(t.creatorId,
-    `🎮 Match Started!\n\nTable: ${tableId}\nPlayers: ${names}\nPrize: ₹${t.winnerGets}\n` +
-    `Room Code: ${tapCopy(t.roomCode)}\n\nGood luck! Tap your result after the game:`,
+    `🎮 Match Started!\n\n` +
+    `Table: ${tableId}\n` +
+    `Players: ${names}\n` +
+    `Prize: ₹${t.winnerGets}\n` +
+    `Room Code: ${tapCopy(t.roomCode)}\n\n` +
+    `Good luck! Tap your result after the game:`,
     gameResultMenu(tableId));
 
   send(t.opponentId,
-    `🎮 Game is ON!\n\nTable: ${tableId}\nPlayers: ${names}\nPrize: ₹${t.winnerGets}\n\n` +
+    `🎮 Game is ON!\n\n` +
+    `Table: ${tableId}\n` +
+    `Players: ${names}\n` +
+    `Prize: ₹${t.winnerGets}\n\n` +
     `Good luck! Tap your result after the game:`,
     gameResultMenu(tableId));
 
@@ -496,13 +502,16 @@ function activateGame(tableId) {
 
   bot.sendMessage(ADMIN_ID,
     `New Active Table: ${tableId}\nPlayers: ${names}\nPot: ₹${t.pot}\nRoom: ${t.roomCode}`,
-    { reply_markup: { inline_keyboard: [[
-      { text: "🏆 Declare Winner", callback_data: `declare_winner_${tableId}` },
-      { text: "🚫 Cancel Table",   callback_data: `cancel_table_${tableId}` },
-    ]]}}
+    {
+      reply_markup: { inline_keyboard: [[
+        { text: "🏆 Declare Winner", callback_data: `declare_winner_${tableId}` },
+        { text: "🚫 Cancel Table",   callback_data: `cancel_table_${tableId}` },
+      ]]},
+    }
   ).catch(() => {});
 }
 
+// ─── DECLARE WINNER ───────────────────────────────────────────────────────────
 function declareWinner(tableId, winnerId) {
   const t = tables[tableId];
   if (!t) return;
@@ -522,6 +531,7 @@ function declareWinner(tableId, winnerId) {
 
   recordMatchCompletion(t.pot, t.platformCut);
 
+  // Referral reward on first match
   [t.creatorId, t.opponentId].forEach(pid => {
     if (!pid || !users[pid]) return;
     const u = users[pid];
@@ -532,8 +542,10 @@ function declareWinner(tableId, winnerId) {
         referrer.referCount += 1;
         u.referRewardPaid    = true;
         send(u.referredBy,
-          `🎉 Refer Reward!\n\nYour referred user ${u.name} just completed their first match!\n` +
-          `₹${REFER_REWARD} added to your wallet.\nNew Balance: ₹${referrer.balance}`);
+          `🎉 Refer Reward!\n\n` +
+          `Your referred user ${u.name} just completed their first match!\n` +
+          `₹${REFER_REWARD} added to your wallet.\n` +
+          `New Balance: ₹${referrer.balance}`);
       }
     }
   });
@@ -555,11 +567,13 @@ function declareWinner(tableId, winnerId) {
       `🏆 Game Result!\nTable: ${tableId} | ${names}\nWinner: ${winnerName} | Prize: ₹${t.winnerGets}`
     ).catch(() => {});
   }
+
   bot.sendMessage(ADMIN_ID,
     `Table ${tableId} completed.\nWinner: ${winnerName} | ₹${t.winnerGets} paid.`
   ).catch(() => {});
 }
 
+// ─── CANCEL TABLE ─────────────────────────────────────────────────────────────
 function cancelTable(tableId, reason) {
   const t = tables[tableId];
   if (!t || ["completed", "cancelled"].includes(t.status)) return;
@@ -578,7 +592,7 @@ function cancelTable(tableId, reason) {
   });
 }
 
-// ─── ADMIN USER INFO ──────────────────────────────────────────────────────────
+// ─── USER INFO PANEL (admin) ──────────────────────────────────────────────────
 function sendUserInfoPanel(adminChatId, targetId) {
   const u = users[targetId];
   if (!u) { send(adminChatId, `❌ User ${targetId} not found.`); return; }
@@ -586,10 +600,15 @@ function sendUserInfoPanel(adminChatId, targetId) {
   const pendingWdl = Object.values(pendingWithdrawals).find(w => w.chatId === targetId && w.status === "pending");
 
   const text =
-    `👤 User Info\n\nID: \`${targetId}\`\n` +
-    `Name: ${escMD(u.name)}\nUsername: @${escMD(u.username)}\n\n` +
-    `Balance: ₹${u.balance}\nGames Played: ${u.gamesPlayed}\nGames Won: ${u.gamesWon}\n` +
-    `Status: ${u.status}\nTable: ${u.tableId || "None"}\n\n` +
+    `👤 User Info\n\n` +
+    `ID: \`${targetId}\`\n` +
+    `Name: ${escMD(u.name)}\n` +
+    `Username: @${escMD(u.username)}\n\n` +
+    `Balance: ₹${u.balance}\n` +
+    `Games Played: ${u.gamesPlayed}\n` +
+    `Games Won: ${u.gamesWon}\n` +
+    `Status: ${u.status}\n` +
+    `Table: ${u.tableId || "None"}\n\n` +
     `Deposited: ${u.hasDeposited ? "Yes ✅" : "No ❌"}\n` +
     `Referred By: ${u.referredBy ? `\`${u.referredBy}\`` : "None"}\n` +
     `Refer Count: ${u.referCount || 0}\n` +
@@ -612,24 +631,32 @@ function sendUserInfoPanel(adminChatId, targetId) {
   });
 }
 
-// ─── /start ───────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+//  /start
+// ─────────────────────────────────────────────────────────────────────────────
 bot.onText(/\/start(.*)/, async (msg, match) => {
   const chatId     = msg.chat.id;
   const param      = match[1]?.trim() || "";
   const referredBy = param && !isNaN(+param) && +param !== chatId ? +param : null;
   registerUser(msg, referredBy);
 
-  if (isAdmin(chatId)) { send(chatId, "👑 Welcome Admin!", adminMenu()); return; }
-  if (!botOnline)      { send(chatId, "🔴 Bot is offline for maintenance. Try again later."); return; }
+  if (isAdmin(chatId)) {
+    send(chatId, "👑 Welcome Admin!", adminMenu());
+    return;
+  }
+  if (!botOnline) { send(chatId, "🔴 Bot is offline for maintenance. Try again later."); return; }
 
   const isMember = await isGroupMember(chatId);
   if (!isMember) {
     send(chatId,
-      `🎲 Welcome to Ludo Adda, ${msg.from.first_name}!\n\n⚠️ To use the bot you must join our official group first.`,
-      { reply_markup: { inline_keyboard: [
-        [{ text: "✅ Join Our Group", url: GROUP_INVITE_LINK }],
-        [{ text: "▶️ I've Joined — Start Playing", callback_data: "check_membership" }],
-      ]}});
+      `🎲 Welcome to Ludo Adda, ${escMD(msg.from.first_name)}!\n\n` +
+      `⚠️ To use the bot you must join our official group first.`,
+      {
+        reply_markup: { inline_keyboard: [
+          [{ text: "✅ Join Our Group", url: GROUP_INVITE_LINK }],
+          [{ text: "▶️ I've Joined — Start Playing", callback_data: "check_membership" }],
+        ]},
+      });
     return;
   }
 
@@ -638,7 +665,9 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
     mainMenu());
 });
 
-// ─── MESSAGE HANDLER ──────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+//  MESSAGE HANDLER
+// ─────────────────────────────────────────────────────────────────────────────
 bot.on("message", msg => {
   const chatId = msg.chat.id;
   const text   = msg.text;
@@ -649,7 +678,7 @@ bot.on("message", msg => {
 
   registerUser(msg);
 
-  // ══════════ ADMIN ══════════════════════════════════════════════════════════
+  // ══════════════════════ ADMIN ══════════════════════════════════════════════
   if (isAdmin(chatId)) {
     const st = adminState[chatId];
 
@@ -657,6 +686,7 @@ bot.on("message", msg => {
       if (photo) {
         const fileId  = photo[photo.length - 1].file_id;
         const caption = msg.caption || "";
+
         if (st.action === "broadcast") {
           let n = 0;
           Object.keys(users).forEach(uid => {
@@ -679,7 +709,11 @@ bot.on("message", msg => {
         }
       }
 
-      if (text === "❌ Cancel") { delete adminState[chatId]; send(chatId, "❌ Cancelled.", adminMenu()); return; }
+      if (text === "❌ Cancel") {
+        delete adminState[chatId];
+        send(chatId, "❌ Cancelled.", adminMenu());
+        return;
+      }
 
       if (st.action === "broadcast") {
         let n = 0;
@@ -690,13 +724,15 @@ bot.on("message", msg => {
         send(chatId, `✅ Broadcast sent to ${n} users.`, adminMenu());
         return;
       }
+
       if (st.action === "msg_user_id") {
         const tid = +text;
         if (!users[tid]) { send(chatId, `❌ User ${text} not found.`); delete adminState[chatId]; return; }
         adminState[chatId] = { action: "msg_user_text", targetId: tid };
-        send(chatId, `User: ${users[tid].name}\n\nSend your message (text or photo):`, cancelKb());
+        send(chatId, `User: ${users[tid].name}\n\nSend your message (text or photo with optional caption):`, cancelKb());
         return;
       }
+
       if (st.action === "msg_user_text") {
         bot.sendMessage(st.targetId, `📢 Message from Admin:\n\n${text}`)
           .then(() => send(chatId, "✅ Message sent.", adminMenu()))
@@ -704,18 +740,22 @@ bot.on("message", msg => {
         delete adminState[chatId];
         return;
       }
+
       if (st.action === "bal_id") {
         const tid = +text;
         if (!users[tid]) { send(chatId, `❌ User ${text} not found.`); delete adminState[chatId]; return; }
         adminState[chatId] = { action: "bal_type", targetId: tid };
-        send(chatId, `User: ${users[tid].name}\nBalance: ₹${users[tid].balance}\n\nChoose action:`, {
-          reply_markup: { inline_keyboard: [
-            [{ text: "➕ Add", callback_data: `bal_add_${tid}` }, { text: "➖ Deduct", callback_data: `bal_ded_${tid}` }],
-            [{ text: "❌ Cancel", callback_data: "bal_cancel" }],
-          ]},
-        });
+        send(chatId,
+          `User: ${users[tid].name}\nBalance: ₹${users[tid].balance}\n\nChoose action:`,
+          {
+            reply_markup: { inline_keyboard: [
+              [{ text: "➕ Add", callback_data: `bal_add_${tid}` }, { text: "➖ Deduct", callback_data: `bal_ded_${tid}` }],
+              [{ text: "❌ Cancel", callback_data: "bal_cancel" }],
+            ]},
+          });
         return;
       }
+
       if (st.action === "bal_add" || st.action === "bal_ded") {
         const amt   = parseFloat(text);
         if (isNaN(amt) || amt <= 0) { send(chatId, "❌ Invalid amount."); return; }
@@ -723,40 +763,53 @@ bot.on("message", msg => {
         const isAdd = st.action === "bal_add";
         if (!isAdd && users[tid].balance < amt) {
           send(chatId, `❌ Balance too low (₹${users[tid].balance}).`);
-          delete adminState[chatId]; return;
+          delete adminState[chatId];
+          return;
         }
         users[tid].balance += isAdd ? amt : -amt;
         send(chatId, `✅ ₹${amt} ${isAdd ? "added to" : "deducted from"} ${users[tid].name}\nNew balance: ₹${users[tid].balance}`, adminMenu());
         send(tid, `💰 Balance Update!\n\n${isAdd ? "+" : "-"}₹${amt}\nNew Balance: ₹${users[tid].balance}`);
-        delete adminState[chatId]; return;
+        delete adminState[chatId];
+        return;
       }
+
       if (st.action === "declare_winner") {
         const tid = +text;
         const t   = tables[st.tableId];
         if (!t || ![t.creatorId, t.opponentId].includes(tid)) {
-          send(chatId, `❌ Not a valid player ID for table ${st.tableId}.`); return;
+          send(chatId, `❌ Not a valid player ID for table ${st.tableId}.`);
+          return;
         }
         declareWinner(st.tableId, tid);
-        delete adminState[chatId]; return;
+        delete adminState[chatId];
+        return;
       }
+
       if (st.action === "user_info_id") {
         const tid = +text;
         delete adminState[chatId];
-        sendUserInfoPanel(chatId, tid); return;
+        sendUserInfoPanel(chatId, tid);
+        return;
       }
     }
 
-    // Admin menu buttons
+    // ── Admin menu buttons ──────────────────────────────────────────────────
     if (text === "📢 Broadcast") {
       adminState[chatId] = { action: "broadcast" };
       const n = Object.keys(users).filter(id => +id !== ADMIN_ID).length;
-      send(chatId, `Send broadcast to ${n} users.\n\nSend TEXT or a PHOTO with optional caption:`, cancelKb()); return;
+      send(chatId, `Send broadcast to ${n} users.\n\nYou can send TEXT or a PHOTO (with optional caption):`, cancelKb());
+      return;
     }
-    if (text === "👤 MSG User")      { adminState[chatId] = { action: "msg_user_id" }; send(chatId, "Enter User ID:", cancelKb()); return; }
-    if (text === "💰 Balance Update") { adminState[chatId] = { action: "bal_id" };     send(chatId, "Enter User ID:", cancelKb()); return; }
-    if (text === "👤 User Info")      { adminState[chatId] = { action: "user_info_id" }; send(chatId, "Enter the User ID to view:", cancelKb()); return; }
-    if (text === "🔙 User Menu")      { send(chatId, "Switched to User Menu.", mainMenu()); return; }
-
+    if (text === "👤 MSG User") {
+      adminState[chatId] = { action: "msg_user_id" };
+      send(chatId, "Enter User ID:", cancelKb());
+      return;
+    }
+    if (text === "💰 Balance Update") {
+      adminState[chatId] = { action: "bal_id" };
+      send(chatId, "Enter User ID:", cancelKb());
+      return;
+    }
     if (text === "📊 Bot Status") {
       const active     = Object.values(tables).filter(t => t.status === "active").length;
       const open       = Object.values(tables).filter(t => t.status === "open").length;
@@ -766,19 +819,29 @@ bot.on("message", msg => {
       const totalUsers = Object.keys(users).filter(id => +id !== ADMIN_ID).length;
       const s24        = get24hStats();
       send(chatId,
-        `📊 Bot Status\n\nStatus: ${botOnline ? "🟢 Online" : "🔴 Offline"}\n` +
-        `Total Users: ${totalUsers}\nTotal Matches: ${stats.totalMatches}\n` +
-        `Total Pot: ₹${stats.totalPot}\nTotal Commission: ₹${stats.totalCommission}\n\n` +
-        `Active Tables: ${active}\nOpen Tables: ${open}\n` +
-        `Pending Deposits: ${pDep}\nPending Withdrawals: ${pWdl}\nWin Claims: ${pClaim}\n` +
-        `━━━━━━━━━━━━━━━━\n⏰ Last 24 Hours\n` +
-        `Active Users: ${s24.activeUsers}\nMatches: ${s24.matches24h}\n` +
-        `Pot: ₹${s24.pot24h}\nCommission: ₹${s24.commission24h}`);
+        `📊 Bot Status\n\n` +
+        `Status: ${botOnline ? "🟢 Online" : "🔴 Offline"}\n` +
+        `Total Users: ${totalUsers}\n` +
+        `Total Matches: ${stats.totalMatches}\n` +
+        `Total Pot Amount: ₹${stats.totalPot}\n` +
+        `Total Commission: ₹${stats.totalCommission}\n\n` +
+        `Active Tables (live): ${active}\n` +
+        `Open Tables (waiting): ${open}\n` +
+        `Pending Deposits: ${pDep}\n` +
+        `Pending Withdrawals: ${pWdl}\n` +
+        `Win Claims: ${pClaim}\n` +
+        `━━━━━━━━━━━━━━━━\n` +
+        `⏰ Last 24 Hours\n` +
+        `Active Users: ${s24.activeUsers}\n` +
+        `Matches Played: ${s24.matches24h}\n` +
+        `Total Pot: ₹${s24.pot24h}\n` +
+        `Commission Earned: ₹${s24.commission24h}`);
       return;
     }
     if (text === "🔴 Turn Bot OFF" || text === "🟢 Turn Bot ON") {
       botOnline = !botOnline;
-      send(chatId, botOnline ? "🟢 Bot is now ONLINE!" : "🔴 Bot is now OFFLINE!", adminMenu()); return;
+      send(chatId, botOnline ? "🟢 Bot is now ONLINE!" : "🔴 Bot is now OFFLINE!", adminMenu());
+      return;
     }
     if (text === "👥 All Users") {
       const all = Object.keys(users).filter(id => +id !== ADMIN_ID);
@@ -797,30 +860,28 @@ bot.on("message", msg => {
       if (!open.length) { send(chatId, "No open tables."); return; }
       let m = `Open Tables (${open.length}):\n\n`;
       open.forEach(t => { m += `${t.tableId} | ${gameLabel(t.gameType)} | ₹${t.entryFee} | Creator: ${users[t.creatorId]?.name || t.creatorId}\n`; });
-      send(chatId, m); return;
+      send(chatId, m);
+      return;
     }
-    if (text === "🏆 Win Claims") {
-      const pc = Object.values(pendingWinClaims).filter(c => c.status === "pending");
-      if (!pc.length) { send(chatId, "No pending win claims."); return; }
-      pc.forEach(claim => {
-        const t   = tables[claim.tableId];
-        const opp = t ? [t.creatorId, t.opponentId].filter(p => p && p !== claim.claimerId).map(p => users[p]?.name || p).join(", ") : "N/A";
-        const cap = `Win Claim\n\nClaim: ${claim.claimId}\nTable: ${claim.tableId}\nClaimer: ${users[claim.claimerId]?.name || "Unknown"} (${claim.claimerId})\nvs: ${opp}\nPrize: ₹${t?.winnerGets || "?"}`;
-        const btns = { reply_markup: { inline_keyboard: [[{ text: "✅ Approve Win", callback_data: `win_approve_${claim.claimId}` }, { text: "❌ Reject", callback_data: `win_reject_${claim.claimId}` }]] }};
-        if (claim.screenshotFileId) {
-          bot.sendPhoto(chatId, claim.screenshotFileId, { caption: cap, ...btns }).catch(() => send(chatId, cap, btns));
-        } else { send(chatId, cap, btns); }
-      });
+    if (text === "👤 User Info") {
+      adminState[chatId] = { action: "user_info_id" };
+      send(chatId, "Enter the User ID to view:", cancelKb());
+      return;
+    }
+    if (text === "🔙 User Menu") {
+      send(chatId, "Switched to User Menu.", mainMenu());
       return;
     }
   }
 
-  // ══════════ USER ═══════════════════════════════════════════════════════════
+  // ══════════════════════ USER ═══════════════════════════════════════════════
   if (!botOnline) { send(chatId, "🔴 Bot is offline for maintenance."); return; }
 
-  if (text?.startsWith("❌ Cancel Table ")) {
+  // ── GAME FLOW KEYBOARD HANDLERS ────────────────────────────────────────────
+
+  if (text && text.startsWith("❌ Cancel Table ")) {
     const tableId = text.replace("❌ Cancel Table ", "").trim();
-    const t = tables[tableId];
+    const t       = tables[tableId];
     if (!t) { send(chatId, "Table not found.", mainMenu()); return; }
     if (chatId !== t.creatorId) { send(chatId, "Only the creator can cancel."); return; }
     if (t.status !== "open") { send(chatId, "Table is no longer open.", mainMenu()); return; }
@@ -835,105 +896,161 @@ bot.on("message", msg => {
     return;
   }
 
-  if (text?.startsWith("✅ Accept ")) {
+  if (text && text.startsWith("✅ Accept ")) {
     const tableId = text.replace("✅ Accept ", "").trim();
-    const t = tables[tableId];
+    const t       = tables[tableId];
     if (!t || t.status !== "pending_accept") { send(chatId, "This match is no longer available.", mainMenu()); return; }
     if (chatId !== t.opponentId) { send(chatId, "This request is not for you."); return; }
     clearTimeout(t.acceptTimer);
     send(chatId, `✅ Accepted!\n\nTable: ${tableId}\n\nWaiting for the creator to share the room code...`);
-    askCreatorForRoomCode(tableId); return;
+    askCreatorForRoomCode(tableId);
+    return;
   }
 
-  if (text?.startsWith("❌ Decline ")) {
+  if (text && text.startsWith("❌ Decline ")) {
     const tableId = text.replace("❌ Decline ", "").trim();
-    const t = tables[tableId];
+    const t       = tables[tableId];
     if (!t) { send(chatId, "Table not found.", mainMenu()); return; }
     clearTimeout(t.acceptTimer);
-    cancelTable(tableId, "declined by opponent"); return;
+    cancelTable(tableId, "declined by opponent");
+    return;
   }
 
-  if (text?.startsWith("▶️ Start Game ")) {
+  if (text && text.startsWith("▶️ Start Game ")) {
     const tableId = text.replace("▶️ Start Game ", "").trim();
-    const t = tables[tableId];
+    const t       = tables[tableId];
     if (!t || t.status !== "room_shared") { send(chatId, "Game session not found or already started.", mainMenu()); return; }
     if (chatId !== t.opponentId) { send(chatId, "Only the opponent can press Start."); return; }
-    activateGame(tableId); return;
+    activateGame(tableId);
+    return;
   }
 
-  if (text?.startsWith("🏆 I Won ")) {
+  if (text && text.startsWith("🏆 I Won ")) {
     const tableId = text.replace("🏆 I Won ", "").trim();
-    const t = tables[tableId];
+    const t       = tables[tableId];
     if (!t || t.status !== "active") { send(chatId, "Table is not active.", mainMenu()); return; }
     if (chatId !== t.creatorId && chatId !== t.opponentId) { send(chatId, "You are not in this table."); return; }
-    const already = Object.values(pendingWinClaims).find(c => c.tableId === tableId && c.claimerId === chatId && c.status === "pending");
+
+    const already = Object.values(pendingWinClaims).find(
+      c => c.tableId === tableId && c.claimerId === chatId && c.status === "pending"
+    );
     if (already) { send(chatId, `Claim already submitted: ${already.claimId}\nWait for admin verification.`); return; }
+
     userState[chatId] = { action: "win_proof_screenshot", tableId };
     send(chatId,
       `Win Claim — Table ${tableId}\n\nSend a screenshot of your winning game as proof.\n\nFalse claims = permanent ban.`,
-      cancelKb("❌ Cancel Claim")); return;
+      cancelKb("❌ Cancel Claim"));
+    return;
   }
 
-  if (text?.startsWith("😔 I Lost ")) {
+  if (text && text.startsWith("😔 I Lost ")) {
     const tableId = text.replace("😔 I Lost ", "").trim();
-    const t = tables[tableId];
+    const t       = tables[tableId];
     if (!t || t.status !== "active") { send(chatId, "Table is not active.", mainMenu()); return; }
     if (chatId !== t.creatorId && chatId !== t.opponentId) { send(chatId, "You are not in this table."); return; }
     if (t.lossReports.includes(chatId)) { send(chatId, "You already reported a loss for this table."); return; }
+
     t.lossReports.push(chatId);
     users[chatId].gamesPlayed += 1;
     users[chatId].status       = "idle";
     users[chatId].tableId      = null;
+
     send(chatId, `😔 Loss recorded for table ${tableId}.\n\nBetter luck next time!`, mainMenu());
-    bot.sendMessage(ADMIN_ID, `${users[chatId]?.name} (${chatId}) reported a loss on table ${tableId}.`).catch(() => {});
+    bot.sendMessage(ADMIN_ID,
+      `${users[chatId]?.name} (${chatId}) reported a loss on table ${tableId}.`
+    ).catch(() => {});
     return;
   }
 
   if (text === "❌ Cancel Game") {
     const st = userState[chatId];
-    if (st?.action === "send_room_code") { const tid = st.tableId; delete userState[chatId]; cancelTable(tid, "cancelled by creator"); return; }
-    const activeTable = Object.values(tables).find(t => (t.creatorId === chatId || t.opponentId === chatId) && t.status === "room_shared");
-    if (activeTable) { cancelTable(activeTable.tableId, "cancelled by opponent before start"); return; }
-    send(chatId, "No active game to cancel.", mainMenu()); return;
+    if (st?.action === "send_room_code") {
+      const tableId = st.tableId;
+      delete userState[chatId];
+      cancelTable(tableId, "cancelled by creator");
+      return;
+    }
+    const activeTable = Object.values(tables).find(
+      t => (t.creatorId === chatId || t.opponentId === chatId) &&
+           t.status === "room_shared"
+    );
+    if (activeTable) {
+      cancelTable(activeTable.tableId, "cancelled by opponent before start");
+      return;
+    }
+    send(chatId, "No active game to cancel.", mainMenu());
+    return;
   }
-  if (text === "❌ Cancel Claim")   { delete userState[chatId]; send(chatId, "❌ Claim cancelled.", mainMenu()); return; }
-  if (text === "❌ Cancel Deposit") { if (userState[chatId]?.action === "deposit_screenshot") { delete userState[chatId]; send(chatId, "❌ Deposit cancelled.", mainMenu()); } return; }
-  if (text === "❌ Cancel")         { delete userState[chatId]; send(chatId, "❌ Cancelled.", mainMenu()); return; }
 
-  // User state machine
+  if (text === "❌ Cancel Claim") {
+    delete userState[chatId];
+    send(chatId, "❌ Claim cancelled.", mainMenu());
+    return;
+  }
+
+  if (text === "❌ Cancel Deposit") {
+    if (userState[chatId]?.action === "deposit_screenshot") {
+      delete userState[chatId];
+      send(chatId, "❌ Deposit cancelled.", mainMenu());
+    }
+    return;
+  }
+
+  if (text === "❌ Cancel") {
+    delete userState[chatId];
+    send(chatId, "❌ Cancelled.", mainMenu());
+    return;
+  }
+
+  // ── User state machine ────────────────────────────────────────────────────
   const st = userState[chatId];
   if (st) {
     if (st.action === "send_room_code") {
       const t = tables[st.tableId];
-      if (!t || t.status !== "room_pending") { delete userState[chatId]; send(chatId, "⚠️ Table no longer available.", mainMenu()); return; }
+      if (!t || t.status !== "room_pending") {
+        delete userState[chatId];
+        send(chatId, "⚠️ Table no longer available.", mainMenu());
+        return;
+      }
       delete userState[chatId];
-      sendRoomCodeToOpponent(st.tableId, text.trim()); return;
+      sendRoomCodeToOpponent(st.tableId, text.trim());
+      return;
     }
-    if (st.action === "deposit_screenshot")   { send(chatId, "📸 Please send a screenshot IMAGE, not text.\n\nTap Cancel Deposit to cancel."); return; }
-    if (st.action === "win_proof_screenshot") { send(chatId, "📸 Please send a screenshot IMAGE as proof, not text."); return; }
+    if (st.action === "deposit_screenshot") {
+      send(chatId, "📸 Please send a screenshot IMAGE, not text.\n\nTap Cancel Deposit to cancel.");
+      return;
+    }
+    if (st.action === "win_proof_screenshot") {
+      send(chatId, "📸 Please send a screenshot IMAGE as proof, not text.");
+      return;
+    }
     if (st.action === "withdraw_upi") {
       const { amount } = st;
       if ((users[chatId]?.balance || 0) < amount) {
         send(chatId, `❌ Insufficient balance! You have ₹${users[chatId]?.balance || 0}`, mainMenu());
-        delete userState[chatId]; return;
+        delete userState[chatId];
+        return;
       }
       const txnId = genTxnId();
+      // FIX: sanitize UPI ID — strip markdown chars before storing/displaying
       const upiId = text.trim().replace(/[`*_\[\]]/g, "");
       users[chatId].balance -= amount;
       pendingWithdrawals[txnId] = { txnId, chatId, amount, upiId, status: "pending", timestamp: new Date() };
       delete userState[chatId];
+
       sendMD(chatId,
-        `✅ Withdrawal Submitted!\n\nTXN: ${tapCopy(txnId)}\nAmount: ₹${amount}\nUPI: ${tapCopy(upiId)}\n\n` +
-        `Balance: ₹${users[chatId].balance}\n\nAdmin will process within 24 hours.`,
+        `✅ Withdrawal Submitted!\n\nTXN: ${tapCopy(txnId)}\nAmount: ₹${amount}\nUPI: ${tapCopy(upiId)}\n\nBalance: ₹${users[chatId].balance}\n\nAdmin will process within 24 hours.`,
         mainMenu());
+
       bot.sendMessage(ADMIN_ID,
         `New Withdrawal Request!\n\nTXN: ${txnId}\nUser: ${users[chatId]?.name} (${chatId})\nAmount: ₹${amount}\nUPI: ${upiId}`,
-        { reply_markup: { inline_keyboard: [[{ text: "✅ Mark Paid", callback_data: `wdl_done_${txnId}` }, { text: "❌ Reject", callback_data: `wdl_rej_${txnId}` }]] }}
-      ).catch(() => {}); return;
+        { reply_markup: { inline_keyboard: [[{ text: "✅ Mark Paid", callback_data: `wdl_done_${txnId}` }, { text: "❌ Reject", callback_data: `wdl_rej_${txnId}` }]] } }
+      ).catch(() => {});
+      return;
     }
   }
 
-  // Main menu
+  // ── Main menu buttons ──────────────────────────────────────────────────────
   if (text === "💰 Deposit") {
     send(chatId, "💰 Deposit\n\nChoose amount:", {
       reply_markup: { inline_keyboard: [
@@ -941,7 +1058,8 @@ bot.on("message", msg => {
         [{ text: "₹500", callback_data: "deposit_500" }, { text: "₹1000", callback_data: "deposit_1000" }],
         [{ text: "❌ Cancel", callback_data: "back_menu" }],
       ]},
-    }); return;
+    });
+    return;
   }
 
   if (text === "💸 Withdraw") {
@@ -950,9 +1068,15 @@ bot.on("message", msg => {
     const hasDeposited = u?.hasDeposited || false;
     if (gamesPlayed < 2 && !hasDeposited) {
       send(chatId,
-        `❌ Withdrawal Not Available Yet!\n\nTo unlock withdrawals:\n• Play at least 2 matches, OR\n• Make at least 1 deposit\n\n` +
-        `Your Progress:\nMatches Played: ${gamesPlayed}/2\nDeposits Made: ${hasDeposited ? "Yes ✅" : "No ❌"}`,
-        mainMenu()); return;
+        `❌ Withdrawal Not Available Yet!\n\n` +
+        `To unlock withdrawals, you need to:\n` +
+        `• Play at least 2 matches, OR\n` +
+        `• Make at least 1 deposit\n\n` +
+        `Your Progress:\n` +
+        `Matches Played: ${gamesPlayed}/2\n` +
+        `Deposits Made: ${hasDeposited ? "Yes ✅" : "No ❌"}`,
+        mainMenu());
+      return;
     }
     send(chatId, `💸 Withdraw\n\nYour Balance: ₹${u?.balance || 0}\nMinimum: ₹100`, {
       reply_markup: { inline_keyboard: [
@@ -960,7 +1084,8 @@ bot.on("message", msg => {
         [{ text: "₹1000", callback_data: "withdraw_1000" }],
         [{ text: "❌ Cancel", callback_data: "back_menu" }],
       ]},
-    }); return;
+    });
+    return;
   }
 
   if (text === "⚡ Quick Ludo") {
@@ -972,19 +1097,29 @@ bot.on("message", msg => {
           [{ text: "❌ Cancel", callback_data: "back_menu" }],
         ]},
       });
-    }); return;
+    });
+    return;
   }
 
   if (text === "🎲 Classic Ludo") {
     requireGroupMembership(chatId, () => {
       send(chatId,
-        `🎲 Classic Ludo — Choose Goti Mode\n\nℹ️ Goti = number of tokens per player\nAll matches are 2 players.\n\nSelect your Goti mode:`,
-        { reply_markup: { inline_keyboard: [
-          [{ text: "1 Goti", callback_data: "classic_1goti" }, { text: "2 Goti", callback_data: "classic_2goti" },
-           { text: "3 Goti", callback_data: "classic_3goti" }, { text: "4 Goti", callback_data: "classic_4goti" }],
-          [{ text: "❌ Cancel", callback_data: "back_menu" }],
-        ]}});
-    }); return;
+        `🎲 Classic Ludo — Choose Goti Mode\n\n` +
+        `ℹ️ Goti = number of tokens per player\n` +
+        `All matches are 2 players.\n\nSelect your Goti mode:`,
+        {
+          reply_markup: { inline_keyboard: [
+            [
+              { text: "1 Goti", callback_data: "classic_1goti" },
+              { text: "2 Goti", callback_data: "classic_2goti" },
+              { text: "3 Goti", callback_data: "classic_3goti" },
+              { text: "4 Goti", callback_data: "classic_4goti" },
+            ],
+            [{ text: "❌ Cancel", callback_data: "back_menu" }],
+          ]},
+        });
+    });
+    return;
   }
 
   if (text === "🏆 Popular Ludo") {
@@ -996,7 +1131,8 @@ bot.on("message", msg => {
           [{ text: "❌ Cancel", callback_data: "back_menu" }],
         ]},
       });
-    }); return;
+    });
+    return;
   }
 
   if (text === "👤 Profile") {
@@ -1004,19 +1140,28 @@ bot.on("message", msg => {
     const pd = Object.values(pendingDeposits).find(d => d.chatId === chatId && d.status === "pending");
     const em = { idle: "😴", waiting: "⏳", "in-game": "🎮" }[u.status] || "😴";
     sendMD(chatId,
-      `👤 Your Profile\n\nID: ${tapCopy(chatId)}\nName: ${escMD(u.name || "N/A")}\nUsername: @${escMD(u.username || "N/A")}\n\n` +
-      `Balance: ₹${u.balance || 0}\nGames Played: ${u.gamesPlayed || 0}\nGames Won: ${u.gamesWon || 0}\n` +
+      `👤 Your Profile\n\n` +
+      `ID: ${tapCopy(chatId)}\n` +
+      `Name: ${escMD(u.name || "N/A")}\n` +
+      `Username: @${escMD(u.username || "N/A")}\n\n` +
+      `Balance: ₹${u.balance || 0}\n` +
+      `Games Played: ${u.gamesPlayed || 0}\n` +
+      `Games Won: ${u.gamesWon || 0}\n` +
       `Status: ${em} ${u.status || "idle"}` +
       (pd ? `\n\nPending Deposit: ₹${pd.amount} (TXN: ${tapCopy(pd.txnId)})` : ""),
-      mainMenu()); return;
+      mainMenu());
+    return;
   }
 
   if (text === "🤝 Refer & Earn") {
     const u = users[chatId] || {};
     sendMD(chatId,
-      `🤝 Refer and Earn\n\nTotal Referrals: ${u.referCount || 0}\n\n` +
-      `Your Referral Link:\n${tapCopy(`https://t.me/Ludo_AddaBot?start=${chatId}`)}\n\n` +
-      `Earn ₹${REFER_REWARD} for each friend who joins AND plays their first match\\!`);
+      `🤝 Refer and Earn\n\n` +
+      `Total Referrals: ${u.referCount || 0}\n\n` +
+      `Your Referral Link:\n` +
+      `${`https://t.me/Ludo_AddaBot?start=${chatId}`}\n\n` +
+      `Earn ₹${REFER_REWARD} for each friend who joins AND plays their first match\\!`
+      );
     return;
   }
 
@@ -1027,11 +1172,14 @@ bot.on("message", msg => {
         [{ text: "❓ FAQ", callback_data: "faq" }],
         [{ text: "🔙 Back", callback_data: "back_menu" }],
       ]},
-    }); return;
+    });
+    return;
   }
 });
 
-// ─── CALLBACK QUERY HANDLER ───────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+//  CALLBACK QUERY HANDLER
+// ─────────────────────────────────────────────────────────────────────────────
 bot.on("callback_query", query => {
   const data            = query.data;
   const msgId           = query.message.message_id;
@@ -1047,14 +1195,17 @@ bot.on("callback_query", query => {
         bot.deleteMessage(chatId, msgId).catch(() => {});
         send(chatId, `✅ Welcome to Ludo Adda!\n\nYou've joined the group. Let's play!`, mainMenu());
       } else {
-        send(chatId, `❌ You haven't joined yet!\n\nPlease join the group first, then tap "I've Joined" again.`, {
-          reply_markup: { inline_keyboard: [
-            [{ text: "✅ Join Our Group", url: GROUP_INVITE_LINK }],
-            [{ text: "▶️ I've Joined — Start Playing", callback_data: "check_membership" }],
-          ]},
-        });
+        send(chatId,
+          `❌ You haven't joined yet!\n\nPlease join the group first, then tap "I've Joined" again.`,
+          {
+            reply_markup: { inline_keyboard: [
+              [{ text: "✅ Join Our Group", url: GROUP_INVITE_LINK }],
+              [{ text: "▶️ I've Joined — Start Playing", callback_data: "check_membership" }],
+            ]},
+          });
       }
-    }); return;
+    });
+    return;
   }
 
   if (data.startsWith("join_")) {
@@ -1062,111 +1213,176 @@ bot.on("callback_query", query => {
     const gameType = parts[1];
     const fee      = parseInt(parts[2]);
     if (!isGroupCallback) bot.deleteMessage(chatId, msgId).catch(() => {});
-    handleJoin(chatId, gameType, fee); return;
+    handleJoin(chatId, gameType, fee);
+    return;
   }
 
   if (data.startsWith("classic_") && data.endsWith("goti")) {
     const gotiMode  = data;
     if (!isGroupCallback) bot.deleteMessage(chatId, msgId).catch(() => {});
     const gotiLabel = data.replace("classic_", "").replace("goti", "") + " Goti";
-    send(chatId, `🎲 Classic Ludo — ${gotiLabel} Mode\n(2 players | choose entry fee):`, {
-      reply_markup: { inline_keyboard: [
-        [{ text: "₹50", callback_data: `join_${gotiMode}_50` }, { text: "₹100", callback_data: `join_${gotiMode}_100` }, { text: "₹200", callback_data: `join_${gotiMode}_200` }],
-        [{ text: "₹250", callback_data: `join_${gotiMode}_250` }, { text: "₹500", callback_data: `join_${gotiMode}_500` }],
-        [{ text: "🔙 Back", callback_data: "back_menu" }],
-      ]},
-    }); return;
+    send(chatId,
+      `🎲 Classic Ludo — ${gotiLabel} Mode\n(2 players | choose entry fee):`,
+      {
+        reply_markup: { inline_keyboard: [
+          [
+            { text: "₹50",  callback_data: `join_classic_50`  },
+            { text: "₹100", callback_data: `join_classic_100` },
+            { text: "₹200", callback_data: `join_classic_200` },
+          ],
+          [
+            { text: "₹250", callback_data: `join_classic_250` },
+            { text: "₹500", callback_data: `join_classic_500` },
+          ],
+          [{ text: "🔙 Back", callback_data: "back_menu" }],
+        ]},
+      });
+    return;
   }
 
   if (data.startsWith("group_join_")) {
     const tableId = data.replace("group_join_", "");
     const t       = tables[tableId];
+
     if (!t || t.status !== "open") {
-      bot.answerCallbackQuery(query.id, { text: "This table is no longer available.", show_alert: true }).catch(() => {}); return;
+      bot.answerCallbackQuery(query.id, { text: "This table is no longer available.", show_alert: true }).catch(() => {});
+      return;
     }
+
     ensureUser(query.from);
     const user = users[chatId];
-    if (chatId === t.creatorId) { bot.answerCallbackQuery(query.id, { text: "You can't join your own table!", show_alert: true }).catch(() => {}); return; }
-    if (user.status !== "idle") { bot.answerCallbackQuery(query.id, { text: `You are already in a session (${user.status}). Finish it first.`, show_alert: true }).catch(() => {}); return; }
-    if (user.balance < t.entryFee) { bot.answerCallbackQuery(query.id, { text: `Insufficient balance! You need ₹${t.entryFee}. Please deposit first.`, show_alert: true }).catch(() => {}); return; }
 
-    user.balance -= t.entryFee;
-    user.status   = "waiting";
-    user.tableId  = tableId;
-    t.opponentId  = chatId;
-    t.status      = "pending_accept";
+    if (chatId === t.creatorId) {
+      bot.answerCallbackQuery(query.id, { text: "You can't join your own table!", show_alert: true }).catch(() => {});
+      return;
+    }
+    if (user.status !== "idle") {
+      bot.answerCallbackQuery(query.id, { text: `You are already in a session (${user.status}). Finish it first.`, show_alert: true }).catch(() => {});
+      return;
+    }
+    if (user.balance < t.entryFee) {
+      bot.answerCallbackQuery(query.id, { text: `Insufficient balance! You need ₹${t.entryFee}. Please deposit first.`, show_alert: true }).catch(() => {});
+      return;
+    }
+
+    user.balance  -= t.entryFee;
+    user.status    = "waiting";
+    user.tableId   = tableId;
+    t.opponentId   = chatId;
+    t.status       = "pending_accept";
+
     clearTimeout(t.expireTimer);
 
     if (t.groupMsgId) {
       bot.editMessageText(
-        `Table ${tableId} — Match Found!\n\n${gameLabel(t.gameType)} | ₹${t.entryFee}\n${dname(t.creatorId)} vs ${dname(chatId)}`,
+        `Match Found!\n\n${gameLabel(t.gameType)} | ₹${t.entryFee}\n${dname(t.creatorId)} vs ${dname(chatId)}`,
         { chat_id: groupChatId, message_id: t.groupMsgId }
       ).catch(() => {});
-      bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: groupChatId, message_id: t.groupMsgId }).catch(() => {});
+      bot.editMessageReplyMarkup({ inline_keyboard: [] },
+        { chat_id: groupChatId, message_id: t.groupMsgId }
+      ).catch(() => {});
     }
 
-    send(t.creatorId, `🎯 Opponent found via group!\n\nOpponent: ${dname(chatId)}\nTable: ${tableId}\n\nWaiting for opponent to accept...`);
+    send(t.creatorId,
+      `🎯 Opponent found via group!\n\n` +
+      `Opponent: ${dname(chatId)}\n` +
+      `Table: ${tableId}\n\n` +
+      `Waiting for opponent to accept...`);
+
     send(chatId,
-      `🎯 Match Request!\n\nGame: ${gameLabel(t.gameType)}\nTable Creator: ${dname(t.creatorId)}\n` +
-      `Entry: ₹${t.entryFee} (deducted) | Pot: ₹${t.pot}\nWinner Gets: ₹${t.winnerGets}\n\nAccept or Decline within 5 minutes!`,
+      `🎯 Match Request!\n\n` +
+      `Game: ${gameLabel(t.gameType)}\n` +
+      `Table Creator: ${dname(t.creatorId)}\n` +
+      `Entry: ₹${t.entryFee} (deducted) | Pot: ₹${t.pot}\n` +
+      `Winner Gets: ₹${t.winnerGets}\n\n` +
+      `Accept or Decline within 5 minutes!`,
       acceptDeclineMenu(tableId));
-    t.acceptTimer = setTimeout(() => timeoutPendingAccept(tableId), 300_000); return;
+
+    t.acceptTimer = setTimeout(() => timeoutPendingAccept(tableId), 300_000);
+    return;
   }
 
   if (data.startsWith("dep_approve_")) {
-    const txnId = data.replace("dep_approve_", ""); const dep = pendingDeposits[txnId];
+    const txnId = data.replace("dep_approve_", "");
+    const dep   = pendingDeposits[txnId];
     if (!dep || dep.status !== "pending") { bot.answerCallbackQuery(query.id, { text: "Already processed." }); return; }
-    dep.status = "approved"; users[dep.chatId].balance += dep.amount; users[dep.chatId].hasDeposited = true;
+    dep.status = "approved";
+    users[dep.chatId].balance     += dep.amount;
+    users[dep.chatId].hasDeposited = true;
     bot.deleteMessage(chatId, msgId).catch(() => {});
     send(chatId, `✅ Deposit ${txnId} approved! ₹${dep.amount} added to ${users[dep.chatId]?.name}.`);
-    send(dep.chatId, `✅ Deposit Approved!\n\n₹${dep.amount} added to your wallet!\nNew Balance: ₹${users[dep.chatId].balance}`, mainMenu()); return;
+    send(dep.chatId, `✅ Deposit Approved!\n\n₹${dep.amount} added to your wallet!\nNew Balance: ₹${users[dep.chatId].balance}`, mainMenu());
+    return;
   }
   if (data.startsWith("dep_reject_")) {
-    const txnId = data.replace("dep_reject_", ""); const dep = pendingDeposits[txnId];
+    const txnId = data.replace("dep_reject_", "");
+    const dep   = pendingDeposits[txnId];
     if (!dep || dep.status !== "pending") { bot.answerCallbackQuery(query.id, { text: "Already processed." }); return; }
-    dep.status = "rejected"; bot.deleteMessage(chatId, msgId).catch(() => {});
+    dep.status = "rejected";
+    bot.deleteMessage(chatId, msgId).catch(() => {});
     send(chatId, `❌ Deposit ${txnId} rejected.`);
-    send(dep.chatId, `❌ Deposit Rejected!\n\nYour deposit of ₹${dep.amount} was rejected.\nContact support if this is a mistake.`, mainMenu()); return;
+    send(dep.chatId, `❌ Deposit Rejected!\n\nYour deposit of ₹${dep.amount} was rejected.\nContact support if this is a mistake.`, mainMenu());
+    return;
   }
 
   if (data.startsWith("wdl_done_")) {
-    const txnId = data.replace("wdl_done_", ""); const w = pendingWithdrawals[txnId];
+    const txnId = data.replace("wdl_done_", "");
+    const w     = pendingWithdrawals[txnId];
     if (!w || w.status !== "pending") { bot.answerCallbackQuery(query.id, { text: "Already processed." }); return; }
-    w.status = "done"; bot.deleteMessage(chatId, msgId).catch(() => {});
+    w.status = "done";
+    bot.deleteMessage(chatId, msgId).catch(() => {});
     send(chatId, `✅ Withdrawal ${txnId} marked as paid!`);
-    send(w.chatId, `✅ Withdrawal Processed!\n\n₹${w.amount} sent to your UPI!\nTXN: ${txnId}`, mainMenu()); return;
+    send(w.chatId, `✅ Withdrawal Processed!\n\n₹${w.amount} sent to your UPI!\nTXN: ${txnId}`, mainMenu());
+    return;
   }
   if (data.startsWith("wdl_rej_")) {
-    const txnId = data.replace("wdl_rej_", ""); const w = pendingWithdrawals[txnId];
+    const txnId = data.replace("wdl_rej_", "");
+    const w     = pendingWithdrawals[txnId];
     if (!w || w.status !== "pending") { bot.answerCallbackQuery(query.id, { text: "Already processed." }); return; }
-    w.status = "rejected"; users[w.chatId].balance += w.amount; bot.deleteMessage(chatId, msgId).catch(() => {});
+    w.status = "rejected";
+    users[w.chatId].balance += w.amount;
+    bot.deleteMessage(chatId, msgId).catch(() => {});
     send(chatId, `❌ Withdrawal ${txnId} rejected. Amount refunded.`);
-    send(w.chatId, `❌ Withdrawal Rejected!\n\n₹${w.amount} refunded.\nBalance: ₹${users[w.chatId].balance}\n\nContact support for help.`, mainMenu()); return;
+    send(w.chatId, `❌ Withdrawal Rejected!\n\n₹${w.amount} refunded.\nBalance: ₹${users[w.chatId].balance}\n\nContact support for help.`, mainMenu());
+    return;
   }
 
   if (data.startsWith("win_approve_")) {
-    const cid = data.replace("win_approve_", ""); const claim = pendingWinClaims[cid];
+    const cid   = data.replace("win_approve_", "");
+    const claim = pendingWinClaims[cid];
     if (!claim || claim.status !== "pending") { bot.answerCallbackQuery(query.id, { text: "Already processed." }); return; }
-    const t = tables[claim.tableId]; if (!t) { send(chatId, "Table not found."); return; }
-    claim.status = "approved"; declareWinner(claim.tableId, claim.claimerId);
+    const t = tables[claim.tableId];
+    if (!t) { send(chatId, "Table not found."); return; }
+    claim.status = "approved";
+    declareWinner(claim.tableId, claim.claimerId);
     bot.deleteMessage(chatId, msgId).catch(() => {});
-    send(chatId, `✅ Claim ${cid} approved. Winner: ${users[claim.claimerId]?.name} | ₹${t.winnerGets} paid.`); return;
+    send(chatId, `✅ Claim ${cid} approved. Winner: ${users[claim.claimerId]?.name} | ₹${t.winnerGets} paid.`);
+    return;
   }
   if (data.startsWith("win_reject_")) {
-    const cid = data.replace("win_reject_", ""); const claim = pendingWinClaims[cid];
+    const cid   = data.replace("win_reject_", "");
+    const claim = pendingWinClaims[cid];
     if (!claim || claim.status !== "pending") { bot.answerCallbackQuery(query.id, { text: "Already processed." }); return; }
-    claim.status = "rejected"; bot.deleteMessage(chatId, msgId).catch(() => {});
+    claim.status = "rejected";
+    bot.deleteMessage(chatId, msgId).catch(() => {});
     send(chatId, `❌ Claim ${cid} rejected.`);
-    send(claim.claimerId, `❌ Win Claim Rejected!\n\nTable: ${claim.tableId}\nContact support if this is a mistake.`, mainMenu()); return;
+    send(claim.claimerId, `❌ Win Claim Rejected!\n\nTable: ${claim.tableId}\nContact support if this is a mistake.`, mainMenu());
+    return;
   }
 
   if (data.startsWith("bal_add_") || data.startsWith("bal_ded_")) {
-    const isAdd = data.startsWith("bal_add_"); const tid = parseInt(data.split("_").pop());
+    const isAdd = data.startsWith("bal_add_");
+    const tid   = parseInt(data.split("_").pop());
     if (!users[tid]) { send(chatId, "❌ User not found."); return; }
     adminState[chatId] = { action: isAdd ? "bal_add" : "bal_ded", targetId: tid };
-    send(chatId, `${isAdd ? "Add" : "Deduct"} balance for ${users[tid].name}\n\nEnter amount (₹):`, cancelKb()); return;
+    send(chatId, `${isAdd ? "Add" : "Deduct"} balance for ${users[tid].name}\n\nEnter amount (₹):`, cancelKb());
+    return;
   }
-  if (data === "bal_cancel") { delete adminState[chatId]; send(chatId, "❌ Cancelled.", adminMenu()); return; }
+  if (data === "bal_cancel") {
+    delete adminState[chatId];
+    send(chatId, "❌ Cancelled.", adminMenu());
+    return;
+  }
 
   if (data.startsWith("reset_state_")) {
     const tid = parseInt(data.replace("reset_state_", ""));
@@ -1176,106 +1392,189 @@ bot.on("callback_query", query => {
       const t = tables[u.tableId];
       if (!["completed", "cancelled"].includes(t.status)) cancelTable(u.tableId, "reset by admin");
     }
-    u.status = "idle"; u.tableId = null; delete userState[tid];
+    u.status  = "idle";
+    u.tableId = null;
+    delete userState[tid];
     send(chatId, `✅ User ${u.name} (${tid}) state has been reset to idle.`);
-    send(tid, `🔄 Your account state was reset by admin.\n\nIf you had a pending game it has been cancelled and your entry fee refunded.`, mainMenu()); return;
+    send(tid, `🔄 Your account state was reset by admin.\n\nIf you had a pending game it has been cancelled and your entry fee refunded.`, mainMenu());
+    return;
   }
 
   if (data.startsWith("declare_winner_")) {
-    const tableId = data.replace("declare_winner_", ""); const t = tables[tableId];
+    const tableId = data.replace("declare_winner_", "");
+    const t       = tables[tableId];
     if (!t) { send(chatId, "Table not found."); return; }
     if (["completed", "cancelled"].includes(t.status)) { send(chatId, `Table ${tableId} is already ${t.status}.`); return; }
-    const list = [t.creatorId, t.opponentId].filter(Boolean).map(pid => `${pid} — ${users[pid]?.name || "Unknown"}`).join("\n");
+    const list = [t.creatorId, t.opponentId].filter(Boolean)
+      .map(pid => `${pid} — ${users[pid]?.name || "Unknown"}`).join("\n");
     adminState[chatId] = { action: "declare_winner", tableId };
-    send(chatId, `Declare Winner — ${tableId}\n\nPlayers:\n${list}\n\nSend the winner's User ID:`); return;
+    send(chatId, `Declare Winner — ${tableId}\n\nPlayers:\n${list}\n\nSend the winner's User ID:`);
+    return;
   }
 
   if (data.startsWith("cancel_table_")) {
-    const tableId = data.replace("cancel_table_", ""); const t = tables[tableId];
+    const tableId = data.replace("cancel_table_", "");
+    const t       = tables[tableId];
     if (!t) { send(chatId, "Table not found."); return; }
     if (["completed", "cancelled"].includes(t.status)) { send(chatId, `Table ${tableId} is already ${t.status}.`); return; }
     cancelTable(tableId, "cancelled by admin");
-    send(chatId, `✅ Table ${tableId} cancelled. All players refunded.`, adminMenu()); return;
+    send(chatId, `✅ Table ${tableId} cancelled. All players refunded.`, adminMenu());
+    return;
   }
 
   if (data.startsWith("deposit_")) {
-    const amount = parseInt(data.split("_")[1]); if (!amount) return;
+    const amount = parseInt(data.split("_")[1]);
+    if (!amount) return;
     const ep = Object.values(pendingDeposits).find(d => d.chatId === chatId && d.status === "pending");
-    if (ep) { send(chatId, `Pending deposit exists!\n\nTXN: ${ep.txnId} | ₹${ep.amount}\n\nWait for admin to process it first.`, mainMenu()); return; }
+    if (ep) {
+      send(chatId, `Pending deposit exists!\n\nTXN: ${ep.txnId} | ₹${ep.amount}\n\nWait for admin to process it first.`, mainMenu());
+      return;
+    }
     userState[chatId] = { action: "deposit_screenshot", amount };
     const QR = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=7891624054@mbk%26pn=LudoAdda%26am=${amount}%26cu=INR`;
     bot.sendPhoto(chatId, QR, {
       caption:
-        `Deposit ₹${amount}\n\nUPI ID: 7891624054@mbk\nAmount: ₹${amount}\n\n` +
+        `Deposit ₹${amount}\n\n` +
+        `UPI ID: 7891624054@mbk\n` +
+        `Amount: ₹${amount}\n\n` +
         `Scan QR above OR pay to the UPI ID manually.\n\n` +
-        `After payment, send the SCREENSHOT of your transaction.\nScreenshot must contain the UTR number.`,
-      reply_markup: { keyboard: [[{ text: "❌ Cancel Deposit" }]], resize_keyboard: true, one_time_keyboard: true },
-    }).catch(() => {}); return;
+        `After payment, send the SCREENSHOT of your transaction.\n` +
+        `Screenshot must contain the UTR number.`,
+      reply_markup: {
+        keyboard         : [[{ text: "❌ Cancel Deposit" }]],
+        resize_keyboard  : true,
+        one_time_keyboard: true,
+      },
+    }).catch(() => {});
+    return;
   }
 
   if (data.startsWith("withdraw_")) {
-    const amount = parseInt(data.split("_")[1]); if (!amount) return;
-    if ((users[chatId]?.balance || 0) < amount) { send(chatId, `❌ Insufficient balance! You have ₹${users[chatId]?.balance || 0}`); return; }
+    const amount = parseInt(data.split("_")[1]);
+    if (!amount) return;
+    if ((users[chatId]?.balance || 0) < amount) {
+      send(chatId, `❌ Insufficient balance! You have ₹${users[chatId]?.balance || 0}`);
+      return;
+    }
     userState[chatId] = { action: "withdraw_upi", amount };
-    send(chatId, `Withdraw ₹${amount}\n\nPlease enter your UPI ID:`, cancelKb()); return;
+    send(chatId, `Withdraw ₹${amount}\n\nPlease enter your UPI ID:`, cancelKb());
+    return;
   }
 
-  if (data === "back_menu") { bot.deleteMessage(chatId, msgId).catch(() => {}); send(chatId, "Main Menu:", mainMenu()); return; }
+  if (data === "back_menu") {
+    bot.deleteMessage(chatId, msgId).catch(() => {});
+    send(chatId, "Main Menu:", mainMenu());
+    return;
+  }
   if (data === "faq") {
     send(chatId,
-      `❓ FAQ\n\nHow to deposit?\nTap Deposit → choose amount → pay via UPI → send screenshot.\n\n` +
+      `❓ FAQ\n\n` +
+      `How to deposit?\nTap Deposit → choose amount → pay via UPI → send screenshot.\n\n` +
       `How to withdraw?\nTap Withdraw → choose amount → enter UPI ID.\nRequires 2 matches played OR 1 deposit.\n\n` +
       `How is the winner decided?\nTap "I Won" after game → submit screenshot → Admin verifies.\n\n` +
       `Refer & Earn?\nEarn ₹${REFER_REWARD} when your referred friend plays their first match.\n\n` +
-      `Platform fee?\n${PLATFORM_CUT_PERCENT}% is deducted from the pot as platform fee.`); return;
+      `Platform fee?\n${PLATFORM_CUT_PERCENT}% is deducted from the pot as platform fee.`);
+    return;
   }
 });
 
-// ─── PHOTO HANDLER ────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+//  PHOTO HANDLER
+// ─────────────────────────────────────────────────────────────────────────────
 bot.on("photo", msg => {
   const chatId = msg.chat.id;
   if (isAdmin(chatId)) return;
+
   const st = userState[chatId];
   if (!st) return;
 
   if (st.action === "deposit_screenshot") {
     const ep = Object.values(pendingDeposits).find(d => d.chatId === chatId && d.status === "pending");
-    if (ep) { send(chatId, `Deposit already pending: ${ep.txnId} | ₹${ep.amount}\nWait for admin.`, mainMenu()); delete userState[chatId]; return; }
+    if (ep) {
+      send(chatId, `Deposit already pending: ${ep.txnId} | ₹${ep.amount}\nWait for admin.`, mainMenu());
+      delete userState[chatId];
+      return;
+    }
     const fileId = msg.photo[msg.photo.length - 1].file_id;
     const txnId  = genTxnId();
-    pendingDeposits[txnId] = { txnId, chatId, amount: st.amount, screenshotFileId: fileId, status: "pending", timestamp: new Date() };
+    pendingDeposits[txnId] = {
+      txnId, chatId, amount: st.amount, screenshotFileId: fileId, status: "pending", timestamp: new Date(),
+    };
     delete userState[chatId];
-    send(chatId, `📸 Screenshot Received!\n\nTXN ID: ${txnId}\nAmount: ₹${st.amount}\n\nAdmin is verifying. You will be notified.`, mainMenu());
+
+    send(chatId,
+      `📸 Screenshot Received!\n\nTXN ID: ${txnId}\nAmount: ₹${st.amount}\n\nAdmin is verifying. You will be notified.`,
+      mainMenu());
+
     bot.sendPhoto(ADMIN_ID, fileId, {
-      caption: `New Deposit Request!\n\nTXN: ${txnId}\nUser: ${users[chatId]?.name || "Unknown"} (${chatId})\nUsername: @${users[chatId]?.username || "N/A"}\nAmount: ₹${st.amount}\nTime: ${new Date().toLocaleString("en-IN")}`,
-      reply_markup: { inline_keyboard: [[{ text: "✅ Approve", callback_data: `dep_approve_${txnId}` }, { text: "❌ Reject", callback_data: `dep_reject_${txnId}` }]] },
+      caption:
+        `New Deposit Request!\n\n` +
+        `TXN: ${txnId}\n` +
+        `User: ${users[chatId]?.name || "Unknown"} (${chatId})\n` +
+        `Username: @${users[chatId]?.username || "N/A"}\n` +
+        `Amount: ₹${st.amount}\n` +
+        `Time: ${new Date().toLocaleString("en-IN")}`,
+      reply_markup: { inline_keyboard: [[
+        { text: "✅ Approve", callback_data: `dep_approve_${txnId}` },
+        { text: "❌ Reject",  callback_data: `dep_reject_${txnId}` },
+      ]]},
     }).catch(() => {
-      bot.sendMessage(ADMIN_ID, `New Deposit!\nTXN: ${txnId}\nUser: ${users[chatId]?.name} (${chatId})\nAmount: ₹${st.amount}\nScreenshot forward failed.`,
-        { reply_markup: { inline_keyboard: [[{ text: "✅ Approve", callback_data: `dep_approve_${txnId}` }, { text: "❌ Reject", callback_data: `dep_reject_${txnId}` }]] }}
+      bot.sendMessage(ADMIN_ID,
+        `New Deposit!\nTXN: ${txnId}\nUser: ${users[chatId]?.name} (${chatId})\nAmount: ₹${st.amount}\nScreenshot forward failed.`,
+        { reply_markup: { inline_keyboard: [[{ text: "✅ Approve", callback_data: `dep_approve_${txnId}` }, { text: "❌ Reject", callback_data: `dep_reject_${txnId}` }]] } }
       ).catch(() => {});
-    }); return;
+    });
+    return;
   }
 
   if (st.action === "win_proof_screenshot") {
-    const { tableId } = st; const t = tables[tableId];
-    if (!t || t.status !== "active") { send(chatId, "Table is no longer active.", mainMenu()); delete userState[chatId]; return; }
+    const { tableId } = st;
+    const t           = tables[tableId];
+    if (!t || t.status !== "active") {
+      send(chatId, "Table is no longer active.", mainMenu());
+      delete userState[chatId];
+      return;
+    }
     const fileId  = msg.photo[msg.photo.length - 1].file_id;
     const claimId = genClaimId();
-    pendingWinClaims[claimId] = { claimId, tableId, claimerId: chatId, screenshotFileId: fileId, status: "pending", timestamp: new Date() };
+    pendingWinClaims[claimId] = {
+      claimId, tableId, claimerId: chatId, screenshotFileId: fileId, status: "pending", timestamp: new Date(),
+    };
     delete userState[chatId];
-    send(chatId, `✅ Win Claim Submitted!\n\nClaim ID: ${claimId}\nTable: ${tableId}\n\nAdmin will verify your screenshot. You will be notified.`, mainMenu());
-    const opp = [t.creatorId, t.opponentId].filter(p => p && p !== chatId).map(p => users[p]?.name || p).join(", ");
+
+    send(chatId,
+      `✅ Win Claim Submitted!\n\nClaim ID: ${claimId}\nTable: ${tableId}\n\nAdmin will verify your screenshot. You will be notified.`,
+      mainMenu());
+
+    const opp = [t.creatorId, t.opponentId]
+      .filter(p => p && p !== chatId)
+      .map(p => users[p]?.name || p)
+      .join(", ");
+
     bot.sendPhoto(ADMIN_ID, fileId, {
-      caption: `New Win Claim!\n\nClaim: ${claimId}\nTable: ${tableId}\nClaimer: ${users[chatId]?.name || "Unknown"} (${chatId})\nvs: ${opp}\nPrize: ₹${t.winnerGets}\nTime: ${new Date().toLocaleString("en-IN")}`,
-      reply_markup: { inline_keyboard: [[{ text: "✅ Approve Win", callback_data: `win_approve_${claimId}` }, { text: "❌ Reject", callback_data: `win_reject_${claimId}` }]] },
+      caption:
+        `New Win Claim!\n\n` +
+        `Claim: ${claimId}\n` +
+        `Table: ${tableId}\n` +
+        `Claimer: ${users[chatId]?.name || "Unknown"} (${chatId})\n` +
+        `vs: ${opp}\n` +
+        `Prize: ₹${t.winnerGets}\n` +
+        `Time: ${new Date().toLocaleString("en-IN")}`,
+      reply_markup: { inline_keyboard: [[
+        { text: "✅ Approve Win", callback_data: `win_approve_${claimId}` },
+        { text: "❌ Reject",      callback_data: `win_reject_${claimId}` },
+      ]]},
     }).catch(() => {
-      bot.sendMessage(ADMIN_ID, `New Win Claim!\nClaim: ${claimId}\nTable: ${tableId}\nClaimer: ${users[chatId]?.name} (${chatId})\nPrize: ₹${t.winnerGets}\nScreenshot forward failed.`,
-        { reply_markup: { inline_keyboard: [[{ text: "✅ Approve Win", callback_data: `win_approve_${claimId}` }, { text: "❌ Reject", callback_data: `win_reject_${claimId}` }]] }}
+      bot.sendMessage(ADMIN_ID,
+        `New Win Claim!\nClaim: ${claimId}\nTable: ${tableId}\nClaimer: ${users[chatId]?.name} (${chatId})\nPrize: ₹${t.winnerGets}\nScreenshot forward failed.`,
+        { reply_markup: { inline_keyboard: [[{ text: "✅ Approve Win", callback_data: `win_approve_${claimId}` }, { text: "❌ Reject", callback_data: `win_reject_${claimId}` }]] } }
       ).catch(() => {});
-    }); return;
+    });
+    return;
   }
 });
 
-// ─── PROCESS SAFETY ───────────────────────────────────────────────────────────
+// ─── ERROR HANDLING ───────────────────────────────────────────────────────────
+// FIX 5: Catch unhandled rejections to prevent process crash
 process.on("unhandledRejection", r => console.error("Unhandled rejection:", r));
 process.on("uncaughtException",  e => console.error("Uncaught exception:",  e.message));
