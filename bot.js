@@ -9,10 +9,10 @@ const REFER_REWARD = 20;
 
 const express = require("express");
 const TelegramBot = require("node-telegram-bot-api");
-const bot = new TelegramBot(BOT_TOKEN);
+const bot = new TelegramBot(BOT_TOKEN, { webHook: true });
 const app = express();
 app.use(express.json());
-app.post("https://test-bot-k7wm.onrender.com/webhook", (req, res) => {
+app.post("/webhook", (req, res) => {
   bot.processUpdate(req.body);
   res.status(200).send("OK");
 });
