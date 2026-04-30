@@ -14,9 +14,9 @@ app.listen(PORT, () => {
 });
 const token = process.env.BOT_TOKEN;
 const bot = new TelegramBot(token, {polling: true});
-const ADMIN_ID = 8521844327;
-const GROUP_ID = -1003890515710;
-const GROUP_INVITE_LINK = "https://t.me/+YOUR_GROUP_INVITE_LINK"; // ← CHANGE THIS
+const ADMIN_ID = 8641315326;
+const GROUP_ID = -1003907305365;
+const GROUP_INVITE_LINK = "https://t.me/+Bg5tAAxgL5cxYWRl"; // ← CHANGE THIS
 const PLATFORM_CUT_PERCENT = 5;
 const REFER_REWARD = 20;
 
@@ -78,7 +78,7 @@ function registerUser(msg, referredBy = null) {
     users[id] = {
       name           : `${msg.from.first_name} ${msg.from.last_name || ""}`.trim(),
       username       : msg.from.username || "N/A",
-      balance        : 1000,
+      balance        : 0,
       gamesPlayed    : 0,
       gamesWon       : 0,
       status         : "idle",
