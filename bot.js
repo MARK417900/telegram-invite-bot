@@ -12,7 +12,7 @@ const express = require("express");
 const TelegramBot = require("node-telegram-bot-api");
 
 // Create bot WITHOUT any mode — we handle everything manually
-const bot = new TelegramBot(BOT_TOKEN);
+const bot = new TelegramBot(BOT_TOKEN,{ polling: false, webHook: false });
 
 const app = express();
 app.use(express.json());
@@ -24,7 +24,7 @@ app.post(`/webhook`, (req, res) => {
 
 app.get("/", (req, res) => res.send("Bot is running!"));
 
-const PORT = process.env.PORT || 1000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
   console.log(`🚀 Server running on port ${PORT}`);
   try {
