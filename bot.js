@@ -21,10 +21,9 @@ const GROUP_INVITE_LINK = "https://t.me/+YOUR_GROUP_INVITE_LINK"; // ← CHANGE 
 const PLATFORM_CUT_PERCENT = 5;
 const REFER_REWARD = 20;
 // ─────────────────────────────────────────────────────────────────────────────
-
-if (!BOT_TOKEN) {
-  console.error("BOT_TOKEN is missing!");
-  process.exit(1);
+console.log("TOKEN:", process.env.BOT_TOKEN);
+if (!process.env.BOT_TOKEN) {
+  throw new Error("BOT_TOKEN not found in environment!");
 }
 // ─── FIX 3: Escape special Markdown characters in user-supplied text ──────────
 function escMD(text) {
