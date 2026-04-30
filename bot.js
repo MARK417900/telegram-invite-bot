@@ -586,7 +586,6 @@ function sendUserInfoPanel(adminChatId, targetId) {
   const text =
     `👤 User Info\n\n` +
     `ID: \`${targetId}\`\n` +
-    `Name: ${escMD(u.name)}\n` +
     `Username: @${escMD(u.username)}\n\n` +
     `Balance: ₹${u.balance}\n` +
     `Games Played: ${u.gamesPlayed}\n` +
@@ -603,13 +602,11 @@ function sendUserInfoPanel(adminChatId, targetId) {
     parse_mode  : "Markdown",
     reply_markup: { inline_keyboard: [
       [{ text: "🔄 Reset User State", callback_data: `reset_state_${targetId}` }],
-      [{ text: "💰 Update Balance",   callback_data: `bal_add_${targetId}` }],
     ]},
   }).catch(() => {
     send(adminChatId, text.replace(/[`*_\[\]]/g, ""), {
       reply_markup: { inline_keyboard: [
         [{ text: "🔄 Reset User State", callback_data: `reset_state_${targetId}` }],
-        [{ text: "💰 Update Balance",   callback_data: `bal_add_${targetId}` }],
       ]},
     });
   });
@@ -972,10 +969,10 @@ bot.on("message", msg => {
     return;
   }
 
-  if (text === "❌ Cancel Deposit") {
+  if (text === "💔 Cancel Deposit") {
     if (userState[chatId]?.action === "deposit_screenshot") {
       delete userState[chatId];
-      send(chatId, "❌ Deposit cancelled.", mainMenu());
+      send(chatId, "💔 Deposit cancelled.", mainMenu());
     }
     return;
   }
@@ -1035,7 +1032,7 @@ bot.on("message", msg => {
 
   // ── Main menu buttons ──────────────────────────────────────────────────────
   if (text === "💰 Deposit") {
-    send(chatId, "💰 Deposit\n\nChoose amount:", {
+    send(chatId, "💰 Choose Deposit amount:", {
       reply_markup: { inline_keyboard: [
         [{ text: "₹50", callback_data: "deposit_50" }, { text: "₹100", callback_data: "deposit_100" }, { text: "₹200", callback_data: "deposit_200" }],
         [{ text: "₹500", callback_data: "deposit_500" }, { text: "₹1000", callback_data: "deposit_1000" }],
@@ -1073,12 +1070,14 @@ bot.on("message", msg => {
 
   if (text === "⚡ Quick Ludo") {
     requireGroupMembership(chatId, () => {
-      send(chatId, "⚡ Quick Ludo\n\nFast-paced 2-player games!\n\nChoose entry fee:", {
-        reply_markup: { inline_keyboard: [
-          [{ text: "₹50", callback_data: "join_quick_50" }, { text: "₹100", callback_data: "join_quick_100" }, { text: "₹200", callback_data: "join_quick_200" }],
-          [{ text: "₹250", callback_data: "join_quick_250" }, { text: "₹500", callback_data: "join_quick_500" }],
-          [{ text: "❌ Cancel", callback_data: "back_menu" }],
-        ]},
+      send(chatId, "⚡ Quick Ludo\n\nChoose entry fee:", {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "₹50", callback_data: "join_quick_50" }, { text: "₹100", callback_data: "join_quick_100" }, { text: "₹200", callback_data: "join_quick_200" }, { text: "₹300", callback_data: "join_quick_300" }],
+            [{ text: "₹500", callback_data: "join_quick_500" }, { text: "₹1000", callback_data: "join_quick_1000" }],
+            [{ text: "❌ Cancel", callback_data: "back_menu" }],
+          ]
+        }, 
       });
     });
     return;
@@ -1087,9 +1086,8 @@ bot.on("message", msg => {
   if (text === "🎲 Classic Ludo") {
     requireGroupMembership(chatId, () => {
       send(chatId,
-        `🎲 Classic Ludo — Choose Goti Mode\n\n` +
-        `ℹ️ Goti = number of tokens per player\n` +
-        `All matches are 2 players.\n\nSelect your Goti mode:`,
+        `🎲 Classic Ludo — Choose Goti No.\n` +
+        `(kitne Goti ka match kheloge)`,
         {
           reply_markup: { inline_keyboard: [
             [
@@ -1107,9 +1105,9 @@ bot.on("message", msg => {
 
   if (text === "🏆 Popular Ludo") {
     requireGroupMembership(chatId, () => {
-      send(chatId, "🏆 Popular Ludo\n\nHigh-stakes 2-player games!\n\nChoose entry fee:", {
+      send(chatId, "🏆 Popular Ludo\n\Choose entry fee 👇", {
         reply_markup: { inline_keyboard: [
-          [{ text: "₹50", callback_data: "join_popular_50" }, { text: "₹100", callback_data: "join_popular_100" }, { text: "₹200", callback_data: "join_popular_200" }],
+          [{ text: "₹50", callback_data: "join_popular_50" }, { text: "₹100", callback_data: "join_popular_100" }, { text: "₹200", callback_data: "join_popular_200" }, { text: "₹300", callback_data: "join_popular_300" }],
           [{ text: "₹500", callback_data: "join_popular_500" }, { text: "₹1000", callback_data: "join_popular_1000" }],
           [{ text: "❌ Cancel", callback_data: "back_menu" }],
         ]},
@@ -1126,7 +1124,6 @@ bot.on("message", msg => {
       `👤 Your Profile\n\n` +
       `ID: ${tapCopy(chatId)}\n` +
       `Name: ${escMD(u.name || "N/A")}\n` +
-      `Username: @${escMD(u.username || "N/A")}\n\n` +
       `Balance: ₹${u.balance || 0}\n` +
       `Games Played: ${u.gamesPlayed || 0}\n` +
       `Games Won: ${u.gamesWon || 0}\n` +
@@ -1211,10 +1208,11 @@ bot.on("callback_query", query => {
             { text: "₹50",  callback_data: `join_classic_50`  },
             { text: "₹100", callback_data: `join_classic_100` },
             { text: "₹200", callback_data: `join_classic_200` },
+            { text: "₹300", callback_data: `join_classic_300` },
           ],
           [
-            { text: "₹250", callback_data: `join_classic_250` },
             { text: "₹500", callback_data: `join_classic_500` },
+            { text: "₹1000", callback_data: `join_classic_1000` },
           ],
           [{ text: "🔙 Back", callback_data: "back_menu" }],
         ]},
@@ -1416,14 +1414,13 @@ bot.on("callback_query", query => {
     const QR = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=7891624054@mbk%26pn=LudoAdda%26am=${amount}%26cu=INR`;
     bot.sendPhoto(chatId, QR, {
       caption:
-        `Deposit ₹${amount}\n\n` +
+        `💰 Deposit Amount ₹${amount}\n\n` +
         `UPI ID: 7891624054@mbk\n` +
-        `Amount: ₹${amount}\n\n` +
         `Scan QR above OR pay to the UPI ID manually.\n\n` +
-        `After payment, send the SCREENSHOT of your transaction.\n` +
-        `Screenshot must contain the UTR number.`,
+        `📷After payment, send the screenshot of your transaction.\n` +
+        `⚠ screenshot must contain the UTR number.`,
       reply_markup: {
-        keyboard         : [[{ text: "❌ Cancel Deposit" }]],
+        keyboard         : [[{ text: "💔 Cancel Deposit" }]],
         resize_keyboard  : true,
         one_time_keyboard: true,
       },
@@ -1435,7 +1432,7 @@ bot.on("callback_query", query => {
     const amount = parseInt(data.split("_")[1]);
     if (!amount) return;
     if ((users[chatId]?.balance || 0) < amount) {
-      send(chatId, `❌ Insufficient balance! You have ₹${users[chatId]?.balance || 0}`);
+      send(chatId, `😥 Insufficient balance! You have ₹${users[chatId]?.balance || 0}`);
       return;
     }
     userState[chatId] = { action: "withdraw_upi", amount };
