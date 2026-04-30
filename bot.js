@@ -11,7 +11,9 @@ const REFER_REWARD = 20;
 const express = require("express");
 const TelegramBot = require("node-telegram-bot-api");
 
-const bot = new TelegramBot(BOT_TOKEN, { webHook: true });
+// Create bot WITHOUT any mode — we handle everything manually
+const bot = new TelegramBot(BOT_TOKEN);
+
 const app = express();
 app.use(express.json());
 
@@ -19,13 +21,21 @@ app.post(`/webhook`, (req, res) => {
   bot.processUpdate(req.body);
   res.status(200).send("OK");
 });
+
 app.get("/", (req, res) => res.send("Bot is running!"));
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  // Set webhook on startup
-  await bot.setWebHook(`${RENDER_URL}/webhook`);
-  console.log(`✅ Webhook set to ${RENDER_URL}/webhook`);
+  try {
+    // Clear any old webhook or polling first
+    await bot.deleteWebHook();
+    // Set fresh webhook
+    await bot.setWebHook(`${RENDER_URL}/webhook`);
+    console.log(`✅ Webhook set to ${RENDER_URL}/webhook`);
+  } catch (err) {
+    console.error("❌ Failed to set webhook:", err.message);
+  }
 });
 
 function escMD(text) {
