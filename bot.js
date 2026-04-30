@@ -13,7 +13,7 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
     console.log("Server running on port " + PORT);
 });
-const BOT_TOKEN = "8605121015:AAFnOYKJdiSePMF-TxYHgffvGC2_R8kZx9M";
+const BOT_TOKEN = process.env.BOT_TOKEN;
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 const ADMIN_ID = 8521844327;
 const GROUP_ID = -1003890515710;
@@ -22,7 +22,10 @@ const PLATFORM_CUT_PERCENT = 5;
 const REFER_REWARD = 20;
 // ─────────────────────────────────────────────────────────────────────────────
 
-
+if (!BOT_TOKEN) {
+  console.error("BOT_TOKEN is missing!");
+  process.exit(1);
+}
 // ─── FIX 3: Escape special Markdown characters in user-supplied text ──────────
 function escMD(text) {
   if (!text) return "";
