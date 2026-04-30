@@ -24,7 +24,7 @@ app.post(`/webhook`, (req, res) => {
 
 app.get("/", (req, res) => res.send("Bot is running!"));
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 1000;
 app.listen(PORT, async () => {
   console.log(`🚀 Server running on port ${PORT}`);
   try {
