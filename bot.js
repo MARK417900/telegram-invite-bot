@@ -1,6 +1,6 @@
 
 
-const BOT_TOKEN = "8605121015:AAHhicwjGY6M-ERh93-veBOqikCPiGlhax0";
+const BOT_TOKEN = "8605121015:AAEnD_nSnJY-hXK904TdtTYfO3K_qgA2S8o";
 const RENDER_URL = "https://test-bot-5tik.onrender.com";
 const ADMIN_ID = 8521844327;
 const GROUP_ID = -1003890515710; 
