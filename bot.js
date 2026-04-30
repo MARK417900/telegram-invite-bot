@@ -1,6 +1,20 @@
+const express = require("express");
+const fs = require("fs");
 const TelegramBot = require("node-telegram-bot-api");
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
+
+const app = express(); 
+const PORT = process.env.PORT || 3000;
+
+/* SERVER */
+app.get("/", (req, res) => {
+    res.send("✅ Bot Backend Running");
+});
+
+app.listen(PORT, () => {
+    console.log("Server running on port " + PORT);
+});
 const BOT_TOKEN = "8605121015:AAFnOYKJdiSePMF-TxYHgffvGC2_R8kZx9M";
+const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 const ADMIN_ID = 8521844327;
 const GROUP_ID = -1003890515710;
 const GROUP_INVITE_LINK = "https://t.me/+YOUR_GROUP_INVITE_LINK"; // ← CHANGE THIS
@@ -8,55 +22,6 @@ const PLATFORM_CUT_PERCENT = 5;
 const REFER_REWARD = 20;
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ─── FIX 1: Resilient polling options ────────────────────────────────────────
-// autoStart: false so we can delete the webhook FIRST, then start polling
-const bot = new TelegramBot(BOT_TOKEN, {
-  polling: {
-    interval : 300,
-    autoStart: false,   // ← manually started below after webhook is cleared
-    params   : { timeout: 10 },
-  },
-  request: {
-    timeout   : 30000,
-    retryLimit: 5,
-  },
-});
-
-console.log("🚀 LudoAdda Bot starting...");
-
-// ─── Delete any existing webhook, THEN start polling ─────────────────────────
-// This prevents the "409 Conflict: terminated by other getUpdates request" error
-// that occurs when Telegram still has a registered webhook for this bot token.
-bot.deleteWebHook()
-  .then(() => {
-    return bot.startPolling();
-  }).catch(err => {
-    console.error("❌ Failed to start bot:", err.message);
-    process.exit(1);
-  });
-
-// ─── FIX 2: Auto-restart polling on fatal network errors ──────────────────────
-bot.on("polling_error", (err) => {
-  const msg = err.message || "";
-  console.error("Polling error:", msg);
-
-  if (
-    msg.includes("ECONNRESET") ||
-    msg.includes("ENOTFOUND")  ||
-    msg.includes("ETIMEDOUT")  ||
-    msg.includes("EFATAL")     ||
-    msg.includes("socket hang up")
-  ) {
-    console.log("🔄 Network error detected — restarting polling in 5s...");
-    bot.stopPolling()
-      .catch(() => {})
-      .finally(() => {
-        setTimeout(() => {
-          bot.startPolling().catch((e) => console.error("Failed to restart polling:", e.message));
-        }, 5000);
-      });
-  }
-});
 
 // ─── FIX 3: Escape special Markdown characters in user-supplied text ──────────
 function escMD(text) {
