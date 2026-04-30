@@ -12,7 +12,7 @@ const TelegramBot = require("node-telegram-bot-api");
 const bot = new TelegramBot(BOT_TOKEN);
 const app = express();
 app.use(express.json());
-app.post("/webhook", (req, res) => {
+app.post("https://test-bot-k7wm.onrender.com/webhook", (req, res) => {
   bot.processUpdate(req.body);
   res.status(200).send("OK");
 });
