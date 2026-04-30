@@ -12,23 +12,14 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
     console.log("Server running on port " + PORT);
 });
-const token = process.env.BOT_TOKEN?.trim();
-if (!token) {
-  throw new Error("BOT_TOKEN missing");
-}
-const bot = new TelegramBot(token, {
-  polling: true
-});
+const token = process.env.BOT_TOKEN;
+const bot = new TelegramBot(token, {polling: true});
 const ADMIN_ID = 8521844327;
 const GROUP_ID = -1003890515710;
 const GROUP_INVITE_LINK = "https://t.me/+YOUR_GROUP_INVITE_LINK"; // ← CHANGE THIS
 const PLATFORM_CUT_PERCENT = 5;
 const REFER_REWARD = 20;
-// ─────────────────────────────────────────────────────────────────────────────
-console.log("TOKEN:", process.env.BOT_TOKEN);
-if (!process.env.BOT_TOKEN) {
-  throw new Error("BOT_TOKEN not found in environment!");
-}
+
 // ─── FIX 3: Escape special Markdown characters in user-supplied text ──────────
 function escMD(text) {
   if (!text) return "";
