@@ -1,40 +1,87 @@
-
-
-const BOT_TOKEN = "8605121015:AAEnD_nSnJY-hXK904TdtTYfO3K_qgA2S8o";
-const RENDER_URL = "https://test-bot-5tik.onrender.com";
-const ADMIN_ID = 8521844327;
-const GROUP_ID = -1003890515710; 
-const GROUP_INVITE_LINK = "https://t.me/+oZ50aEXyGv4zMjY1"; // ← CHANGE THIS
+const BOT_TOKEN  = process.env.BOT_TOKEN;
+const RENDER_URL = process.env.RENDER_URL;
+const ADMIN_ID   = 8521844327;
+const GROUP_ID   = -1003890515710;
+const GROUP_INVITE_LINK    = "https://t.me/+oZ50aEXyGv4zMjY1";
 const PLATFORM_CUT_PERCENT = 5;
-const REFER_REWARD = 20;
+const REFER_REWARD         = 20;
 
 const express = require("express");
-const TelegramBot = require("node-telegram-bot-api");
+const https   = require("https");
 
-// Create bot WITHOUT any mode — we handle everything manually
-const bot = new TelegramBot(BOT_TOKEN,{ polling: false, webHook: false });
+// ── Raw Telegram API caller — no library polling issues ──────────────────────
+function callTelegram(method, params) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify(params);
+    const req  = https.request({
+      hostname: "api.telegram.org",
+      path    : `/bot${BOT_TOKEN}/${method}`,
+      method  : "POST",
+      headers : { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(body) },
+    }, res => {
+      let data = "";
+      res.on("data", c => data += c);
+      res.on("end", () => {
+        try { resolve(JSON.parse(data)); }
+        catch { resolve({}); }
+      });
+    });
+    req.on("error", reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+// ── Recreate bot-like methods using raw API ───────────────────────────────────
+const bot = {
+  sendMessage          : (chat_id, text, extra = {})            => callTelegram("sendMessage",           { chat_id, text, ...extra }),
+  sendPhoto            : (chat_id, photo, extra = {})           => callTelegram("sendPhoto",             { chat_id, photo, ...extra }),
+  editMessageText      : (text, extra = {})                     => callTelegram("editMessageText",       { text, ...extra }),
+  editMessageReplyMarkup: (reply_markup, extra = {})            => callTelegram("editMessageReplyMarkup",{ reply_markup, ...extra }),
+  deleteMessage        : (chat_id, message_id)                  => callTelegram("deleteMessage",         { chat_id, message_id }),
+  answerCallbackQuery  : (callback_query_id, extra = {})        => callTelegram("answerCallbackQuery",   { callback_query_id, ...extra }),
+  getChatMember        : (chat_id, user_id)                     => callTelegram("getChatMember",         { chat_id, user_id }).then(r => r.result),
+  setWebHook           : (url)                                  => callTelegram("setWebhook",            { url }),
+  deleteWebHook        : ()                                     => callTelegram("deleteWebhook",         {}),
+  onText               : (regex, fn) => { bot._textHandlers = bot._textHandlers || []; bot._textHandlers.push({ regex, fn }); },
+  on                   : (event, fn) => { bot._eventHandlers = bot._eventHandlers || {}; bot._eventHandlers[event] = fn; },
+  processUpdate        : (update) => {
+    if (update.message) {
+      const msg = update.message;
+      if (bot._textHandlers && msg.text) {
+        for (const h of bot._textHandlers) {
+          const m = msg.text.match(h.regex);
+          if (m) { h.fn(msg, m); return; }
+        }
+      }
+      if (bot._eventHandlers?.message) bot._eventHandlers.message(update.message);
+    }
+    if (update.callback_query && bot._eventHandlers?.callback_query) {
+      bot._eventHandlers.callback_query(update.callback_query);
+    }
+  },
+};
 
 const app = express();
 app.use(express.json());
 
-app.post(`/webhook`, (req, res) => {
+app.post("/webhook", (req, res) => {
   bot.processUpdate(req.body);
-  res.status(200).send("OK");
+  res.sendStatus(200);
 });
 
-app.get("/", (req, res) => res.send("Bot is running!"));
+app.get("/", (req, res) => res.send("✅ Bot is running!"));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Server started on port ${PORT}`);
   try {
-    // Clear any old webhook or polling first
     await bot.deleteWebHook();
-    // Set fresh webhook
+    console.log("🗑️ Old webhook deleted");
     await bot.setWebHook(`${RENDER_URL}/webhook`);
-    console.log(`✅ Webhook set to ${RENDER_URL}/webhook`);
+    console.log(`✅ Webhook set → ${RENDER_URL}/webhook`);
   } catch (err) {
-    console.error("❌ Failed to set webhook:", err.message);
+    console.error("❌ Webhook setup failed:", err.message);
   }
 });
 
