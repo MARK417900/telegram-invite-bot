@@ -1430,11 +1430,11 @@ bot.on("callback_query", query => {
       return;
     }
     userState[chatId] = { action: "deposit_screenshot", amount };
-    const QR = `paymentQR.jpg`;
+    const QR = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=7891624054@mbk%26pn=LudoAdda%26am=${amount}%26cu=INR`;
     bot.sendPhoto(chatId, QR, {
       caption:
         `💰 Deposit Amount ₹${amount}\n\n` +
-        `UPI ID: ${tapCopy("7891624054@mbk")}\n\n` +
+        `UPI ID: 7891624054@mbk\n\n` +
         `📷 After Payment send the screenshot of your transaction here.\n` +
         `⚠ Screenshot must contain the UTR number.`,
       reply_markup: {
