@@ -143,7 +143,7 @@ function mainMenu() {
     reply_markup: {
       keyboard: [
         [{ text: "👤 Profile" }, { text: "💰 Deposit" }],
-        [{ text: "⚡ Quick Ludo" }, { text: "🎲 Classic Ludo" }, { text: "🐍 Snake & Ladder" }],
+        [{ text: "⚡ Quick Ludo" }, { text: "🎲 Classic Ludo" }, { text: "Snake Ladder" }],
         [{ text: "🤝 Refer & Earn" }, { text: "💸 Withdraw" }],
         [{ text: "🆘 Support" }],
       ],
@@ -1118,7 +1118,7 @@ bot.on("message", msg => {
     return;
   }
 
-  if (text === "🐍 Snake & Ladder") {
+  if (text === "Snake Ladder") {
     requireGroupMembership(chatId, () => {
       send(chatId, "🐍 Snake & Ladder\nChoose entry fee 👇", {
         reply_markup: {
@@ -1156,7 +1156,7 @@ bot.on("message", msg => {
     sendMD(chatId,
       `🤝 Refer and Earn\n\n` +
       `Your Referral Link:\n` +
-      `${`https://t.me/Ludo_AddaBot?start=${chatId}`}\n\n` +
+      `${`https://t.me/Ludo\_AddaBot?start=${chatId}`}\n\n` +
       `Earn ₹${REFER_REWARD} for each friend who joins AND plays their first match\\!`
     );
     return;
