@@ -581,7 +581,7 @@ function sendUserInfoPanel(adminChatId, targetId) {
 
   const text =
     `👤 User Info\n\n` +
-    `ID: \`${tapCopy(targetId)}\`\n` +
+    `ID: \`${targetId}\`\n` +
     `Name: ${u.name}\n` +
     `Username: @${u.username}\n\n` +
     `Balance: ₹${u.balance}\n` +
@@ -942,7 +942,7 @@ bot.on("message", msg => {
 
     send(chatId, `😔 Loss recorded for table ${tableId}.\n\nBetter luck next time!`, mainMenu());
     bot.sendMessage(ADMIN_ID,
-      `${users[chatId]?.name} (${tapCopy(chatId)}) reported a loss on table ${tableId}.`
+      `${users[chatId]?.name} (${chatId}) reported a loss on table ${tableId}.`
     ).catch(() => { });
     return;
   }
@@ -1027,7 +1027,7 @@ bot.on("message", msg => {
         mainMenu());
 
       bot.sendMessage(ADMIN_ID,
-        `New Withdrawal Request!\n\nTXN: ${txnId}\nUser: ${users[chatId]?.name} (${tapCopy(chatId)})\nAmount: ₹${amount}\nUPI: ${tapCopy(upiId)}`,
+        `New Withdrawal Request!\n\nTXN: ${txnId}\nUser: ${users[chatId]?.name} (${chatId})\nAmount: ₹${amount}\nUPI: ${upiId}`,
         { reply_markup: { inline_keyboard: [[{ text: "✅ Mark Paid", callback_data: `wdl_done_${txnId}` }, { text: "❌ Reject", callback_data: `wdl_rej_${txnId}` }]] } }
       ).catch(() => { });
       return;
@@ -1051,7 +1051,6 @@ bot.on("message", msg => {
   if (text === "💸 Withdraw") {
     const u = users[chatId];
     const gamesPlayed = u?.gamesPlayed || 0;
-    const hasDeposited = u?.hasDeposited || false;
     if (gamesPlayed < 2 && !hasDeposited) {
       send(chatId,
         `❌ Withdrawal Not Available Yet!\n\n` +
@@ -1064,6 +1063,7 @@ bot.on("message", msg => {
         mainMenu());
       return;
     }
+    const hasDeposited = u?.hasDeposited || false;
     send(chatId, `💸 Withdraw\n\nYour Balance: ₹${u?.balance || 0}\nMinimum: ₹100`, {
       reply_markup: {
         inline_keyboard: [
