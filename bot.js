@@ -1429,52 +1429,22 @@ bot.on("callback_query", query => {
       send(chatId, `Pending deposit exists!\n\nTXN: ${ep.txnId} | ₹${ep.amount}\n\nWait for admin to process it first.`, mainMenu());
       return;
     }
-    if (data.startsWith("deposit_")) {
-  const amount = parseInt(data.split("_")[1]);
-  if (!amount) return;
-
-  const ep = Object.values(pendingDeposits).find(d => d.chatId === chatId && d.status === "pending");
-  if (ep) {
-    send(chatId, `Pending deposit exists!\n\nTXN: ${ep.txnId} | ₹${ep.amount}\n\nWait for admin to process it first.`, mainMenu());
+    userState[chatId] = { action: "deposit_screenshot", amount };
+    const QR = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=7891624054@mbk%26pn=LudoAdda%26am=${amount}%26cu=INR`;
+    bot.sendPhoto(chatId, QR, {
+      caption:
+        `💰 Deposit Amount ₹${amount}\n\n` +
+        `UPI ID: 7891624054@mbk\n\n` +
+        `📷 After Payment send the screenshot of your transaction here.\n` +
+        `⚠ Screenshot must contain the UTR number.`,
+      reply_markup: {
+        keyboard: [[{ text: "💔 Cancel Deposit" }]],
+        resize_keyboard: true,
+        one_time_keyboard: true,
+      },
+    }).catch(() => { });
     return;
   }
-
-  userState[chatId] = { action: "deposit_screenshot", amount };
-
-  // ── Replace this string with your own hosted image URL or Telegram file_id ──
-  const YOUR_QR = "https://github.com/MARK417900/telegram-invite-bot/blob/main/PaymentQR.jpg"; // <-- put your URL here
-
-  const UPI_ID = "7891624054@mbk";
-
-  bot.sendPhoto(chatId, YOUR_QR, {
-    caption:
-      `💰 Deposit Amount: ₹${amount}\n\n` +
-      `UPI ID: \`${UPI_ID}\`\n\n` +           
-      `📷 After payment, send the screenshot here.\n` +
-      `⚠️ Screenshot must contain the UTR number.`,
-    parse_mode: "Markdown",           // required for backtick tap-to-copy
-    reply_markup: {
-      keyboard: [[{ text: "💔 Cancel Deposit" }]],
-      resize_keyboard: true,
-      one_time_keyboard: true,
-    },
-  }).catch(() => {
-    // fallback if photo fails — send text only
-    sendMD(chatId,
-      `💰 Deposit Amount: ₹${amount}\n\n` +
-      `UPI ID \`${UPI_ID}\`\n\n` +
-      `📷 After payment, send the screenshot here.\n` +
-      `⚠️ Screenshot must contain the UTR number.`,
-      {
-        reply_markup: {
-          keyboard: [[{ text: "💔 Cancel Deposit" }]],
-          resize_keyboard: true,
-          one_time_keyboard: true,
-        },
-      });
-  });
-  return;
-}
 
   if (data.startsWith("withdraw_")) {
     const amount = parseInt(data.split("_")[1]);
