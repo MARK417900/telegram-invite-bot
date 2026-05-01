@@ -12,15 +12,16 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
   console.log("Server running on port " + PORT);
 });
+
 const token = process.env.BOT_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
 const ADMIN_ID = 8641315326;
 const GROUP_ID = -1003907305365;
-const GROUP_INVITE_LINK = "https://t.me/+Bg5tAAxgL5cxYWRl"; 
+const GROUP_INVITE_LINK = "https://t.me/+Bg5tAAxgL5cxYWRl";
 const PLATFORM_CUT_PERCENT = 5;
 const REFER_REWARD = 20;
 
-// ─── FIX 3: Escape special Markdown characters in user-supplied text ──────────
+// ─── Escape special Markdown characters in user-supplied text ─────────────────
 function escMD(text) {
   if (!text) return "";
   return String(text).replace(/[*`\[]/g, "\\$&");
@@ -91,12 +92,13 @@ function registerUser(msg, referredBy = null) {
   }
 }
 
+// FIX: balance set to 0 (was 1000 — free money exploit via group join button)
 function ensureUser(from) {
   if (!users[from.id]) {
     users[from.id] = {
       name: `${from.first_name} ${from.last_name || ""}`.trim(),
       username: from.username || "N/A",
-      balance: 1000,
+      balance: 0,
       gamesPlayed: 0,
       gamesWon: 0,
       status: "idle",
@@ -265,7 +267,7 @@ async function requireGroupMembership(chatId, onSuccess) {
     });
 }
 
-//  MATCHMAKING
+// ─── MATCHMAKING ──────────────────────────────────────────────────────────────
 function handleJoin(chatId, gameType, entryFee) {
   const user = users[chatId];
   if (!user) return;
@@ -307,7 +309,7 @@ function handleJoin(chatId, gameType, entryFee) {
 
     if (match.groupMsgId) {
       bot.editMessageText(
-        `Match Found!\n\n${dname(match.creatorId)} vs ${dname(chatId)}${gameLabel(gameType)} | Entry ₹${entryFee}`,
+        `Match Found!\n\n${dname(match.creatorId)} vs ${dname(chatId)}\n${gameLabel(gameType)} | Entry ₹${entryFee}`,
         { chat_id: GROUP_ID, message_id: match.groupMsgId }
       ).catch(() => { });
       bot.editMessageReplyMarkup({ inline_keyboard: [] },
@@ -406,6 +408,8 @@ function expireOpenTable(tableId) {
 function timeoutPendingAccept(tableId) {
   const t = tables[tableId];
   if (!t || t.status !== "pending_accept") return;
+  // FIX: also clear expire timer here
+  clearTimeout(t.expireTimer);
   t.status = "cancelled";
   [t.creatorId, t.opponentId].forEach(pid => {
     if (!pid || !users[pid]) return;
@@ -442,8 +446,8 @@ function sendRoomCodeToOpponent(tableId, code) {
 
   sendMD(t.opponentId,
     `Table: ${tableId}\n\n` +
-    `🔑Room Code: ${tapCopy(t.roomCode)}\n\n` +
-    `Tap to copy code and and Start Game!`,
+    `🔑 Room Code: ${tapCopy(t.roomCode)}\n\n` +
+    `Tap to copy code and Start Game!`,
     startGameMenu(tableId));
 }
 
@@ -462,26 +466,26 @@ function activateGame(tableId) {
 
   sendMD(t.creatorId,
     `🎮 Table ${tableId} Match Started!\n\n` +
-    `\n` +
     `${names}\n` +
     `Prize: ₹${t.winnerGets}\n` +
     `Room Code: ${tapCopy(t.roomCode)}\n\n` +
-    `Good luck!\n Tap your result after the game:`,
+    `Good luck!\nTap your result after the game:`,
     gameResultMenu(tableId));
 
   send(t.opponentId,
     `🎮 Game is ON!\n\n` +
     `${names}\n` +
     `Prize: ₹${t.winnerGets}\n\n` +
-    `Good luck!\n Tap your result after the game:`,
+    `Good luck!\nTap your result after the game:`,
     gameResultMenu(tableId));
 
   if (GROUP_ID) {
     bot.sendMessage(GROUP_ID,
-      `🎮 Game Started!\n\n ${names}\n${gameLabel(t.gameType)} | Prize: ₹${t.winnerGets}`
+      `🎮 Game Started!\n\n${names}\n${gameLabel(t.gameType)} | Prize: ₹${t.winnerGets}`
     ).catch(() => { });
   }
 
+  // FIX: use sendMD so tapCopy works in admin notification
   bot.sendMessage(ADMIN_ID,
     `New Active Table: ${tableId}\nPlayers: ${names}\nPot: ₹${t.pot}\nRoom: ${t.roomCode}`,
     {
@@ -498,6 +502,9 @@ function activateGame(tableId) {
 function declareWinner(tableId, winnerId) {
   const t = tables[tableId];
   if (!t) return;
+  // FIX: guard against running twice on already completed table
+  if (t.status === "completed") return;
+
   clearTimeout(t.acceptTimer);
   t.status = "completed";
   t.winner = winnerId;
@@ -514,6 +521,7 @@ function declareWinner(tableId, winnerId) {
 
   recordMatchCompletion(t.pot, t.platformCut);
 
+  // Refer reward — only trigger from declareWinner, not from loss report
   [t.creatorId, t.opponentId].forEach(pid => {
     if (!pid || !users[pid]) return;
     const u = users[pid];
@@ -539,14 +547,14 @@ function declareWinner(tableId, winnerId) {
     if (!pid) return;
     send(pid,
       pid === winnerId
-        ? `🏆 You Won!\n\nTable: ${tableId}\nPrize: ₹${t.winnerGets}(added)\nNew Balance: ₹${users[pid].balance}`
+        ? `🏆 You Won!\n\nTable: ${tableId}\nPrize: ₹${t.winnerGets} (added)\nNew Balance: ₹${users[pid].balance}`
         : `😔 You Lost! Table ${tableId}\n\nBetter luck next time!`,
       mainMenu());
   });
 
   if (GROUP_ID) {
     bot.sendMessage(GROUP_ID,
-      `🏆 Table ${tableId} Game Result! \n\n ${names} \n| \nWinner: ${winnerName} | Prize: ₹${t.winnerGets}`
+      `🏆 Table ${tableId} Game Result!\n\n${names}\n|\nWinner: ${winnerName} | Prize: ₹${t.winnerGets}`
     ).catch(() => { });
   }
 
@@ -579,21 +587,22 @@ function sendUserInfoPanel(adminChatId, targetId) {
   const pendingDep = Object.values(pendingDeposits).find(d => d.chatId === targetId && d.status === "pending");
   const pendingWdl = Object.values(pendingWithdrawals).find(w => w.chatId === targetId && w.status === "pending");
 
+  // FIX: use tapCopy() for all IDs so admin can tap-to-copy
   const text =
     `👤 User Info\n\n` +
-    `ID: \`${targetId}\`\n` +
-    `Name: ${u.name}\n` +
-    `Username: @${u.username}\n\n` +
+    `ID: ${tapCopy(targetId)}\n` +
+    `Name: ${escMD(u.name)}\n` +
+    `Username: @${escMD(u.username)}\n\n` +
     `Balance: ₹${u.balance}\n` +
     `Games Played: ${u.gamesPlayed}\n` +
     `Games Won: ${u.gamesWon}\n` +
     `Status: ${u.status}\n` +
     `Table: ${u.tableId || "None"}\n\n` +
     `Deposited: ${u.hasDeposited ? "Yes ✅" : "No ❌"}\n` +
-    `Referred By: ${u.referredBy ? `\`${u.referredBy}\`` : "None"}\n` +
+    `Referred By: ${u.referredBy ? tapCopy(u.referredBy) : "None"}\n` +
     `Refer Count: ${u.referCount || 0}\n` +
-    (pendingDep ? `\nPending Deposit: ₹${pendingDep.amount} (${pendingDep.txnId})\n` : "") +
-    (pendingWdl ? `\nPending Withdrawal: ₹${pendingWdl.amount} (${pendingWdl.txnId})\n` : "");
+    (pendingDep ? `\nPending Deposit: ₹${pendingDep.amount} (${tapCopy(pendingDep.txnId)})\n` : "") +
+    (pendingWdl ? `\nPending Withdrawal: ₹${pendingWdl.amount} | UPI: ${tapCopy(pendingWdl.upiId)} (${tapCopy(pendingWdl.txnId)})\n` : "");
 
   bot.sendMessage(adminChatId, text, {
     parse_mode: "Markdown",
@@ -887,7 +896,7 @@ bot.on("message", msg => {
     if (!t || t.status !== "pending_accept") { send(chatId, "This match is no longer available.", mainMenu()); return; }
     if (chatId !== t.opponentId) { send(chatId, "This request is not for you."); return; }
     clearTimeout(t.acceptTimer);
-    send(chatId, `✅ Table ${tableId} Accepted !\n\nWaiting for the table creator to share the room code...`);
+    send(chatId, `✅ Table ${tableId} Accepted!\n\nWaiting for the table creator to share the room code...`);
     askCreatorForRoomCode(tableId);
     return;
   }
@@ -936,14 +945,35 @@ bot.on("message", msg => {
     if (t.lossReports.includes(chatId)) { send(chatId, "You already reported a loss for this table."); return; }
 
     t.lossReports.push(chatId);
-    users[chatId].gamesPlayed += 1;
+
+    // FIX: do NOT increment gamesPlayed here — handled in declareWinner to keep refer reward logic correct
     users[chatId].status = "idle";
     users[chatId].tableId = null;
 
     send(chatId, `😔 Loss recorded for table ${tableId}.\n\nBetter luck next time!`, mainMenu());
-    bot.sendMessage(ADMIN_ID,
-      `${users[chatId]?.name} (${chatId}) reported a loss on table ${tableId}.`
-    ).catch(() => { });
+
+    // FIX: if both players reported a loss, auto-cancel and refund
+    const bothLost = [t.creatorId, t.opponentId].every(pid => t.lossReports.includes(pid));
+    if (bothLost) {
+      t.status = "cancelled";
+      [t.creatorId, t.opponentId].forEach(pid => {
+        if (!pid || !users[pid]) return;
+        users[pid].balance += t.entryFee;
+        users[pid].gamesPlayed += 1;
+        users[pid].status = "idle";
+        users[pid].tableId = null;
+        send(pid,
+          `⚠️ Both players reported a loss for table ${tableId}.\n\nEntry fee refunded: ₹${t.entryFee}\nBalance: ₹${users[pid].balance}`,
+          mainMenu());
+      });
+      bot.sendMessage(ADMIN_ID,
+        `⚠️ Table ${tableId} — Both players reported a loss. Auto-cancelled and refunded.`
+      ).catch(() => { });
+    } else {
+      bot.sendMessage(ADMIN_ID,
+        `${users[chatId]?.name} (${chatId}) reported a loss on table ${tableId}.\n\nOther player has not submitted result yet.`
+      ).catch(() => { });
+    }
     return;
   }
 
@@ -1026,9 +1056,18 @@ bot.on("message", msg => {
         `✅ Withdrawal Submitted!\n\nTXN: ${tapCopy(txnId)}\nAmount: ₹${amount}\nUPI: ${tapCopy(upiId)}\n\nBalance: ₹${users[chatId].balance}\n\nAdmin will process within 24 hours.`,
         mainMenu());
 
+      // FIX: parse_mode Markdown + tapCopy for admin so IDs and UPI are tappable
       bot.sendMessage(ADMIN_ID,
-        `New Withdrawal Request!\n\nTXN: ${txnId}\nUser: ${users[chatId]?.name} (${chatId})\nAmount: ₹${amount}\nUPI: ${upiId}`,
-        { reply_markup: { inline_keyboard: [[{ text: "✅ Mark Paid", callback_data: `wdl_done_${txnId}` }, { text: "❌ Reject", callback_data: `wdl_rej_${txnId}` }]] } }
+        `💸 New Withdrawal Request!\n\nTXN: ${tapCopy(txnId)}\nUser: ${escMD(users[chatId]?.name)} (${tapCopy(chatId)})\nAmount: ₹${amount}\nUPI: ${tapCopy(upiId)}`,
+        {
+          parse_mode: "Markdown",
+          reply_markup: {
+            inline_keyboard: [[
+              { text: "✅ Mark Paid", callback_data: `wdl_done_${txnId}` },
+              { text: "❌ Reject", callback_data: `wdl_rej_${txnId}` },
+            ]]
+          }
+        }
       ).catch(() => { });
       return;
     }
@@ -1047,7 +1086,7 @@ bot.on("message", msg => {
     });
     return;
   }
-  
+
   if (text === "💸 Withdraw") {
     const u = users[chatId];
     const gamesPlayed = u?.gamesPlayed || 0;
@@ -1074,7 +1113,6 @@ bot.on("message", msg => {
       },
     });
     return;
-
   }
 
   if (text === "⚡ Quick Ludo") {
@@ -1136,7 +1174,7 @@ bot.on("message", msg => {
     sendMD(chatId,
       `👤 Your Profile\n\n` +
       `ID: ${tapCopy(chatId)}\n` +
-      `Name: ${u.name || "N/A"}\n` +
+      `Name: ${escMD(u.name) || "N/A"}\n` +
       `Balance: ₹${u.balance || 0}\n` +
       `Refer Count: ${u.referCount || 0}\n` +
       `Games Played: ${u.gamesPlayed || 0}\n` +
@@ -1148,12 +1186,12 @@ bot.on("message", msg => {
   }
 
   if (text === "🤝 Refer & Earn") {
-    const u = users[chatId] || {};
-    sendMD(chatId,
+    // FIX: send as plain text to avoid escaped underscore issues in bot username URL
+    send(chatId,
       `🤝 Refer and Earn\n\n` +
       `Your Referral Link:\n` +
-      `${`https://t.me/Ludo\\_AddaBot?start=${chatId}`}\n\n` +
-      `Earn ₹${REFER_REWARD} for each friend who joins AND plays their first match\\!`
+      `https://t.me/Ludo_AddaBot?start=${chatId}\n\n` +
+      `Earn ₹${REFER_REWARD} for each friend who joins AND plays their first match!`
     );
     return;
   }
@@ -1179,16 +1217,24 @@ bot.on("callback_query", query => {
   const data = query.data;
   const msgId = query.message.message_id;
   const isGroupCallback = query.message.chat.type !== "private";
-  const chatId = isGroupCallback ? query.from.id : query.message.chat.id;
+  // FIX: always use query.from.id as the acting user (not message chat id)
+  const chatId = query.from.id;
   const groupChatId = query.message.chat.id;
 
   bot.answerCallbackQuery(query.id).catch(() => { });
 
+  // FIX: block all non-admin callback actions when bot is offline
+  if (!botOnline && !isAdmin(chatId) && data !== "check_membership") {
+    bot.answerCallbackQuery(query.id, { text: "🔴 Bot is offline for maintenance.", show_alert: true }).catch(() => { });
+    return;
+  }
+
   if (data === "check_membership") {
+    // FIX: was using undefined `msg` — now correctly uses `query.from`
     isGroupMember(chatId).then(isMember => {
       if (isMember) {
         bot.deleteMessage(chatId, msgId).catch(() => { });
-        send(chatId, `🎲 Welcome to Ludo Adda, ${msg.from.first_name}!\nLet's Play and Win real money!!!`, mainMenu());
+        send(chatId, `🎲 Welcome to Ludo Adda, ${query.from.first_name}!\nLet's Play and Win real money!!!`, mainMenu());
       } else {
         send(chatId,
           `❌ You haven't joined yet!\n\nPlease join the group first, then tap "I've Joined" again.`,
@@ -1205,32 +1251,47 @@ bot.on("callback_query", query => {
     return;
   }
 
+  // FIX: handle join_ with up to 3 parts to support classic_1goti_50 format
   if (data.startsWith("join_")) {
-    const parts = data.split("_");
-    const gameType = parts[1];
-    const fee = parseInt(parts[2]);
+    // FIX: alert if user is already in a session
+    if (!isAdmin(chatId)) {
+      const u = users[chatId];
+      if (u && u.status !== "idle") {
+        bot.answerCallbackQuery(query.id, {
+          text: `You already have an active session (${u.status}). Finish or cancel it first.`,
+          show_alert: true
+        }).catch(() => { });
+        return;
+      }
+    }
+    const withoutPrefix = data.slice(5); // remove "join_"
+    const lastUnderscore = withoutPrefix.lastIndexOf("_");
+    const gameType = withoutPrefix.slice(0, lastUnderscore);
+    const fee = parseInt(withoutPrefix.slice(lastUnderscore + 1));
     if (!isGroupCallback) bot.deleteMessage(chatId, msgId).catch(() => { });
     handleJoin(chatId, gameType, fee);
     return;
   }
 
+  // FIX: classic goti callbacks — embed goti type into fee buttons
   if (data.startsWith("classic_") && data.endsWith("goti")) {
     if (!isGroupCallback) bot.deleteMessage(chatId, msgId).catch(() => { });
+    const gotiType = data; // e.g. "classic_1goti"
     const gotiLabel = data.replace("classic_", "").replace("goti", "") + " Goti";
     send(chatId,
-      `🎲 Classic Ludo — ${gotiLabel} Mode\nchoose entry fee 👇`,
+      `🎲 Classic Ludo — ${gotiLabel} Mode\nChoose entry fee 👇`,
       {
         reply_markup: {
           inline_keyboard: [
             [
-              { text: "₹50", callback_data: `join_classic_50` },
-              { text: "₹100", callback_data: `join_classic_100` },
-              { text: "₹200", callback_data: `join_classic_200` },
-              { text: "₹300", callback_data: `join_classic_300` },
+              { text: "₹50",   callback_data: `join_${gotiType}_50`   },
+              { text: "₹100",  callback_data: `join_${gotiType}_100`  },
+              { text: "₹200",  callback_data: `join_${gotiType}_200`  },
+              { text: "₹300",  callback_data: `join_${gotiType}_300`  },
             ],
             [
-              { text: "₹500", callback_data: `join_classic_500` },
-              { text: "₹1000", callback_data: `join_classic_1000` },
+              { text: "₹500",  callback_data: `join_${gotiType}_500`  },
+              { text: "₹1000", callback_data: `join_${gotiType}_1000` },
             ],
             [{ text: "🔙 Back", callback_data: "back_menu" }],
           ]
@@ -1353,6 +1414,15 @@ bot.on("callback_query", query => {
     const t = tables[claim.tableId];
     if (!t) { send(chatId, "Table not found."); return; }
     claim.status = "approved";
+
+    // FIX: reject all other pending win claims for the same table to prevent double payout
+    Object.values(pendingWinClaims).forEach(c => {
+      if (c.tableId === claim.tableId && c.claimId !== cid && c.status === "pending") {
+        c.status = "rejected";
+        send(c.claimerId, `❌ Win Claim Rejected!\n\nTable: ${c.tableId}\nOpponent's claim was verified by admin.`, mainMenu());
+      }
+    });
+
     declareWinner(claim.tableId, claim.claimerId);
     bot.deleteMessage(chatId, msgId).catch(() => { });
     send(chatId, `✅ Claim ${cid} approved. Winner: ${users[claim.claimerId]?.name} | ₹${t.winnerGets} paid.`);
@@ -1463,6 +1533,7 @@ bot.on("callback_query", query => {
     send(chatId, "Main Menu:", mainMenu());
     return;
   }
+
   if (data === "faq") {
     send(chatId,
       `❓ FAQ\n\n` +
@@ -1499,13 +1570,14 @@ bot.on("photo", msg => {
     };
     delete userState[chatId];
 
-    send(chatId,
-      `📸 Screenshot Received!\n\nTXN ID: ${txnId}\nAmount: ₹${st.amount}\n\nAdmin is verifying. You will be notified.`,
+    sendMD(chatId,
+      `📸 Screenshot Received!\n\nTXN ID: ${tapCopy(txnId)}\nAmount: ₹${st.amount}\n\nAdmin is verifying. You will be notified.`,
       mainMenu());
 
+    // FIX: parse_mode Markdown in caption + tapCopy for TXN and User ID
     bot.sendPhoto(ADMIN_ID, fileId, {
       caption:
-        `New Deposit Request!\n\n` +
+        `💰 New Deposit Request!\n\n` +
         `TXN: ${txnId}\n` +
         `User: ${users[chatId]?.name || "Unknown"} (${chatId})\n` +
         `Username: @${users[chatId]?.username || "N/A"}\n` +
@@ -1541,8 +1613,8 @@ bot.on("photo", msg => {
     };
     delete userState[chatId];
 
-    send(chatId,
-      `✅ Win Claim Submitted!\n\nClaim ID: ${claimId}\nTable: ${tableId}\n\nAdmin will verify your screenshot. You will be notified.`,
+    sendMD(chatId,
+      `✅ Win Claim Submitted!\n\nClaim ID: ${tapCopy(claimId)}\nTable: ${tableId}\n\nAdmin will verify your screenshot. You will be notified.`,
       mainMenu());
 
     const opp = [t.creatorId, t.opponentId]
@@ -1552,7 +1624,7 @@ bot.on("photo", msg => {
 
     bot.sendPhoto(ADMIN_ID, fileId, {
       caption:
-        `New Win Claim!\n\n` +
+        `🏆 New Win Claim!\n\n` +
         `Claim: ${claimId}\n` +
         `Table: ${tableId}\n` +
         `Claimer: ${users[chatId]?.name || "Unknown"} (${chatId})\n` +
