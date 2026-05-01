@@ -1156,7 +1156,7 @@ bot.on("message", msg => {
     sendMD(chatId,
       `🤝 Refer and Earn\n\n` +
       `Your Referral Link:\n` +
-      `${`https://t.me/Ludo\_AddaBot?start=${chatId}`}\n\n` +
+      `${`https://t.me/Ludo\\_AddaBot?start=${chatId}`}\n\n` +
       `Earn ₹${REFER_REWARD} for each friend who joins AND plays their first match\\!`
     );
     return;
