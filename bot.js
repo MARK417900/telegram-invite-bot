@@ -143,7 +143,7 @@ function mainMenu() {
     reply_markup: {
       keyboard: [
         [{ text: "👤 Profile" }, { text: "💰 Deposit" }],
-        [{ text: "⚡ Quick Ludo" }, { text: "🎲 Classic Ludo" }, { text: "🐍 Snake & Ladder" }],
+        [{ text: "⚡ Quick Ludo" }, { text: "🎲 Classic Ludo" }, { text: "Snake Ladder" }],
         [{ text: "🤝 Refer & Earn" }, { text: "💸 Withdraw" }],
         [{ text: "🆘 Support" }],
       ],
@@ -888,6 +888,7 @@ bot.on("message", msg => {
   if (text && text.startsWith("✅ Accept ")) {
     const tableId = text.replace("✅ Accept ", "").trim();
     const t = tables[tableId];
+    handleJoin(chatId, gameType, fee);
     if (!t || t.status !== "pending_accept") { send(chatId, "This match is no longer available.", mainMenu()); return; }
     if (chatId !== t.opponentId) { send(chatId, "This request is not for you."); return; }
     clearTimeout(t.acceptTimer);
@@ -1118,7 +1119,7 @@ bot.on("message", msg => {
     return;
   }
 
-  if (text === "🐍 Snake & Ladder") {
+  if (text === "Snake Ladder") {
     requireGroupMembership(chatId, () => {
       send(chatId, "🐍 Snake & Ladder\nChoose entry fee 👇", {
         reply_markup: {
