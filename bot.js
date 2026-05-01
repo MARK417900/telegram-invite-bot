@@ -143,7 +143,7 @@ function mainMenu() {
     reply_markup: {
       keyboard: [
         [{ text: "👤 Profile" }, { text: "💰 Deposit" }],
-        [{ text: "⚡ Quick Ludo" }, { text: "🎲 Classic Ludo" }, { text: "Snake Ladder" }],
+        [{ text: "⚡ Quick Ludo" }, { text: "🎲 Classic Ludo" }, { text: "🐍 Snake & Ladder" }],
         [{ text: "🤝 Refer & Earn" }, { text: "💸 Withdraw" }],
         [{ text: "🆘 Support" }],
       ],
@@ -276,7 +276,7 @@ function handleJoin(chatId, gameType, entryFee) {
   }
   if (user.balance < entryFee) {
     send(chatId,
-      `❌ Insufficient Balance!\nPlease deposit first.😔`,
+      `❌ Insufficient Balance!\n\nEntry Fee: ₹${entryFee}\nYour Balance: ₹${user.balance}\n\nPlease deposit first.`,
       mainMenu());
     return;
   }
@@ -427,6 +427,7 @@ function askCreatorForRoomCode(tableId) {
   send(t.creatorId,
     `✅ Opponent Accepted!\n\n` +
     `Opponent: ${dname(t.opponentId)}\n` +
+    `Table: ${tableId}\n\n` +
     `Please type and send your Room Code from the Ludo app:`,
     cancelKb("❌ Cancel Game"));
 }
@@ -440,11 +441,12 @@ function sendRoomCodeToOpponent(tableId, code) {
   sendMD(t.creatorId,
     `📤 Room code sent to opponent!\n\n` +
     `Code: ${tapCopy(t.roomCode)}\n\n` +
-    `Waiting for opponent to Start Game...`);
+    `Waiting for opponent to tap ▶️ Start Game...`);
 
   sendMD(t.opponentId,
+    `Table: ${tableId}\n\n` +
     `🔑Room Code: ${tapCopy(t.roomCode)}\n\n` +
-    `Tap to copy it and Start Game!`,
+    `Tap the code to copy it and ▶️ Start Game!`,
     startGameMenu(tableId));
 }
 
@@ -472,19 +474,20 @@ function activateGame(tableId) {
 
   send(t.opponentId,
     `🎮 Game is ON!\n\n` +
-    `${names}\n` +
+    `Table: ${tableId}\n` +
+    `Players: ${names}\n` +
     `Prize: ₹${t.winnerGets}\n\n` +
     `Good luck! Tap your result after the game:`,
     gameResultMenu(tableId));
 
   if (GROUP_ID) {
     bot.sendMessage(GROUP_ID,
-      `🎮 Game Started!\n\nTable: ${tableId} | ${gameLabel(t.gameType)}\n${names}\n\nPrize: ₹${t.winnerGets}`
+      `🎮 Game Started!\nTable: ${tableId} | ${gameLabel(t.gameType)}\nPlayers: ${names}\nPrize: ₹${t.winnerGets}`
     ).catch(() => { });
   }
 
   bot.sendMessage(ADMIN_ID,
-    `New Active Table: ${tableId}\n${names}\nPot: ₹${t.pot} | Room Code: ${tapCopy(t.roomCode)}`,
+    `New Active Table: ${tableId}\nPlayers: ${names}\nPot: ₹${t.pot}\nRoom: ${t.roomCode}`,
     {
       reply_markup: {
         inline_keyboard: [[
@@ -582,7 +585,7 @@ function sendUserInfoPanel(adminChatId, targetId) {
 
   const text =
     `👤 User Info\n\n` +
-    `ID: \`${tapCopy(targetId)}\`\n` +
+    `ID: \`${targetId}\`\n` +
     `Name: ${u.name}\n` +
     `Username: @${u.username}\n\n` +
     `Balance: ₹${u.balance}\n` +
@@ -763,7 +766,7 @@ bot.on("message", msg => {
         const tid = +text;
         const t = tables[st.tableId];
         if (!t || ![t.creatorId, t.opponentId].includes(tid)) {
-          send(chatId, `❌ Player ID Not valid ${st.tableId}.`);
+          send(chatId, `❌ Not a valid player ID for table ${st.tableId}.`);
           return;
         }
         declareWinner(st.tableId, tid);
@@ -836,7 +839,7 @@ bot.on("message", msg => {
       for (let i = 0; i < all.length; i += 50) chunks.push(all.slice(i, i + 50));
       chunks.forEach((ch, idx) => {
         let m = idx === 0 ? `All Users (${all.length}):\n\n` : `Continued...\n\n`;
-        ch.forEach(id => { const u = users[id]; m += `ID: ${tapCopy(id)} | ${u.name} | ₹${u.balance} | ${u.status}\n`; });
+        ch.forEach(id => { const u = users[id]; m += `ID: ${id} | ${u.name} | ₹${u.balance} | ${u.status}\n`; });
         send(chatId, m);
       });
       return;
@@ -888,7 +891,7 @@ bot.on("message", msg => {
     if (!t || t.status !== "pending_accept") { send(chatId, "This match is no longer available.", mainMenu()); return; }
     if (chatId !== t.opponentId) { send(chatId, "This request is not for you."); return; }
     clearTimeout(t.acceptTimer);
-    send(chatId, `✅Table ${tableId} Accepted!\n Waiting for the creator to share the room code...`);
+    send(chatId, `✅ Accepted!\n\nTable: ${tableId}\n\nWaiting for the creator to share the room code...`);
     askCreatorForRoomCode(tableId);
     return;
   }
@@ -1115,7 +1118,7 @@ bot.on("message", msg => {
     return;
   }
 
-  if (text === "Snake Ladder") {
+  if (text === "🐍 Snake & Ladder") {
     requireGroupMembership(chatId, () => {
       send(chatId, "🐍 Snake & Ladder\nChoose entry fee 👇", {
         reply_markup: {
@@ -1275,7 +1278,7 @@ bot.on("callback_query", query => {
 
     if (t.groupMsgId) {
       bot.editMessageText(
-        `Match Found!\n\n${dname(t.creatorId)} vs ${dname(chatId)}${gameLabel(t.gameType)} | ₹${t.entryFee}`,
+        `Match Found!\n\n${gameLabel(t.gameType)} | ₹${t.entryFee}\n${dname(t.creatorId)} vs ${dname(chatId)}`,
         { chat_id: groupChatId, message_id: t.groupMsgId }
       ).catch(() => { });
       bot.editMessageReplyMarkup({ inline_keyboard: [] },
@@ -1293,7 +1296,8 @@ bot.on("callback_query", query => {
       `🎯 Match Request!\n\n` +
       `Game: ${gameLabel(t.gameType)}\n` +
       `Table Creator: ${dname(t.creatorId)}\n` +
-      `Entry: ₹${t.entryFee} | Winner Gets: ₹${t.winnerGets}\n` +
+      `Entry: ₹${t.entryFee} (deducted) | Pot: ₹${t.pot}\n` +
+      `Winner Gets: ₹${t.winnerGets}\n\n` +
       `Accept or Decline within 5 minutes!`,
       acceptDeclineMenu(tableId));
 
@@ -1407,7 +1411,7 @@ bot.on("callback_query", query => {
     const list = [t.creatorId, t.opponentId].filter(Boolean)
       .map(pid => `${pid} — ${users[pid]?.name || "Unknown"}`).join("\n");
     adminState[chatId] = { action: "declare_winner", tableId };
-    send(chatId, `Declare Winner — ${tableId}\n\nPlayers:\n${tapCopy(list)}\n\nSend the winner's User ID:`);
+    send(chatId, `Declare Winner — ${tableId}\n\nPlayers:\n${list}\n\nSend the winner's User ID:`);
     return;
   }
 
