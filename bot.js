@@ -888,7 +888,6 @@ bot.on("message", msg => {
   if (text && text.startsWith("✅ Accept ")) {
     const tableId = text.replace("✅ Accept ", "").trim();
     const t = tables[tableId];
-    handleJoin(chatId, gameType, fee);
     if (!t || t.status !== "pending_accept") { send(chatId, "This match is no longer available.", mainMenu()); return; }
     if (chatId !== t.opponentId) { send(chatId, "This request is not for you."); return; }
     clearTimeout(t.acceptTimer);
