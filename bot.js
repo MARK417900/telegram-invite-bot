@@ -16,7 +16,7 @@ const token = process.env.BOT_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
 const ADMIN_ID = 8641315326;
 const GROUP_ID = -1003907305365;
-const GROUP_INVITE_LINK = "https://t.me/+Bg5tAAxgL5cxYWRl"; // ← CHANGE THIS
+const GROUP_INVITE_LINK = "https://t.me/+Bg5tAAxgL5cxYWRl"; 
 const PLATFORM_CUT_PERCENT = 5;
 const REFER_REWARD = 20;
 
@@ -1430,14 +1430,13 @@ bot.on("callback_query", query => {
       return;
     }
     userState[chatId] = { action: "deposit_screenshot", amount };
-    const QR = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=7891624054@mbk%26pn=LudoAdda%26am=${amount}%26cu=INR`;
+    const QR = `paymentQR.jpg`;
     bot.sendPhoto(chatId, QR, {
       caption:
         `💰 Deposit Amount ₹${amount}\n\n` +
-        `UPI ID: 7891624054@mbk\n` +
-        `Scan QR above OR pay to the UPI ID manually.\n\n` +
-        `📷After payment, send the screenshot of your transaction.\n` +
-        `⚠ screenshot must contain the UTR number.`,
+        `UPI ID: ${tapCopy("7891624054@mbk")}\n\n` +
+        `📷 After Payment send the screenshot of your transaction here.\n` +
+        `⚠ Screenshot must contain the UTR number.`,
       reply_markup: {
         keyboard: [[{ text: "💔 Cancel Deposit" }]],
         resize_keyboard: true,
