@@ -23,7 +23,7 @@ const REFER_REWARD = 20;
 // ─── FIX 3: Escape special Markdown characters in user-supplied text ──────────
 function escMD(text) {
   if (!text) return "";
-  return String(text).replace(/[_*`\[]/g, "\\$&");
+  return String(text).replace(/[*`\[]/g, "\\$&");
 }
 
 // ─── IN-MEMORY STORE ──────────────────────────────────────────────────────────
@@ -1172,7 +1172,7 @@ bot.on("callback_query", query => {
     isGroupMember(chatId).then(isMember => {
       if (isMember) {
         bot.deleteMessage(chatId, msgId).catch(() => {});
-        send(chatId, `✅ Welcome to Ludo Adda!\n\nYou've joined the group. Let's play!`, mainMenu());
+        send(chatId, `🎲 Welcome to Ludo Adda, ${msg.from.first_name}!\nLet's Play and Win real money!!!`, mainMenu());
       } else {
         send(chatId,
           `❌ You haven't joined yet!\n\nPlease join the group first, then tap "I've Joined" again.`,
