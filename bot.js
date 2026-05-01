@@ -1051,6 +1051,7 @@ bot.on("message", msg => {
   if (text === "💸 Withdraw") {
     const u = users[chatId];
     const gamesPlayed = u?.gamesPlayed || 0;
+    const hasDeposited = u?.hasDeposited || false;
     if (gamesPlayed < 2 && !hasDeposited) {
       send(chatId,
         `❌ Withdrawal Not Available Yet!\n\n` +
@@ -1063,7 +1064,6 @@ bot.on("message", msg => {
         mainMenu());
       return;
     }
-    const hasDeposited = u?.hasDeposited || false;
     send(chatId, `💸 Withdraw\n\nYour Balance: ₹${u?.balance || 0}\nMinimum: ₹100`, {
       reply_markup: {
         inline_keyboard: [
