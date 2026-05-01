@@ -355,11 +355,11 @@ function handleJoin(chatId, gameType, entryFee) {
     };
 
     sendMD(chatId,
-      `✅ Table ID: ${tapCopy(tableId)} Created!\n\n` +
+      `✅ Table ${tapCopy(tableId)} Created!\n\n` +
       `Game: ${gameLabel(gameType)}\n` +
       `Entry Fee: ₹${entryFee} (deducted)\n` +
       `Winner Gets: ₹${winnerGets}\n\n` +
-      `Searching for opponent...`,
+      `Searching for opponent in group...`,
       waitingMenu(tableId));
 
     bot.sendMessage(GROUP_ID,
@@ -581,7 +581,7 @@ function sendUserInfoPanel(adminChatId, targetId) {
 
   const text =
     `👤 User Info\n\n` +
-    `ID: \`${targetId}\`\n` +
+    `ID: \`${tapCopy(targetId)}\`\n` +
     `Name: ${u.name}\n` +
     `Username: @${u.username}\n\n` +
     `Balance: ₹${u.balance}\n` +
@@ -942,7 +942,7 @@ bot.on("message", msg => {
 
     send(chatId, `😔 Loss recorded for table ${tableId}.\n\nBetter luck next time!`, mainMenu());
     bot.sendMessage(ADMIN_ID,
-      `${users[chatId]?.name} (${chatId}) reported a loss on table ${tableId}.`
+      `${users[chatId]?.name} (${tapCopy(chatId)}) reported a loss on table ${tableId}.`
     ).catch(() => { });
     return;
   }
@@ -1027,7 +1027,7 @@ bot.on("message", msg => {
         mainMenu());
 
       bot.sendMessage(ADMIN_ID,
-        `New Withdrawal Request!\n\nTXN: ${txnId}\nUser: ${users[chatId]?.name} (${chatId})\nAmount: ₹${amount}\nUPI: ${upiId}`,
+        `New Withdrawal Request!\n\nTXN: ${txnId}\nUser: ${users[chatId]?.name} (${tapCopy(chatId)})\nAmount: ₹${amount}\nUPI: ${tapCopy(upiId)}`,
         { reply_markup: { inline_keyboard: [[{ text: "✅ Mark Paid", callback_data: `wdl_done_${txnId}` }, { text: "❌ Reject", callback_data: `wdl_rej_${txnId}` }]] } }
       ).catch(() => { });
       return;
@@ -1047,22 +1047,11 @@ bot.on("message", msg => {
     });
     return;
   }
-
+  
   if (text === "💸 Withdraw") {
     const u = users[chatId];
     const gamesPlayed = u?.gamesPlayed || 0;
     const hasDeposited = u?.hasDeposited || false;
-    send(chatId, `💸 Withdraw\n\nYour Balance: ₹${u?.balance || 0}\nMinimum: ₹100`, {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "₹100", callback_data: "withdraw_100" }, { text: "₹200", callback_data: "withdraw_200" }, { text: "₹500", callback_data: "withdraw_500" }],
-          [{ text: "₹1000", callback_data: "withdraw_1000" }],
-          [{ text: "❌ Cancel", callback_data: "back_menu" }],
-        ]
-      },
-    });
-    return;
-
     if (gamesPlayed < 2 && !hasDeposited) {
       send(chatId,
         `❌ Withdrawal Not Available Yet!\n\n` +
@@ -1075,6 +1064,17 @@ bot.on("message", msg => {
         mainMenu());
       return;
     }
+    send(chatId, `💸 Withdraw\n\nYour Balance: ₹${u?.balance || 0}\nMinimum: ₹100`, {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "₹100", callback_data: "withdraw_100" }, { text: "₹200", callback_data: "withdraw_200" }, { text: "₹500", callback_data: "withdraw_500" }],
+          [{ text: "₹1000", callback_data: "withdraw_1000" }],
+          [{ text: "❌ Cancel", callback_data: "back_menu" }],
+        ]
+      },
+    });
+    return;
+
   }
 
   if (text === "⚡ Quick Ludo") {
