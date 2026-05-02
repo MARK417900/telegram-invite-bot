@@ -1278,7 +1278,7 @@ bot.on("callback_query", query => {
 
     if (t.groupMsgId) {
       bot.editMessageText(
-        `Match Found!\n\n${gameLabel(t.gameType)} | ₹${t.entryFee}\n${dname(t.creatorId)} vs ${dname(chatId)}`,
+        `Match Found!\n\n${dname(t.creatorId)} vs ${dname(chatId)}\n${gameLabel(t.gameType)} `,
         { chat_id: groupChatId, message_id: t.groupMsgId }
       ).catch(() => { });
       bot.editMessageReplyMarkup({ inline_keyboard: [] },
@@ -1567,7 +1567,7 @@ bot.on("photo", msg => {
 
     bot.sendPhoto(ADMIN_ID, fileId, {
       caption:
-        `New Deposit Request!\n\n` +
+        `Deposit Request!\n\n` +
         `TXN: ${txnId}\n` +
         `User: ${users[chatId]?.name || "Unknown"} (${chatId})\n` +
         `Username: @${users[chatId]?.username || "N/A"}\n` +
