@@ -1162,7 +1162,7 @@ bot.on("message", msg => {
     send(chatId, "🆘 Support\nChoose an option:", {
       reply_markup: {
         inline_keyboard: [
-          [{ text: "📞 Contact", url: "https://t.me/MARK41_helperBot" }],
+          [{ text: "📞 Contact Admin", url: "https://t.me/LUDO_HELPERBOT" }],
           [{ text: "❓ FAQ", callback_data: "faq" }],
           [{ text: "🔙 Back", callback_data: "back_menu" }],
         ]
@@ -1430,7 +1430,7 @@ bot.on("callback_query", query => {
       return;
     }
     userState[chatId] = { action: "deposit_screenshot", amount };
-    const QR = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=7891624054@mbk%26pn=LudoAdda%26am=${amount}%26cu=INR`;
+    const QR = `https://github.com/MARK417900/telegram-invite-bot/blob/main/PaymentQR.jpg`;
     bot.sendPhoto(chatId, QR, {
       caption:
         `💰 Deposit Amount ₹${amount}\n\n` +
