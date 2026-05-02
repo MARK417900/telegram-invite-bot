@@ -375,10 +375,9 @@ function handleJoin(chatId, gameType, entryFee) {
 
     bot.sendMessage(GROUP_ID,
       `🎮 New Table Created!\n\n` +
-      `Game Type: ${gameLabel(gameType)}\n` +
-      `Table Creator: ${dname(chatId)}\n` +
-      `Entry: ₹${entryFee}\n` +
-      `Winner Gets: ₹${winnerGets}`,
+      `Game: ${gameLabel(gameType)}\n` +
+      `Creator: ${dname(chatId)}\n` +
+      `Entry: ₹${entryFee} | Win: ₹${winnerGets}`,
       {
         reply_markup: {
           inline_keyboard: [[
@@ -1208,9 +1207,10 @@ bot.on("callback_query", query => {
   }
 
   if (data.startsWith("join_")) {
-    const parts = data.split("_");
-    const gameType = parts[1];
-    const fee = parseInt(parts[2]);
+    const withoutPrefix = data.slice(5); // remove "join_"
+    const lastUnder = withoutPrefix.lastIndexOf("_");
+    const gameType = withoutPrefix.slice(0, lastUnder);   // everything before last "_"
+    const fee = parseInt(withoutPrefix.slice(lastUnder + 1)); // everything after last "_"
     if (!isGroupCallback) bot.deleteMessage(chatId, msgId).catch(() => { });
     handleJoin(chatId, gameType, fee);
     return;
@@ -1218,21 +1218,23 @@ bot.on("callback_query", query => {
 
   if (data.startsWith("classic_") && data.endsWith("goti")) {
     if (!isGroupCallback) bot.deleteMessage(chatId, msgId).catch(() => { });
+    // data is e.g. "classic_1goti", "classic_2goti" etc.
+    const gotiKey = data; // e.g. "classic_1goti" — used as gameType to ensure matching
     const gotiLabel = data.replace("classic_", "").replace("goti", "") + " Goti";
     send(chatId,
-      `🎲 Classic Ludo — ${gotiLabel} Mode\nchoose entry fee 👇`,
+      `🎲 Classic Ludo — ${gotiLabel} Mode\nChoose entry fee 👇`,
       {
         reply_markup: {
           inline_keyboard: [
             [
-              { text: "₹50", callback_data: `join_classic_50` },
-              { text: "₹100", callback_data: `join_classic_100` },
-              { text: "₹200", callback_data: `join_classic_200` },
-              { text: "₹300", callback_data: `join_classic_300` },
+              { text: "₹50",   callback_data: `join_${gotiKey}_50`   },
+              { text: "₹100",  callback_data: `join_${gotiKey}_100`  },
+              { text: "₹200",  callback_data: `join_${gotiKey}_200`  },
+              { text: "₹300",  callback_data: `join_${gotiKey}_300`  },
             ],
             [
-              { text: "₹500", callback_data: `join_classic_500` },
-              { text: "₹1000", callback_data: `join_classic_1000` },
+              { text: "₹500",  callback_data: `join_${gotiKey}_500`  },
+              { text: "₹1000", callback_data: `join_${gotiKey}_1000` },
             ],
             [{ text: "🔙 Back", callback_data: "back_menu" }],
           ]
