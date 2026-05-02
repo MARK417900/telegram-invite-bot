@@ -16,7 +16,7 @@ const token = process.env.BOT_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
 const ADMIN_ID = 8641315326;
 const GROUP_ID = -1003907305365;
-const GROUP_INVITE_LINK = "https://t.me/+Bg5tAAxgL5cxYWRl"; 
+const GROUP_INVITE_LINK = "https://t.me/+Bg5tAAxgL5cxYWRl";
 const PLATFORM_CUT_PERCENT = 5;
 const REFER_REWARD = 20;
 
@@ -206,9 +206,9 @@ function adminMenu() {
   return {
     reply_markup: {
       keyboard: [
-        [{ text: "📢 Broadcast" }, { text: "👤 User Info" }, { text: "📊 Bot Status" }],
-        [{ text: "👤 MSG User" }, { text: botOnline ? "🔴 Turn Bot OFF" : "🟢 Turn Bot ON" }, { text: "👥 All Users" }],
-        [{ text: "💰 Balance Update" }, { text: "📋 Open Tables" }],
+        [{ text: "📢 Broadcast" }, { text: "👥 All Users" }, { text: "📊 Bot Status" }],
+        [{ text: "👤 MSG User" }, { text: botOnline ? "🔴 Turn Bot OFF" : "🟢 Turn Bot ON" }, { text: "👤 User Info" }],
+        [{ text: "📋 Open Tables" }, { text: "💰 Balance Update" }],
         [{ text: "🔙 User Menu" }],
       ],
       resize_keyboard: true,
@@ -254,7 +254,7 @@ async function requireGroupMembership(chatId, onSuccess) {
   const isMember = await isGroupMember(chatId);
   if (isMember) { onSuccess(); return; }
   send(chatId,
-    `🚫 Join Required!\n\nYou must join our group to play Ludo Adda.\n\nJoin the group and then try again!`,
+    `You must join our group.\nJoin the group and then try again!`,
     {
       reply_markup: {
         inline_keyboard: [
@@ -276,7 +276,7 @@ function handleJoin(chatId, gameType, entryFee) {
   }
   if (user.balance < entryFee) {
     send(chatId,
-      `❌ Insufficient Balance!\n\nEntry Fee: ₹${entryFee}\nYour Balance: ₹${user.balance}\n\nPlease deposit first.`,
+      `❌ Insufficient Balance!\nPlease deposit first.`,
       mainMenu());
     return;
   }
@@ -392,7 +392,7 @@ function expireOpenTable(tableId) {
   if (u) { u.balance += t.entryFee; u.status = "idle"; u.tableId = null; }
 
   send(t.creatorId,
-    `⏰ Table Expired!\n\nNo one joined ${tableId} within 10 minutes.\nRefund: ₹${t.entryFee} | Balance: ₹${users[t.creatorId]?.balance}`,
+    `⏰Timeout! Table Expired!\n\nNo one joined ${tableId}\nAmount Refunded: ₹${t.entryFee} | Balance: ₹${users[t.creatorId]?.balance}`,
     mainMenu());
 
   if (t.groupMsgId) {
@@ -524,9 +524,8 @@ function declareWinner(tableId, winnerId) {
         referrer.referCount += 1;
         u.referRewardPaid = true;
         send(u.referredBy,
-          `🎉 Refer Reward!\n\n` +
-          `Your referred user ${u.name} just completed their first match!\n` +
-          `₹${REFER_REWARD} added to your wallet.\n` +
+          `Your referred user ${u.name} just completed their first match!\n\n` +
+          `🎉 Refer Reward ₹${REFER_REWARD} added to your wallet!\n` +
           `New Balance: ₹${referrer.balance}`);
       }
     }
@@ -782,7 +781,7 @@ bot.on("message", msg => {
     if (text === "📢 Broadcast") {
       adminState[chatId] = { action: "broadcast" };
       const n = Object.keys(users).filter(id => +id !== ADMIN_ID).length;
-      send(chatId, `Send broadcast to ${n} users.\n\nYou can send TEXT or a PHOTO (with optional caption):`, cancelKb());
+      send(chatId, `Write broadcast to send ${n} users.`, cancelKb());
       return;
     }
     if (text === "👤 MSG User") {
@@ -834,7 +833,7 @@ bot.on("message", msg => {
       const chunks = [];
       for (let i = 0; i < all.length; i += 50) chunks.push(all.slice(i, i + 50));
       chunks.forEach((ch, idx) => {
-        let m = idx === 0 ? `All Users (${all.length}):\n\n` : `Continued...\n\n`;
+        let m = idx === 0 ? `Total Users: ${all.length}:\n\n` : `Continued...\n\n`;
         ch.forEach(id => { const u = users[id]; m += `ID: ${id} | ${u.name} | ₹${u.balance} | ${u.status}\n`; });
         send(chatId, m);
       });
@@ -1027,7 +1026,7 @@ bot.on("message", msg => {
         mainMenu());
 
       bot.sendMessage(ADMIN_ID,
-        `New Withdrawal Request!\n\nTXN: ${txnId}\nUser: ${users[chatId]?.name} (${chatId})\nAmount: ₹${amount}\nUPI: ${upiId}`,
+        `New Withdrawal Request!\nTXN: ${txnId}\n\nUPI: ${upiId}\nAmount: ₹${amount}\nUser ID: ${chatId}\nName: ${users[chatId]?.name} | ${users[chatId]?.username} `,
         { reply_markup: { inline_keyboard: [[{ text: "✅ Mark Paid", callback_data: `wdl_done_${txnId}` }, { text: "❌ Reject", callback_data: `wdl_rej_${txnId}` }]] } }
       ).catch(() => { });
       return;
@@ -1047,7 +1046,7 @@ bot.on("message", msg => {
     });
     return;
   }
-  
+
   if (text === "💸 Withdraw") {
     const u = users[chatId];
     const gamesPlayed = u?.gamesPlayed || 0;
@@ -1064,11 +1063,11 @@ bot.on("message", msg => {
         mainMenu());
       return;
     }
-    send(chatId, `💸 Withdraw\n\nYour Balance: ₹${u?.balance || 0}\nMinimum: ₹100`, {
+    send(chatId, `💸Select Withdraw Amount\nMinimum Withdraw: ₹100\n\nYour Balance: ₹${u?.balance || 0}`, {
       reply_markup: {
         inline_keyboard: [
-          [{ text: "₹100", callback_data: "withdraw_100" }, { text: "₹200", callback_data: "withdraw_200" }, { text: "₹500", callback_data: "withdraw_500" }],
-          [{ text: "₹1000", callback_data: "withdraw_1000" }],
+          [{ text: "₹50", callback_data: "withdraw_50" }, { text: "₹100", callback_data: "withdraw_100" }, { text: "₹200", callback_data: "withdraw_200" }, { text: "₹300", callback_data: "withdraw_300" }],
+          [{ text: "₹500", callback_data: "withdraw_500" }, { text: "₹1000", callback_data: "withdraw_1000" }],
           [{ text: "❌ Cancel", callback_data: "back_menu" }],
         ]
       },
