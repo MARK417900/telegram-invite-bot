@@ -493,7 +493,7 @@ function activateGame(tableId) {
   }
 
   bot.sendMessage(ADMIN_ID,
-    `New Active Table: ${tableId}\nPlayers: ${names}\nPot: ₹${t.pot}\nRoom: ${t.roomCode}`,
+    `New Active Table: ${tableId}\nPlayers: ${names}\nPot: ₹${t.pot}\nRoom Code: ${t.roomCode}`,
     {
       reply_markup: {
         inline_keyboard: [[
@@ -1296,7 +1296,7 @@ bot.on("callback_query", query => {
       `🎯 Match Request!\n\n` +
       `Game: ${gameLabel(t.gameType)}\n` +
       `Table Creator: ${dname(t.creatorId)}\n` +
-      `Entry: ₹${t.entryFee} (deducted) | Pot: ₹${t.pot}\n` +
+      `Entry: ₹${t.entryFee} (deducted)` +
       `Winner Gets: ₹${t.winnerGets}\n\n` +
       `Accept or Decline within 5 minutes!`,
       acceptDeclineMenu(tableId));
