@@ -1434,7 +1434,7 @@ bot.on("callback_query", query => {
     bot.sendPhoto(chatId, QR, {
       caption:
         `💰 Deposit Amount ₹${amount}\n\n` +
-        `UPI ID: 7891624054@mbk\n\n` +
+        `UPI ID: ${tapCopy("7891624054@mbk")}\n\n` +
         `📷 After Payment send the screenshot of your transaction here.\n` +
         `⚠ Screenshot must contain the UTR number.`,
       reply_markup: {
