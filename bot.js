@@ -654,7 +654,7 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
     return;
   }
   send(chatId,
-    `🎲 Welcome to Ludo Adda, ${msg.from.first_name}!\nLet's Play and Win real money!!!`,
+    `🎲 Welcome to Ludo Adda, ${msg.from.first_name}!\nLet's Play and Win Real Money !`,
     mainMenu());
 });
 
@@ -1035,10 +1035,6 @@ bot.on("message", msg => {
       return;
     }
 
-    if (st.action === "withdraw_qr") {
-      send(chatId, "📸 Please send your QR Code as an IMAGE, not text.");
-      return;
-    }
   }
 
   // ── Main menu buttons ──────────────────────────────────────────────────────
@@ -1484,7 +1480,7 @@ bot.on("callback_query", query => {
     userState[chatId] = { action: "withdraw_qr", amount: st.amount };
     bot.deleteMessage(chatId, msgId).catch(() => { });
     send(chatId,
-      `📷 Send your QR Code screenshot\n\nUpload your UPI QR code image so admin can send payment directly.`,
+      `📷 Send your QR Code screenshot we can send withdraw payment.`,
       cancelKb());
     return;
   }
@@ -1652,12 +1648,12 @@ bot.on("photo", msg => {
     delete userState[chatId];
 
     sendMD(chatId,
-      `✅ Withdrawal Submitted!\n\nTXN: ${tapCopy(txnId)}\nAmount: ₹${amount}\nMethod: QR Code\n\nBalance: ₹${users[chatId].balance}\n\nAdmin will process within 24 hours.`,
+      `✅ Withdrawal Request Submitted!\n\nTXN: ${tapCopy(txnId)}\nAmount: ₹${amount}\nMethod: QR Code\n\nBalance: ₹${users[chatId].balance}\n\nAdmin will process within few hours.`,
       mainMenu());
 
     bot.sendPhoto(ADMIN_ID, fileId, {
       caption:
-        `💸 New Withdrawal Request!\n\n` +
+        `💸 Withdrawal Request!\n\n` +
         `TXN: ${txnId}\n` +
         `Method: QR Code 📷\n` +
         `Amount: ₹${amount}\n` +
