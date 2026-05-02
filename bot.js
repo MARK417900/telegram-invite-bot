@@ -1437,6 +1437,7 @@ bot.on("callback_query", query => {
         `UPI ID: ${tapCopy("7891624054@mbk")}\n\n` +
         `📷 After Payment send the screenshot of your transaction here.\n` +
         `⚠ Screenshot must contain the UTR number.`,
+      parse_mode: "Markdown",
       reply_markup: {
         keyboard: [[{ text: "💔 Cancel Deposit" }]],
         resize_keyboard: true,
