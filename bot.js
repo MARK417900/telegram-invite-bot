@@ -973,7 +973,7 @@ bot.on("message", msg => {
     return;
   }
 
-  if (text === "💔 Cancel Deposit") {
+  if (text === "❌ Cancel Deposit") {
     if (userState[chatId]?.action === "deposit_screenshot") {
       delete userState[chatId];
       send(chatId, "💔 Deposit cancelled.", mainMenu());
@@ -1164,7 +1164,6 @@ bot.on("message", msg => {
         inline_keyboard: [
           [{ text: "📞 Contact Admin", url: "https://t.me/LUDO_HELPERBOT" }],
           [{ text: "❓ FAQ", callback_data: "faq" }],
-          [{ text: "🔙 Back", callback_data: "back_menu" }],
         ]
       },
     });
@@ -1439,7 +1438,7 @@ bot.on("callback_query", query => {
         `⚠ Screenshot must contain the UTR number.`,
       parse_mode: "Markdown",
       reply_markup: {
-        keyboard: [[{ text: "💔 Cancel Deposit" }]],
+        keyboard: [[{ text: "❌ Cancel Deposit" }]],
         resize_keyboard: true,
         one_time_keyboard: true,
       },
