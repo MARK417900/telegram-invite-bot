@@ -318,7 +318,7 @@ function handleJoin(chatId, gameType, entryFee) {
 
     if (match.groupMsgId) {
       bot.editMessageText(
-        `Match Found!\n\n${dname(match.creatorId)} vs ${dname(chatId)}${gameLabel(gameType)} | Entry ₹${entryFee}`,
+        `Match Found!\n\n${dname(match.creatorId)} vs ${dname(chatId)}\n${gameLabel(gameType)} | Entry ₹${entryFee}`,
         { chat_id: GROUP_ID, message_id: match.groupMsgId }
       ).catch(() => { });
       bot.editMessageReplyMarkup({ inline_keyboard: [] },
@@ -1011,12 +1011,8 @@ bot.on("message", msg => {
       sendRoomCodeToOpponent(st.tableId, text.trim());
       return;
     }
-    if (st.action === "deposit_screenshot") {
-      send(chatId, "📸 Please send a screenshot IMAGE, not text.\n\nTap Cancel Deposit to cancel.");
-      return;
-    }
     if (st.action === "win_proof_screenshot") {
-      send(chatId, "📸 Please send a screenshot IMAGE as proof, not text.");
+      send(chatId, "📸 Please send a screenshot image as proof, not text.");
       return;
     }
     
@@ -1028,7 +1024,6 @@ bot.on("message", msg => {
       sendMD(chatId,
         `⚠️ Please confirm your UPI ID:\n\n` +
         `UPI: ${tapCopy(upiId)}\n` +
-        `Amount: ₹${amount}\n\n` +
         `Is this correct?`,
         {
           reply_markup: {
@@ -1342,7 +1337,7 @@ bot.on("callback_query", query => {
     w.status = "done";
     bot.deleteMessage(chatId, msgId).catch(() => { });
     send(chatId, `✅ Withdrawal ${txnId} marked as paid!`);
-    send(w.chatId, `✅ Withdrawal Processed!\n\n₹${w.amount} sent to your UPI!\nTXN: ${txnId}`, mainMenu());
+    send(w.chatId, `✅ Withdrawal Completed!\nTXN: ${txnId}\n\n₹${w.amount} sent to your UPI✅ `, mainMenu());
     return;
   }
   if (data.startsWith("wdl_rej_")) {
@@ -1434,6 +1429,7 @@ bot.on("callback_query", query => {
 
   if (data.startsWith("deposit_")) {
     const amount = parseInt(data.split("_")[1]);
+    bot.deleteMessage(chatId, msgId).catch(() => { });
     if (!amount) return;
     const ep = Object.values(pendingDeposits).find(d => d.chatId === chatId && d.status === "pending");
     if (ep) {
@@ -1460,6 +1456,7 @@ bot.on("callback_query", query => {
 
   if (data.startsWith("withdraw_") && !data.startsWith("withdraw_method_")) {
     const amount = parseInt(data.split("_")[1]);
+    bot.deleteMessage(chatId, msgId).catch(() => { });
     if (!amount) return;
     if ((users[chatId]?.balance || 0) < amount) {
       send(chatId, `😥 Insufficient balance! You have ₹${users[chatId]?.balance || 0}`);
@@ -1467,7 +1464,7 @@ bot.on("callback_query", query => {
     }
     userState[chatId] = { action: "withdraw_method", amount };
     send(chatId,
-      `💸 Withdraw ₹${amount}\n\nChoose payment method:`,
+      `💸 Choose Withdraw method:`,
       withdrawMethodMenu());
     return;
   }
@@ -1476,6 +1473,7 @@ bot.on("callback_query", query => {
     const st = userState[chatId];
     if (!st || st.action !== "withdraw_method") return;
     userState[chatId] = { action: "withdraw_upi", amount: st.amount };
+    bot.deleteMessage(chatId, msgId).catch(() => { });
     send(chatId, `📱 Enter your UPI ID:`, cancelKb());
     return;
   }
@@ -1484,6 +1482,7 @@ bot.on("callback_query", query => {
     const st = userState[chatId];
     if (!st || st.action !== "withdraw_method") return;
     userState[chatId] = { action: "withdraw_qr", amount: st.amount };
+    bot.deleteMessage(chatId, msgId).catch(() => { });
     send(chatId,
       `📷 Send your QR Code screenshot\n\nUpload your UPI QR code image so admin can send payment directly.`,
       cancelKb());
@@ -1505,7 +1504,7 @@ bot.on("callback_query", query => {
     delete userState[chatId];
 
     sendMD(chatId,
-      `✅ Withdrawal Submitted!\n\nTXN: ${tapCopy(txnId)}\nAmount: ₹${amount}\nUPI: ${tapCopy(upiId)}\n\nBalance: ₹${users[chatId].balance}\n\nAdmin will process within 24 hours.`,
+      `✅ Withdrawal request Submitted!\n\nTXN: ${tapCopy(txnId)}\nAmount: ₹${amount}\nUPI: ${tapCopy(upiId)}\nRemaining Balance: ₹${users[chatId].balance}\n\nAdmin will process within few hours.`,
       mainMenu());
 
     bot.sendMessage(ADMIN_ID,
