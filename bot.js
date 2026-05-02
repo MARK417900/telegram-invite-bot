@@ -224,6 +224,17 @@ const cancelKb = (label = "❌ Cancel") => ({
   },
 });
 
+function withdrawMethodMenu() {
+  return {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: "📱 UPI ID", callback_data: "wdl_method_upi" }, { text: "📷 QR Code", callback_data: "wdl_method_qr" }],
+        [{ text: "❌ Cancel", callback_data: "back_menu" }],
+      ]
+    },
+  };
+}
+
 function send(chatId, text, extra = {}) {
   return bot.sendMessage(chatId, text, extra).catch(err =>
     console.error(`sendMessage to ${chatId} failed:`, err.message)
@@ -1008,27 +1019,29 @@ bot.on("message", msg => {
       send(chatId, "📸 Please send a screenshot IMAGE as proof, not text.");
       return;
     }
+    
     if (st.action === "withdraw_upi") {
       const { amount } = st;
-      if ((users[chatId]?.balance || 0) < amount) {
-        send(chatId, `❌ Insufficient balance! You have ₹${users[chatId]?.balance || 0}`, mainMenu());
-        delete userState[chatId];
-        return;
-      }
-      const txnId = genTxnId();
       const upiId = text.trim().replace(/[`*_\[\]]/g, "");
-      users[chatId].balance -= amount;
-      pendingWithdrawals[txnId] = { txnId, chatId, amount, upiId, status: "pending", timestamp: new Date() };
-      delete userState[chatId];
-
+      // Save upi temporarily and ask for confirmation
+      userState[chatId] = { action: "withdraw_upi_confirm", amount, upiId };
       sendMD(chatId,
-        `✅ Withdrawal Submitted!\n\nTXN: ${tapCopy(txnId)}\nAmount: ₹${amount}\nUPI: ${tapCopy(upiId)}\n\nBalance: ₹${users[chatId].balance}\n\nAdmin will process within 24 hours.`,
-        mainMenu());
+        `⚠️ Please confirm your UPI ID:\n\n` +
+        `UPI: ${tapCopy(upiId)}\n` +
+        `Amount: ₹${amount}\n\n` +
+        `Is this correct?`,
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "✅ Confirm", callback_data: "wdl_confirm_upi" }, { text: "✏️ Edit UPI", callback_data: "wdl_edit_upi" }],
+            ]
+          },
+        });
+      return;
+    }
 
-      bot.sendMessage(ADMIN_ID,
-        `New Withdrawal Request!\nTXN: ${txnId}\n\nUPI: ${upiId}\nAmount: ₹${amount}\nUser ID: ${chatId}\nName: ${users[chatId]?.name} | ${users[chatId]?.username} `,
-        { reply_markup: { inline_keyboard: [[{ text: "✅ Mark Paid", callback_data: `wdl_done_${txnId}` }, { text: "❌ Reject", callback_data: `wdl_rej_${txnId}` }]] } }
-      ).catch(() => { });
+    if (st.action === "withdraw_qr") {
+      send(chatId, "📸 Please send your QR Code as an IMAGE, not text.");
       return;
     }
   }
@@ -1445,15 +1458,68 @@ bot.on("callback_query", query => {
     return;
   }
 
-  if (data.startsWith("withdraw_")) {
+  if (data.startsWith("withdraw_") && !data.startsWith("withdraw_method_")) {
     const amount = parseInt(data.split("_")[1]);
     if (!amount) return;
     if ((users[chatId]?.balance || 0) < amount) {
       send(chatId, `😥 Insufficient balance! You have ₹${users[chatId]?.balance || 0}`);
       return;
     }
-    userState[chatId] = { action: "withdraw_upi", amount };
-    send(chatId, `Withdraw ₹${amount}\n\nPlease enter your UPI ID:`, cancelKb());
+    userState[chatId] = { action: "withdraw_method", amount };
+    send(chatId,
+      `💸 Withdraw ₹${amount}\n\nChoose payment method:`,
+      withdrawMethodMenu());
+    return;
+  }
+
+  if (data === "wdl_method_upi") {
+    const st = userState[chatId];
+    if (!st || st.action !== "withdraw_method") return;
+    userState[chatId] = { action: "withdraw_upi", amount: st.amount };
+    send(chatId, `📱 Enter your UPI ID:`, cancelKb());
+    return;
+  }
+
+  if (data === "wdl_method_qr") {
+    const st = userState[chatId];
+    if (!st || st.action !== "withdraw_method") return;
+    userState[chatId] = { action: "withdraw_qr", amount: st.amount };
+    send(chatId,
+      `📷 Send your QR Code screenshot\n\nUpload your UPI QR code image so admin can send payment directly.`,
+      cancelKb());
+    return;
+  }
+
+  if (data === "wdl_confirm_upi") {
+    const st = userState[chatId];
+    if (!st || st.action !== "withdraw_upi_confirm") return;
+    const { amount, upiId } = st;
+    if ((users[chatId]?.balance || 0) < amount) {
+      send(chatId, `❌ Insufficient balance!`, mainMenu());
+      delete userState[chatId];
+      return;
+    }
+    const txnId = genTxnId();
+    users[chatId].balance -= amount;
+    pendingWithdrawals[txnId] = { txnId, chatId, amount, upiId, method: "upi", status: "pending", timestamp: new Date() };
+    delete userState[chatId];
+
+    sendMD(chatId,
+      `✅ Withdrawal Submitted!\n\nTXN: ${tapCopy(txnId)}\nAmount: ₹${amount}\nUPI: ${tapCopy(upiId)}\n\nBalance: ₹${users[chatId].balance}\n\nAdmin will process within 24 hours.`,
+      mainMenu());
+
+    bot.sendMessage(ADMIN_ID,
+      `💸 New Withdrawal Request!\n\nTXN: ${txnId}\nMethod: UPI\nUPI: ${upiId}\nAmount: ₹${amount}\nUser: ${users[chatId]?.name} (${chatId})\nUsername: @${users[chatId]?.username}`,
+      { reply_markup: { inline_keyboard: [[{ text: "✅ Mark Paid", callback_data: `wdl_done_${txnId}` }, { text: "❌ Reject", callback_data: `wdl_rej_${txnId}` }]] } }
+    ).catch(() => { });
+    return;
+  }
+
+  if (data === "wdl_edit_upi") {
+    const st = userState[chatId];
+    if (!st) return;
+    userState[chatId] = { action: "withdraw_upi", amount: st.amount };
+    send(chatId, `✏️ Enter your UPI ID again:`, cancelKb());
     return;
   }
 
@@ -1568,6 +1634,46 @@ bot.on("photo", msg => {
       bot.sendMessage(ADMIN_ID,
         `New Win Claim!\nClaim: ${claimId}\nTable: ${tableId}\nClaimer: ${users[chatId]?.name} (${chatId})\nPrize: ₹${t.winnerGets}\nScreenshot forward failed.`,
         { reply_markup: { inline_keyboard: [[{ text: "✅ Approve Win", callback_data: `win_approve_${claimId}` }, { text: "❌ Reject", callback_data: `win_reject_${claimId}` }]] } }
+      ).catch(() => { });
+    });
+    return;
+  }
+
+  if (st.action === "withdraw_qr") {
+    const { amount } = st;
+    if ((users[chatId]?.balance || 0) < amount) {
+      send(chatId, `❌ Insufficient balance!`, mainMenu());
+      delete userState[chatId];
+      return;
+    }
+    const fileId = msg.photo[msg.photo.length - 1].file_id;
+    const txnId = genTxnId();
+    users[chatId].balance -= amount;
+    pendingWithdrawals[txnId] = { txnId, chatId, amount, upiId: "QR Code", method: "qr", qrFileId: fileId, status: "pending", timestamp: new Date() };
+    delete userState[chatId];
+
+    sendMD(chatId,
+      `✅ Withdrawal Submitted!\n\nTXN: ${tapCopy(txnId)}\nAmount: ₹${amount}\nMethod: QR Code\n\nBalance: ₹${users[chatId].balance}\n\nAdmin will process within 24 hours.`,
+      mainMenu());
+
+    bot.sendPhoto(ADMIN_ID, fileId, {
+      caption:
+        `💸 New Withdrawal Request!\n\n` +
+        `TXN: ${txnId}\n` +
+        `Method: QR Code 📷\n` +
+        `Amount: ₹${amount}\n` +
+        `User: ${users[chatId]?.name} (${chatId})\n` +
+        `Username: @${users[chatId]?.username}`,
+      reply_markup: {
+        inline_keyboard: [[
+          { text: "✅ Mark Paid", callback_data: `wdl_done_${txnId}` },
+          { text: "❌ Reject", callback_data: `wdl_rej_${txnId}` },
+        ]]
+      },
+    }).catch(() => {
+      bot.sendMessage(ADMIN_ID,
+        `New Withdrawal!\nTXN: ${txnId}\nMethod: QR\nAmount: ₹${amount}\nUser: ${users[chatId]?.name} (${chatId})\nQR forward failed.`,
+        { reply_markup: { inline_keyboard: [[{ text: "✅ Mark Paid", callback_data: `wdl_done_${txnId}` }, { text: "❌ Reject", callback_data: `wdl_rej_${txnId}` }]] } }
       ).catch(() => { });
     });
     return;
