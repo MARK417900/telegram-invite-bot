@@ -1430,7 +1430,7 @@ bot.on("callback_query", query => {
       return;
     }
     userState[chatId] = { action: "deposit_screenshot", amount };
-    const QR = `https://github.com/MARK417900/telegram-invite-bot/blob/main/PaymentQR.jpg`;
+    const QR = `https://raw.githubusercontent.com/MARK417900/telegram-invite-bot/main/PaymentQR.jpg`;
     bot.sendPhoto(chatId, QR, {
       caption:
         `💰 Deposit Amount ₹${amount}\n\n` +
