@@ -1540,16 +1540,15 @@ bot.on("callback_query", query => {
     const gamesPlayed = u?.gamesPlayed || 0;
     const hasDeposited = u?.hasDeposited || false;
     if (gamesPlayed < 2 && !hasDeposited) {
-      send(chatId,`🔒 Withdrawal Locked\n\n` +
+      send(chatId,
+        `🔒 Withdrawal Locked\n\n` +
         `✔️ Complete any ONE of the following:\n` +
         `• Play any 2 matches\n` +
         `• Make any single deposit\n\n` +
-
         `📊 Your Status:\n` +
         `Matches Played: ${gamesPlayed}/2\n` +
         `Deposits Made: ${hasDeposited ? "Yes ✅" : "No ❌"}\n` +
-        `Once completed, withdrawals will be enabled automatically.`
-        mainMenu());
+        `Once completed, withdrawals will be enabled automatically.`);
       return;
     }
     if (!amount) return;
