@@ -858,7 +858,7 @@ bot.on("message", msg => {
     }
     if (text === "👤 User Info") {
       adminState[chatId] = { action: "user_info_id" };
-      send(chatId, "Enter the User ID to view:", cancelKb());
+      send(chatId, "Enter the User ID", cancelKb());
       return;
     }
     if (text === "🔙 User Menu") {
@@ -1212,10 +1212,9 @@ bot.on("message", msg => {
   if (text === "🤝 Refer & Earn") {
     const u = users[chatId] || {};
     sendMD(chatId,
-      `🤝 Refer and Earn\n\n` +
-      `Your Referral Link:\n` +
+      `🤝 Your Referral Link:\n` +
       `${`https://t.me/Ludo\\_AddaBot?start=${chatId}`}\n\n` +
-      `Earn ₹${REFER_REWARD} for each friend who joins AND plays their first match\\!`
+      `Earn ₹${REFER_REWARD} for each friend who valid joins and plays their first match!`
     );
     return;
   }
@@ -1273,7 +1272,7 @@ bot.on("callback_query", query => {
     bot.deleteMessage(chatId, msgId).catch(() => { });
     userState[chatId] = { action: "custom_deposit_amount" };
     send(chatId,
-      `✏️ Enter Deposit Amount`,
+      `💰Enter Deposit Amount`,
       cancelKb());
     return;
   }
@@ -1283,7 +1282,7 @@ bot.on("callback_query", query => {
     bot.deleteMessage(chatId, msgId).catch(() => { });
     userState[chatId] = { action: "custom_withdraw_amount" };
     send(chatId,
-      `Enter Withdraw Amount\nMinimum withdraw: ₹100 | Your Balance: ₹${userBal}`,
+      `💰 Enter Withdraw Amount\n\nMinimum withdraw: ₹100 \n Your Balance: ₹${userBal}`,
       cancelKb());
     return;
   }
