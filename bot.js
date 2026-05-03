@@ -1225,8 +1225,8 @@ bot.on("message", msg => {
       reply_markup: {
         inline_keyboard: [
           [{ text: "❓ FAQ", callback_data: "faq" }],
-          [{ text: "🐞Repost Bug", url: "https://t.me/MARK41_helperBot" }],
           [{ text: "📞 Contact Admin", url: "https://t.me/LUDO_HELPERBOT" }],
+          [{ text: "🐞 Report Bug", url: "https://t.me/MARK41_helperBot" }],
         ]
       },
     });
@@ -1273,7 +1273,7 @@ bot.on("callback_query", query => {
     bot.deleteMessage(chatId, msgId).catch(() => { });
     userState[chatId] = { action: "custom_deposit_amount" };
     send(chatId,
-      `✏️ Enter Custom Deposit Amount\n\nMinimum: ₹10 | Maximum: ₹50,000\n\nType the amount (numbers only):`,
+      `✏️ Enter Deposit Amount`,
       cancelKb());
     return;
   }
@@ -1283,7 +1283,7 @@ bot.on("callback_query", query => {
     bot.deleteMessage(chatId, msgId).catch(() => { });
     userState[chatId] = { action: "custom_withdraw_amount" };
     send(chatId,
-      `✏️ Enter Custom Withdraw Amount\n\nMinimum: ₹100 | Your Balance: ₹${userBal}\n\nType the amount (numbers only):`,
+      `✏️ Enter Withdraw Amount\nMinimum withdraw: ₹100 | Your Balance: ₹${userBal}`,
       cancelKb());
     return;
   }
@@ -1294,7 +1294,7 @@ bot.on("callback_query", query => {
     requireGroupMembership(chatId, () => {
       userState[chatId] = { action: "custom_table_amount", gameType };
       send(chatId,
-        `✏️ Enter Custom Entry Fee for ${gameLabel(gameType)}\n\n(Type the amount only in numbers )`,
+        `✏️ Enter Entry Fee for ${gameLabel(gameType)}`,
         cancelKb());
     });
     return;
