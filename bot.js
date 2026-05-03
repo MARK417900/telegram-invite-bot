@@ -555,7 +555,7 @@ function declareWinner(tableId, winnerId) {
 
   if (GROUP_ID) {
     bot.sendMessage(GROUP_ID,
-      `🏆 Table ${tableId} Game Result! \n\n ${names} \n| \nWinner: ${winnerName} | Prize: ₹${t.winnerGets}`
+      `🏆 Table ${tableId} Game Result! \n\n ${names} \nWinner: ${winnerName} | Prize: ₹${t.winnerGets}`
     ).catch(() => { });
   }
 
@@ -1014,11 +1014,71 @@ bot.on("message", msg => {
       send(chatId, "📸 Please send a screenshot image as proof, not text.");
       return;
     }
-    
+
+    // ── CUSTOM AMOUNT HANDLERS ──────────────────────────────────────────────
+
+    if (st.action === "custom_deposit_amount") {
+      const amount = parseInt(text);
+      if (isNaN(amount) || amount < 50 ) {
+        send(chatId, `❌ Invalid amount!`);
+        return;
+      }
+      delete userState[chatId];
+      const ep = Object.values(pendingDeposits).find(d => d.chatId === chatId && d.status === "pending");
+      if (ep) {
+        send(chatId, `Pending deposit exists!\n\nTXN: ${ep.txnId} | ₹${ep.amount}\n\nWait for admin to process it first.`, mainMenu());
+        return;
+      }
+      userState[chatId] = { action: "deposit_screenshot", amount };
+      const QR = `https://raw.githubusercontent.com/MARK417900/telegram-invite-bot/main/PaymentQR.jpg`;
+      bot.sendPhoto(chatId, QR, {
+        caption:
+          `💰 Deposit Amount ₹${amount}\n\n` +
+          `UPI ID: ${tapCopy("7891624054@mbk")}\n\n` +
+          `📷 After Payment send the screenshot of your transaction here.\n` +
+          `⚠ Screenshot must contain the UTR number.`,
+        parse_mode: "Markdown",
+        reply_markup: {
+          keyboard: [[{ text: "❌ Cancel Deposit" }]],
+          resize_keyboard: true,
+          one_time_keyboard: true,
+        },
+      }).catch(() => { });
+      return;
+    }
+
+    if (st.action === "custom_withdraw_amount") {
+      const amount = parseInt(text);
+      const userBal = users[chatId]?.balance || 0;
+      if (isNaN(amount) || amount < 100) {
+        send(chatId, `❌ Invalid amount!\n\nMinimum withdrawal is ₹100.`);
+        return;
+      }
+      if (amount > userBal) {
+        send(chatId, `❌ Insufficient balance!\n\nYou have ₹${userBal}. Enter a lower amount.`);
+        return;
+      }
+      delete userState[chatId];
+      userState[chatId] = { action: "withdraw_method", amount };
+      send(chatId, `💸 Choose Withdraw method for ₹${amount}:`, withdrawMethodMenu());
+      return;
+    }
+
+    if (st.action === "custom_table_amount") {
+      const { gameType } = st;
+      const amount = parseInt(text);
+      if (isNaN(amount) || amount < 50) {
+        send(chatId, `❌ Invalid amount!`);
+        return;
+      }
+      delete userState[chatId];
+      handleJoin(chatId, gameType, amount);
+      return;
+    }
+
     if (st.action === "withdraw_upi") {
       const { amount } = st;
       const upiId = text.trim().replace(/[`*_\[\]]/g, "");
-      // Save upi temporarily and ask for confirmation
       userState[chatId] = { action: "withdraw_upi_confirm", amount, upiId };
       sendMD(chatId,
         `⚠️ Please confirm your UPI ID:\n\n` +
@@ -1043,7 +1103,7 @@ bot.on("message", msg => {
         inline_keyboard: [
           [{ text: "₹50", callback_data: "deposit_50" }, { text: "₹100", callback_data: "deposit_100" }, { text: "₹200", callback_data: "deposit_200" }],
           [{ text: "₹500", callback_data: "deposit_500" }, { text: "₹1000", callback_data: "deposit_1000" }],
-          [{ text: "❌ Cancel", callback_data: "back_menu" }],
+          [{ text: "✏️ Custom Amount", callback_data: "deposit_custom" }],
         ]
       },
     });
@@ -1071,7 +1131,7 @@ bot.on("message", msg => {
         inline_keyboard: [
           [{ text: "₹50", callback_data: "withdraw_50" }, { text: "₹100", callback_data: "withdraw_100" }, { text: "₹200", callback_data: "withdraw_200" }, { text: "₹300", callback_data: "withdraw_300" }],
           [{ text: "₹500", callback_data: "withdraw_500" }, { text: "₹1000", callback_data: "withdraw_1000" }],
-          [{ text: "❌ Cancel", callback_data: "back_menu" }],
+          [{ text: "✏️ Custom Amount", callback_data: "withdraw_custom" }],
         ]
       },
     });
@@ -1086,7 +1146,7 @@ bot.on("message", msg => {
           inline_keyboard: [
             [{ text: "₹50", callback_data: "join_quick_50" }, { text: "₹100", callback_data: "join_quick_100" }, { text: "₹200", callback_data: "join_quick_200" }, { text: "₹300", callback_data: "join_quick_300" }],
             [{ text: "₹500", callback_data: "join_quick_500" }, { text: "₹1000", callback_data: "join_quick_1000" }],
-            [{ text: "❌ Cancel", callback_data: "back_menu" }],
+            [{ text: "✏️ Custom Amount", callback_data: "table_custom_quick" }],
           ]
         },
       });
@@ -1123,7 +1183,7 @@ bot.on("message", msg => {
           inline_keyboard: [
             [{ text: "₹50", callback_data: "join_snake_50" }, { text: "₹100", callback_data: "join_snake_100" }, { text: "₹200", callback_data: "join_snake_200" }, { text: "₹300", callback_data: "join_snake_300" }],
             [{ text: "₹500", callback_data: "join_snake_500" }, { text: "₹1000", callback_data: "join_snake_1000" }],
-            [{ text: "❌ Cancel", callback_data: "back_menu" }],
+            [{ text: "✏️ Custom Amount", callback_data: "table_custom_snake" }],
           ]
         },
       });
@@ -1164,8 +1224,9 @@ bot.on("message", msg => {
     send(chatId, "🆘 Support\nChoose an option:", {
       reply_markup: {
         inline_keyboard: [
-          [{ text: "📞 Contact Admin", url: "https://t.me/LUDO_HELPERBOT" }],
           [{ text: "❓ FAQ", callback_data: "faq" }],
+          [{ text: "🐞Repost Bug", url: "https://t.me/MARK41_helperBot" }],
+          [{ text: "📞 Contact Admin", url: "https://t.me/LUDO_HELPERBOT" }],
         ]
       },
     });
@@ -1189,7 +1250,7 @@ bot.on("callback_query", query => {
     isGroupMember(chatId).then(isMember => {
       if (isMember) {
         bot.deleteMessage(chatId, msgId).catch(() => { });
-        send(chatId, `🎲 Welcome to Ludo Adda, ${msg.from.first_name}!\nLet's Play and Win real money!!!`, mainMenu());
+        send(chatId, `🎲 Welcome to Ludo Adda!\nLet's Play and Win real money!!!`, mainMenu());
       } else {
         send(chatId,
           `❌ You haven't joined yet!\n\nPlease join the group first, then tap "I've Joined" again.`,
@@ -1206,6 +1267,41 @@ bot.on("callback_query", query => {
     return;
   }
 
+  // ── CUSTOM AMOUNT CALLBACKS ────────────────────────────────────────────────
+
+  if (data === "deposit_custom") {
+    bot.deleteMessage(chatId, msgId).catch(() => { });
+    userState[chatId] = { action: "custom_deposit_amount" };
+    send(chatId,
+      `✏️ Enter Custom Deposit Amount\n\nMinimum: ₹10 | Maximum: ₹50,000\n\nType the amount (numbers only):`,
+      cancelKb());
+    return;
+  }
+
+  if (data === "withdraw_custom") {
+    const userBal = users[chatId]?.balance || 0;
+    bot.deleteMessage(chatId, msgId).catch(() => { });
+    userState[chatId] = { action: "custom_withdraw_amount" };
+    send(chatId,
+      `✏️ Enter Custom Withdraw Amount\n\nMinimum: ₹100 | Your Balance: ₹${userBal}\n\nType the amount (numbers only):`,
+      cancelKb());
+    return;
+  }
+
+  if (data.startsWith("table_custom_")) {
+    const gameType = data.replace("table_custom_", "");
+    bot.deleteMessage(chatId, msgId).catch(() => { });
+    requireGroupMembership(chatId, () => {
+      userState[chatId] = { action: "custom_table_amount", gameType };
+      send(chatId,
+        `✏️ Enter Custom Entry Fee for ${gameLabel(gameType)}\n\n(Type the amount only in numbers )`,
+        cancelKb());
+    });
+    return;
+  }
+
+  // ── END CUSTOM AMOUNT CALLBACKS ────────────────────────────────────────────
+
   if (data.startsWith("join_")) {
     const withoutPrefix = data.slice(5); // remove "join_"
     const lastUnder = withoutPrefix.lastIndexOf("_");
@@ -1218,8 +1314,7 @@ bot.on("callback_query", query => {
 
   if (data.startsWith("classic_") && data.endsWith("goti")) {
     if (!isGroupCallback) bot.deleteMessage(chatId, msgId).catch(() => { });
-    // data is e.g. "classic_1goti", "classic_2goti" etc.
-    const gotiKey = data; // e.g. "classic_1goti" — used as gameType to ensure matching
+    const gotiKey = data;
     const gotiLabel = data.replace("classic_", "").replace("goti", "") + " Goti";
     send(chatId,
       `🎲 Classic Ludo — ${gotiLabel} Mode\nChoose entry fee 👇`,
@@ -1236,7 +1331,7 @@ bot.on("callback_query", query => {
               { text: "₹500",  callback_data: `join_${gotiKey}_500`  },
               { text: "₹1000", callback_data: `join_${gotiKey}_1000` },
             ],
-            [{ text: "🔙 Back", callback_data: "back_menu" }],
+            [{ text: "✏️ Custom Amount", callback_data: `table_custom_${gotiKey}` }],
           ]
         },
       });
