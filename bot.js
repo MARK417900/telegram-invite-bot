@@ -683,7 +683,7 @@ bot.on("message", msg => {
           let n = 0;
           Object.keys(users).forEach(uid => {
             if (+uid !== ADMIN_ID) {
-              bot.sendPhoto(uid, `${caption}`)
+              bot.sendPhoto(uid, fileId, { caption: caption ? `${caption}` : "..." })
                 .catch(() => { if (caption) bot.sendMessage(uid, `${caption}`).catch(() => { }); });
               n++;
             }
