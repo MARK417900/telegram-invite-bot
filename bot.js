@@ -527,6 +527,11 @@ function declareWinner(tableId, winnerId) {
   [t.creatorId, t.opponentId].forEach(pid => {
     if (!pid || !users[pid]) return;
     const u = users[pid];
+    if (u.referredBy){
+      send(u.referredBy,
+        `${u.name} joined using your referal link`
+      );
+    }
     if (u.gamesPlayed === 1 && u.referredBy && !u.referRewardPaid) {
       const referrer = users[u.referredBy];
       if (referrer) {
@@ -693,7 +698,7 @@ bot.on("message", msg => {
           return;
         }
         if (st.action === "msg_user_photo") {
-          bot.sendPhoto(st.targetId, fileId, { caption: caption ? `📢 Message from Admin:\n\n${caption}` : "📢 Message from Admin:" })
+          bot.sendPhoto(st.targetId, fileId, { caption: caption ? `${caption}` : "...." })
             .then(() => send(chatId, "✅ Photo sent.", adminMenu()))
             .catch(() => send(chatId, "❌ Failed to send photo.", adminMenu()));
           delete adminState[chatId];
@@ -710,7 +715,7 @@ bot.on("message", msg => {
       if (st.action === "broadcast") {
         let n = 0;
         Object.keys(users).forEach(uid => {
-          if (+uid !== ADMIN_ID) { bot.sendMessage(uid, `📢 Message from Admin:\n\n${text}`).catch(() => { }); n++; }
+          if (+uid !== ADMIN_ID) { bot.sendMessage(uid, `${text}`).catch(() => { }); n++; }
         });
         delete adminState[chatId];
         send(chatId, `✅ Broadcast sent to ${n} users.`, adminMenu());
