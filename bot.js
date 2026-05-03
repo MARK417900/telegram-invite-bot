@@ -743,7 +743,6 @@ bot.on("message", msg => {
             reply_markup: {
               inline_keyboard: [
                 [{ text: "➕ Add", callback_data: `bal_add_${tid}` }, { text: "➖ Deduct", callback_data: `bal_ded_${tid}` }],
-                [{ text: "❌ Cancel", callback_data: "bal_cancel" }],
               ]
             },
           });
@@ -1050,6 +1049,21 @@ bot.on("message", msg => {
     if (st.action === "custom_withdraw_amount") {
       const amount = parseInt(text);
       const userBal = users[chatId]?.balance || 0;
+      const u = users[chatId];
+      const gamesPlayed = u?.gamesPlayed || 0;
+      const hasDeposited = u?.hasDeposited || false;
+      if (gamesPlayed < 2 && !hasDeposited) {
+        send(chatId,
+          `🔒 Withdrawal Locked\n\n` +
+          `Complete any ONE of the following:\n` +
+          `• Play any 2 matches\n` +
+          `• Make any single deposit\n\n` +
+          `Your Status:\n` +
+          `Matches Played: ${gamesPlayed}/2\n\n` +
+          `Deposits Made: ${hasDeposited ? "Yes ✅" : "No ❌"}\n` +
+          `Once completed any one of the above, withdrawals will be enabled automatically.`);
+        return;
+      }
       if (isNaN(amount) || amount < 100) {
         send(chatId, `❌ Invalid amount!\n\nMinimum withdrawal is ₹100.`);
         return;
@@ -1269,7 +1283,7 @@ bot.on("callback_query", query => {
     bot.deleteMessage(chatId, msgId).catch(() => { });
     userState[chatId] = { action: "custom_withdraw_amount" };
     send(chatId,
-      `✏️ Enter Withdraw Amount\nMinimum withdraw: ₹100 | Your Balance: ₹${userBal}`,
+      `Enter Withdraw Amount\nMinimum withdraw: ₹100 | Your Balance: ₹${userBal}`,
       cancelKb());
     return;
   }
@@ -1462,11 +1476,6 @@ bot.on("callback_query", query => {
     send(chatId, `${isAdd ? "Add" : "Deduct"} balance for ${users[tid].name}\n\nEnter amount (₹):`, cancelKb());
     return;
   }
-  if (data === "bal_cancel") {
-    delete adminState[chatId];
-    send(chatId, "❌ Cancelled.", adminMenu());
-    return;
-  }
 
   if (data.startsWith("reset_state_")) {
     const tid = parseInt(data.replace("reset_state_", ""));
@@ -1542,13 +1551,13 @@ bot.on("callback_query", query => {
     if (gamesPlayed < 2 && !hasDeposited) {
       send(chatId,
         `🔒 Withdrawal Locked\n\n` +
-        `✔️ Complete any ONE of the following:\n` +
+        `Complete any ONE of the following:\n` +
         `• Play any 2 matches\n` +
         `• Make any single deposit\n\n` +
-        `📊 Your Status:\n` +
-        `Matches Played: ${gamesPlayed}/2\n` +
+        `Your Status:\n` +
+        `Matches Played: ${gamesPlayed}/2\n\n` +
         `Deposits Made: ${hasDeposited ? "Yes ✅" : "No ❌"}\n` +
-        `Once completed, withdrawals will be enabled automatically.`);
+        `Once completed any one of the above, withdrawals will be enabled automatically.`);
       return;
     }
     if (!amount) return;
@@ -1602,7 +1611,7 @@ bot.on("callback_query", query => {
       mainMenu());
 
     bot.sendMessage(ADMIN_ID,
-      `💸 New Withdrawal Request!\n\nTXN: ${txnId}\nMethod: UPI\nUPI: ${upiId}\nAmount: ₹${amount}\nUser: ${users[chatId]?.name} (${chatId})\nUsername: @${users[chatId]?.username}`,
+      `💸 Withdrawal Request!\n\nTXN: ${txnId}\nMethod: UPI\nUPI: ${upiId}\nAmount: ₹${amount}\nUser: ${users[chatId]?.name} (${chatId})\nUsername: @${users[chatId]?.username}`,
       { reply_markup: { inline_keyboard: [[{ text: "✅ Mark Paid", callback_data: `wdl_done_${txnId}` }, { text: "❌ Reject", callback_data: `wdl_rej_${txnId}` }]] } }
     ).catch(() => { });
     return;
