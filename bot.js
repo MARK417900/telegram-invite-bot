@@ -527,11 +527,6 @@ function declareWinner(tableId, winnerId) {
   [t.creatorId, t.opponentId].forEach(pid => {
     if (!pid || !users[pid]) return;
     const u = users[pid];
-    if (u.referredBy){
-      send(u.referredBy,
-        `${u.name} joined using your referal link`
-      );
-    }
     if (u.gamesPlayed === 1 && u.referredBy && !u.referRewardPaid) {
       const referrer = users[u.referredBy];
       if (referrer) {
