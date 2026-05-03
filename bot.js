@@ -683,8 +683,8 @@ bot.on("message", msg => {
           let n = 0;
           Object.keys(users).forEach(uid => {
             if (+uid !== ADMIN_ID) {
-              bot.sendPhoto(uid, fileId, { caption: caption ? `📢 From Admin:\n\n${caption}` : "📢 Message from Admin:" })
-                .catch(() => { if (caption) bot.sendMessage(uid, `📢 From Admin:\n\n${caption}`).catch(() => { }); });
+              bot.sendPhoto(uid, `${caption}`)
+                .catch(() => { if (caption) bot.sendMessage(uid, `${caption}`).catch(() => { }); });
               n++;
             }
           });
@@ -721,12 +721,12 @@ bot.on("message", msg => {
         const tid = +text;
         if (!users[tid]) { send(chatId, `❌ User ${text} not found.`); delete adminState[chatId]; return; }
         adminState[chatId] = { action: "msg_user_text", targetId: tid };
-        send(chatId, `User: ${users[tid].name}\n\nSend your message (text or photo with optional caption):`, cancelKb());
+        send(chatId, `Send your message to ${users[tid].name}`, cancelKb());
         return;
       }
 
       if (st.action === "msg_user_text") {
-        bot.sendMessage(st.targetId, `📢 Message from Admin:\n\n${text}`)
+        bot.sendMessage(st.targetId, `${text}`)
           .then(() => send(chatId, "✅ Message sent.", adminMenu()))
           .catch(() => send(chatId, "❌ Failed to send.", adminMenu()));
         delete adminState[chatId];
@@ -1019,7 +1019,7 @@ bot.on("message", msg => {
 
     if (st.action === "custom_deposit_amount") {
       const amount = parseInt(text);
-      if (isNaN(amount) || amount < 50 ) {
+      if (isNaN(amount) || amount < 50) {
         send(chatId, `❌ Invalid amount!`);
         return;
       }
@@ -1112,24 +1112,10 @@ bot.on("message", msg => {
 
   if (text === "💸 Withdraw") {
     const u = users[chatId];
-    const gamesPlayed = u?.gamesPlayed || 0;
-    const hasDeposited = u?.hasDeposited || false;
-    if (gamesPlayed < 2 && !hasDeposited) {
-      send(chatId,
-        `❌ Withdrawal Not Available Yet!\n\n` +
-        `To unlock withdrawals, you need to:\n` +
-        `• Play at least 2 matches, OR\n` +
-        `• Make at least 1 deposit\n\n` +
-        `Your Progress:\n` +
-        `Matches Played: ${gamesPlayed}/2\n` +
-        `Deposits Made: ${hasDeposited ? "Yes ✅" : "No ❌"}`,
-        mainMenu());
-      return;
-    }
     send(chatId, `💸Select Withdraw Amount\nMinimum Withdraw: ₹100\n\nYour Balance: ₹${u?.balance || 0}`, {
       reply_markup: {
         inline_keyboard: [
-          [{ text: "₹50", callback_data: "withdraw_50" }, { text: "₹100", callback_data: "withdraw_100" }, { text: "₹200", callback_data: "withdraw_200" }, { text: "₹300", callback_data: "withdraw_300" }],
+          [{ text: "₹100", callback_data: "withdraw_100" }, { text: "₹200", callback_data: "withdraw_200" }, { text: "₹300", callback_data: "withdraw_300" }],
           [{ text: "₹500", callback_data: "withdraw_500" }, { text: "₹1000", callback_data: "withdraw_1000" }],
           [{ text: "✏️ Custom Amount", callback_data: "withdraw_custom" }],
         ]
@@ -1322,13 +1308,13 @@ bot.on("callback_query", query => {
         reply_markup: {
           inline_keyboard: [
             [
-              { text: "₹50",   callback_data: `join_${gotiKey}_50`   },
-              { text: "₹100",  callback_data: `join_${gotiKey}_100`  },
-              { text: "₹200",  callback_data: `join_${gotiKey}_200`  },
-              { text: "₹300",  callback_data: `join_${gotiKey}_300`  },
+              { text: "₹50", callback_data: `join_${gotiKey}_50` },
+              { text: "₹100", callback_data: `join_${gotiKey}_100` },
+              { text: "₹200", callback_data: `join_${gotiKey}_200` },
+              { text: "₹300", callback_data: `join_${gotiKey}_300` },
             ],
             [
-              { text: "₹500",  callback_data: `join_${gotiKey}_500`  },
+              { text: "₹500", callback_data: `join_${gotiKey}_500` },
               { text: "₹1000", callback_data: `join_${gotiKey}_1000` },
             ],
             [{ text: "✏️ Custom Amount", callback_data: `table_custom_${gotiKey}` }],
@@ -1550,6 +1536,21 @@ bot.on("callback_query", query => {
   if (data.startsWith("withdraw_") && !data.startsWith("withdraw_method_")) {
     const amount = parseInt(data.split("_")[1]);
     bot.deleteMessage(chatId, msgId).catch(() => { });
+    const u = users[chatId];
+    const gamesPlayed = u?.gamesPlayed || 0;
+    const hasDeposited = u?.hasDeposited || false;
+    if (gamesPlayed < 2 && !hasDeposited) {
+      send(chatId,
+        `❌ Withdrawal Not Available Yet!\n\n` +
+        `To unlock withdrawals, you need to:\n` +
+        `• Play at least 2 matches, OR\n` +
+        `• Make at least 1 deposit\n\n` +
+        `Your Progress:\n` +
+        `Matches Played: ${gamesPlayed}/2\n` +
+        `Deposits Made: ${hasDeposited ? "Yes ✅" : "No ❌"}`,
+        mainMenu());
+      return;
+    }
     if (!amount) return;
     if ((users[chatId]?.balance || 0) < amount) {
       send(chatId, `😥 Insufficient balance! You have ₹${users[chatId]?.balance || 0}`);
