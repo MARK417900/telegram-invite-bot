@@ -17,7 +17,7 @@ const bot = new TelegramBot(token, { polling: true });
 const ADMIN_ID = 8641315326;
 const GROUP_ID = -1003907305365;
 const GROUP_INVITE_LINK = "https://t.me/+Bg5tAAxgL5cxYWRl";
-const PLATFORM_CUT_PERCENT = 5;
+const PLATFORM_CUT_PERCENT = 2.5;
 const REFER_REWARD = 20;
 
 // ─── FIX 3: Escape special Markdown characters in user-supplied text ──────────
